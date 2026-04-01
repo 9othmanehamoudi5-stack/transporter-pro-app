@@ -1,0 +1,165 @@
+{
+  "theme_and_archetype": {
+    "theme": "Dark",
+    "archetype": "High-Contrast Tactical Dark (Archetype 4 + Archetype 2)",
+    "description": "A 'Dark Elegant' SaaS interface combining the density and authority of a Control Room (Admin) with the high-visibility, tactical precision of a Performance UI (Driver). Uses deep obsidian backgrounds to reduce glare and eye strain, accented with Electric Blue for primary actions and Warning Red for logistics anomalies."
+  },
+  "typography": {
+    "font_families": {
+      "heading": "Cabinet Grotesk",
+      "body": "Satoshi",
+      "mono": "JetBrains Mono"
+    },
+    "hierarchy": {
+      "h1": "text-4xl sm:text-5xl lg:text-6xl tracking-tighter font-bold",
+      "h2": "text-2xl sm:text-3xl lg:text-4xl tracking-tight font-bold",
+      "h3": "text-xl sm:text-2xl tracking-tight font-semibold",
+      "body": "text-base leading-relaxed text-zinc-300",
+      "caption": "text-sm text-zinc-400",
+      "overline": "text-xs tracking-[0.2em] uppercase font-semibold text-zinc-500",
+      "data_point": "font-mono tracking-tight text-white"
+    },
+    "guidelines": [
+      "Headings must use tight letter spacing.",
+      "Use JetBrains Mono for shipment IDs, timestamps, and Eco-scores.",
+      "Never use Inter for headings."
+    ]
+  },
+  "color_palette": {
+    "background": {
+      "base": "#0A0A0B",
+      "surface": "#121214",
+      "surface_elevated": "#1A1A1E"
+    },
+    "brand": {
+      "primary": "#0066FF",
+      "primary_hover": "#0052CC",
+      "primary_transparent": "rgba(0, 102, 255, 0.15)"
+    },
+    "status": {
+      "alert": "#FF3B30",
+      "success": "#34C759",
+      "warning": "#F5A623"
+    },
+    "text": {
+      "primary": "#FFFFFF",
+      "secondary": "#A1A1AA",
+      "disabled": "#52525B"
+    },
+    "border": {
+      "default": "#27272A",
+      "focus": "#0066FF",
+      "light": "rgba(255, 255, 255, 0.1)"
+    }
+  },
+  "layout_strategy": {
+    "driver_app": {
+      "concept": "One-Hand Design (Mobile-First)",
+      "rules": [
+        "Navigation must be at the bottom of the screen.",
+        "Primary action buttons must be large (h-14 or h-16) and placed in the bottom thumb-reach zone.",
+        "Use vertical lists with large hit areas.",
+        "Employ 'Swipe to Confirm' patterns for critical actions (e.g., Delivery Complete) to prevent accidental taps.",
+        "High contrast text for outdoor visibility."
+      ]
+    },
+    "admin_dashboard": {
+      "concept": "Control Room Grid",
+      "rules": [
+        "Use tight gaps (gap-4 or gap-6).",
+        "Sidebar navigation for quick module switching.",
+        "Top row: Key metric cards (Cash-flow, Active Litiges, Eco-score).",
+        "Center: Dense data tables for shipments and map for live tracking.",
+        "Use 1px borders and flat backgrounds for widgets, avoiding soft shadows in dark mode."
+      ]
+    },
+    "client_portal": {
+      "concept": "White Label Minimalist",
+      "rules": [
+        "Centered, focused layout over a cinematic map background.",
+        "Use Glassmorphism (bg-black/40 backdrop-blur-xl border-white/10) for the tracking card.",
+        "Emphasize the progress bar and current status."
+      ]
+    }
+  },
+  "component_rules": {
+    "buttons": {
+      "primary": "bg-[#0066FF] text-white hover:bg-[#0052CC] transition-colors rounded-lg font-semibold",
+      "alert": "bg-[#FF3B30] text-white hover:bg-[#D63026] transition-colors rounded-lg font-semibold",
+      "driver_action": "w-full h-16 text-lg rounded-xl flex items-center justify-center gap-3"
+    },
+    "cards": {
+      "admin": "bg-[#121214] border border-[#27272A] rounded-xl overflow-hidden",
+      "driver": "bg-[#1A1A1E] rounded-2xl p-6 active:scale-[0.98] transition-transform",
+      "glass": "bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl"
+    },
+    "inputs": {
+      "default": "bg-[#0A0A0B] border border-[#27272A] rounded-lg text-white focus:border-[#0066FF] focus:ring-1 focus:ring-[#0066FF] h-12"
+    },
+    "icons": {
+      "library": "lucide-react",
+      "style": "stroke-2"
+    }
+  },
+  "motion_and_interaction": {
+    "hover": "Subtle background lightening (hover:bg-[#1A1A1E]) on table rows and list items.",
+    "active": "Scale down active:scale-[0.98] on mobile driver cards and buttons.",
+    "feedback": "Use red pulsating dots (animate-pulse) for active alerts/litiges.",
+    "loading": "Use skeleton loaders with dark shimmer (bg-zinc-800 to bg-zinc-700) instead of spinners where possible."
+  },
+  "media_and_assets": {
+    "logos": {
+      "transporter_pro": {
+        "url": "https://static.prod-images.emergentagent.com/jobs/2c49de5c-fb91-4633-a690-8bf119de3bcb/images/6de0013f4f1e988374f9396664d20591460636fae7b646e944a40f50d189a781.png",
+        "description": "Transporter-Pro logo, stylized electric blue forward arrow on black.",
+        "placement": "Header, Login screens, Sidebar top"
+      }
+    },
+    "backgrounds": {
+      "dark_map": {
+        "url": "https://static.prod-images.emergentagent.com/jobs/2c49de5c-fb91-4633-a690-8bf119de3bcb/images/97ea60569b65de7a0c89896fd34600cafc5cea1557e38e75c9ffe2ba9915ce4c.png",
+        "description": "Abstract glowing high-tech city map with neon blue routing lines.",
+        "placement": "Live Tracking Map background, Client Portal background"
+      }
+    },
+    "illustrations": {
+      "ai_damage_scan": {
+        "url": "https://static.prod-images.emergentagent.com/jobs/2c49de5c-fb91-4633-a690-8bf119de3bcb/images/d6a19e81ff23aaf20792c372301f443a0d5827fcd746edc9a4ca8da67e1a9b52.png",
+        "description": "AI scanning cardboard package for damage.",
+        "placement": "AI Anti-Litige module, Photo Capture flow"
+      }
+    },
+    "photography": {
+      "delivery_truck_night": {
+        "url": "https://images.unsplash.com/photo-1730033135158-c87def1b7af0?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NjZ8MHwxfHNlYXJjaHwyfHxsb2dpc3RpY3MlMjBkZWxpdmVyeSUyMHRydWNrJTIwbW9kZXJuJTIwbmlnaHR8ZW58MHx8fHwxNzc1MDY2MDc1fDA&ixlib=rb-4.1.0&q=85",
+        "description": "Modern delivery truck driving at night.",
+        "placement": "Hero image for marketing or auth background"
+      },
+      "driver_portrait": {
+        "url": "https://images.pexels.com/photos/7363096/pexels-photo-7363096.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        "description": "Smiling delivery driver in vehicle.",
+        "placement": "Driver profile, testimonial, or demo data"
+      },
+      "happy_customer": {
+        "url": "https://images.pexels.com/photos/33530406/pexels-photo-33530406.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        "description": "Woman signing for a package at doorstep.",
+        "placement": "Client portal success state, E-CMR signature screen context"
+      }
+    }
+  },
+  "testing": {
+    "requirements": [
+      "All interactive elements MUST include data-testid attributes (e.g., data-testid='driver-accept-button').",
+      "Forms must use accessible labels."
+    ]
+  },
+  "instructions_to_main_agent": [
+    "Implement a mobile-first 'Driver Dashboard' emphasizing one-hand operation: massive buttons, bottom-placed actions, and large text.",
+    "Implement an 'Admin Dashboard' using a dark grid layout, prioritizing data density and high-contrast red alerts for litiges/delays.",
+    "Ensure the 'White Label Client Portal' uses the provided dark_map background with glassmorphism components centered on screen.",
+    "Use the specific 'Bleu Électrique' (#0066FF) for all primary CTAs.",
+    "Do NOT use placeholder text for images. Use the precise URLs provided in the media_and_assets section.",
+    "Structure UI strictly with Tailwind utility classes defined in the component_rules.",
+    "Use JWT-based custom auth for B2B SaaS."
+  ]
+}
