@@ -100,7 +100,7 @@ code, .font-mono {
 
 @layer base {
   * {
-    @apply border-border;
+    border-color: transparent;
   }
   body {
     @apply bg-background text-foreground;

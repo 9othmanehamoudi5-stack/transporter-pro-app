@@ -26,9 +26,13 @@ export const deliveriesApi = {
   create: (data) => api.post('/deliveries', data),
   update: (trackingId, data) => api.patch(`/deliveries/${trackingId}`, data),
   assignDriver: (trackingId, driverId) => 
-    api.post(`/deliveries/${trackingId}/assign`, new URLSearchParams({ driver_id: driverId })),
+    api.post(`/deliveries/${trackingId}/assign`, `driver_id=${driverId}`, {
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+    }),
   updateGps: (trackingId, lat, lng) => 
-    api.post(`/deliveries/${trackingId}/gps`, new URLSearchParams({ lat, lng }))
+    api.post(`/deliveries/${trackingId}/gps`, `lat=${lat}&lng=${lng}`, {
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+    })
 };
 
 // ==================== INVOICES ====================
