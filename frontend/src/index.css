@@ -86,7 +86,7 @@ code, .font-mono {
     --accent-foreground: 0 0% 100%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-    --border: 0 0% 15%;
+    --border: 0 0% 100% / 0%;
     --input: 0 0% 15%;
     --ring: 217 100% 50%;
     --chart-1: 217 100% 50%;
@@ -99,7 +99,7 @@ code, .font-mono {
 }
 
 @layer base {
-  * {
+  *, ::before, ::after {
     border-color: transparent;
   }
   body {
