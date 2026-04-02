@@ -1,53 +1,164 @@
-import { useEffect } from "react";
+import React from "react";
 import "@/App.css";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import axios from "axios";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { LoginPage, RegisterPage } from "./pages/AuthPages";
+import AdminDashboard from "./pages/AdminDashboard";
+import DriverDashboard from "./pages/DriverDashboard";
+import { ClientPortal, TrackingSearch } from "./pages/ClientPortal";
+import { Toaster } from "./components/ui/sonner";
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+// Protected Route Component
+const ProtectedRoute = ({ children, allowedRoles }) => {
+  const { user, loading } = useAuth();
 
-const Home = () => {
-  const helloWorldApi = async () => {
-    try {
-      const response = await axios.get(`${API}/`);
-      console.log(response.data.message);
-    } catch (e) {
-      console.error(e, `errored out requesting / api`);
-    }
-  };
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#0A0A0B] flex items-center justify-center">
+        <div className="w-10 h-10 border-2 border-[#0066FF] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
-  useEffect(() => {
-    helloWorldApi();
-  }, []);
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
 
+  if (allowedRoles && !allowedRoles.includes(user.role)) {
+    // Redirect to appropriate dashboard based on role
+    if (user.role === "admin") return <Navigate to="/dashboard" replace />;
+    if (user.role === "driver") return <Navigate to="/driver" replace />;
+    if (user.role === "client") return <Navigate to="/client-dashboard" replace />;
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
+};
+
+// Dashboard Router - redirects to appropriate dashboard based on role
+const DashboardRouter = () => {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#0A0A0B] flex items-center justify-center">
+        <div className="w-10 h-10 border-2 border-[#0066FF] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  switch (user.role) {
+    case "admin":
+      return <AdminDashboard />;
+    case "driver":
+      return <Navigate to="/driver" replace />;
+    case "client":
+      return <Navigate to="/client-dashboard" replace />;
+    default:
+      return <Navigate to="/login" replace />;
+  }
+};
+
+// Client Dashboard - for logged in clients
+const ClientDashboard = () => {
+  const { user, logout } = useAuth();
+  
   return (
-    <div>
-      <header className="App-header">
-        <a
-          className="App-link"
-          href="https://emergent.sh"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <img src="https://avatars.githubusercontent.com/in/1201222?s=120&u=2686cf91179bbafbc7a71bfbc43004cf9ae1acea&v=4" />
-        </a>
-        <p className="mt-5">Building something incredible ~!</p>
-      </header>
+    <div className="min-h-screen bg-[#0A0A0B] p-4">
+      <div className="max-w-4xl mx-auto">
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-2xl font-bold">Bienvenue, {user?.name}</h1>
+          <button 
+            onClick={logout}
+            className="px-4 py-2 bg-[#1A1A1E] hover:bg-[#27272A] rounded-lg transition-colors"
+          >
+            Déconnexion
+          </button>
+        </div>
+        <div className="bg-[#121214] border border-[#27272A] rounded-xl p-6">
+          <p className="text-zinc-400 mb-4">
+            Utilisez le portail de suivi pour suivre vos colis.
+          </p>
+          <a 
+            href="/track" 
+            className="inline-flex items-center px-6 py-3 bg-[#0066FF] hover:bg-[#0052CC] rounded-lg font-semibold transition-colors"
+          >
+            Suivre un colis
+          </a>
+        </div>
+      </div>
     </div>
   );
 };
 
+// Public Route - redirects to dashboard if already logged in
+const PublicRoute = ({ children }) => {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#0A0A0B] flex items-center justify-center">
+        <div className="w-10 h-10 border-2 border-[#0066FF] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (user) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return children;
+};
+
 function App() {
   return (
-    <div className="App">
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Home />}>
-            <Route index element={<Home />} />
-          </Route>
-        </Routes>
-      </BrowserRouter>
-    </div>
+    <AuthProvider>
+      <div className="App min-h-screen bg-[#0A0A0B]">
+        <Toaster richColors position="top-right" />
+        <BrowserRouter>
+          <Routes>
+            {/* Public routes */}
+            <Route path="/login" element={
+              <PublicRoute>
+                <LoginPage />
+              </PublicRoute>
+            } />
+            <Route path="/register" element={
+              <PublicRoute>
+                <RegisterPage />
+              </PublicRoute>
+            } />
+            
+            {/* Client tracking portal - public */}
+            <Route path="/track" element={<TrackingSearch />} />
+            <Route path="/track/:trackingId" element={<ClientPortal />} />
+            
+            {/* Protected routes */}
+            <Route path="/dashboard" element={<DashboardRouter />} />
+            
+            <Route path="/driver" element={
+              <ProtectedRoute allowedRoles={["driver"]}>
+                <DriverDashboard />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/client-dashboard" element={
+              <ProtectedRoute allowedRoles={["client"]}>
+                <ClientDashboard />
+              </ProtectedRoute>
+            } />
+            
+            {/* Default redirect */}
+            <Route path="/" element={<Navigate to="/login" replace />} />
+            <Route path="*" element={<Navigate to="/login" replace />} />
+          </Routes>
+        </BrowserRouter>
+      </div>
+    </AuthProvider>
   );
 }
 
