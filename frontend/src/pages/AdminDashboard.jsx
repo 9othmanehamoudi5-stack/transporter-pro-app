@@ -368,7 +368,7 @@ export const AdminDashboard = () => {
                         <th className="px-4 py-3 text-left">Chauffeur</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-[#27272A]">
+                    <tbody>
                       {deliveries.slice(0, 5).map((d) => (
                         <tr key={d.tracking_id} className="hover:bg-[#1A1A1E]/50">
                           <td className="px-4 py-3 font-mono text-sm">{d.tracking_id}</td>
@@ -403,7 +403,7 @@ export const AdminDashboard = () => {
                       <th className="px-4 py-3 text-left">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[#27272A]">
+                  <tbody>
                     {deliveries.map((d) => (
                       <tr key={d.tracking_id} className="hover:bg-[#1A1A1E]/50">
                         <td className="px-4 py-3 font-mono text-sm">{d.tracking_id}</td>
@@ -488,7 +488,7 @@ export const AdminDashboard = () => {
                         <th className="px-4 py-3 text-left">Actions</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-[#27272A]">
+                    <tbody>
                       {invoices.map((inv) => (
                         <tr key={inv.invoice_id} className="hover:bg-[#1A1A1E]/50">
                           <td className="px-4 py-3 font-mono text-sm">{inv.invoice_id}</td>
@@ -748,7 +748,7 @@ Généré par Transporter-Pro
                         <th className="px-4 py-3 text-left">Carburant (L)</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-[#27272A]">
+                    <tbody>
                       {ecoSummary.map((eco) => (
                         <tr key={eco._id} className="hover:bg-[#1A1A1E]/50">
                           <td className="px-4 py-3">{eco._id}</td>

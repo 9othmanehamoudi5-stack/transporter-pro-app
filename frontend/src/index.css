@@ -86,7 +86,7 @@ code, .font-mono {
     --accent-foreground: 0 0% 100%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-    --border: 0 0% 100% / 0%;
+    --border: 0 0% 0% / 0;
     --input: 0 0% 15%;
     --ring: 217 100% 50%;
     --chart-1: 217 100% 50%;
@@ -99,12 +99,44 @@ code, .font-mono {
 }
 
 @layer base {
-  *, ::before, ::after {
+  *, *::before, *::after {
+    border-style: solid;
+    border-width: 0;
     border-color: transparent;
   }
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Explicit borders only when class is applied */
+.border {
+  border-width: 1px !important;
+  border-color: #27272A !important;
+}
+.border-t {
+  border-top-width: 1px !important;
+}
+.border-b {
+  border-bottom-width: 1px !important;
+}
+.border-l {
+  border-left-width: 1px !important;
+}
+.border-r {
+  border-right-width: 1px !important;
+}
+.border-\[\\#27272A\], .border-zinc-800 {
+  border-color: #27272A !important;
+}
+.border-\[\\#0066FF\] {
+  border-color: #0066FF !important;
+}
+
+/* Remove divide borders completely */
+.divide-y > *,
+.divide-x > * {
+  border-width: 0 !important;
 }
 
 /* Animation for alerts */
