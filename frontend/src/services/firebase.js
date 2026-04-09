@@ -26,6 +26,7 @@ if (typeof window !== 'undefined') {
 // ==================== MISSIONS (Deliveries) FIRESTORE SERVICE ====================
 
 const MISSIONS_COLLECTION = 'missions';
+const DRIVERS_COLLECTION = 'chauffeurs';
 
 export const firestoreMissions = {
   // Get all missions
@@ -195,6 +196,54 @@ export const firestoreMissions = {
       status: 'delivered',
       signature_data: signatureData,
       delivered_at: new Date().toISOString()
+    });
+  }
+};
+
+// ==================== CHAUFFEURS (Drivers) FIRESTORE SERVICE ====================
+
+export const firestoreDrivers = {
+  // Get all drivers from Firestore
+  getAll: async () => {
+    try {
+      const q = query(collection(db, DRIVERS_COLLECTION), orderBy('name', 'asc'));
+      const snapshot = await getDocs(q);
+      return snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+    } catch (error) {
+      console.error('Firestore getAll drivers error:', error);
+      return [];
+    }
+  },
+
+  // Create a new driver
+  create: async (driverData) => {
+    try {
+      const docRef = await addDoc(collection(db, DRIVERS_COLLECTION), {
+        ...driverData,
+        status: 'active',
+        created_at: serverTimestamp()
+      });
+      return { id: docRef.id, ...driverData };
+    } catch (error) {
+      console.error('Firestore create driver error:', error);
+      throw error;
+    }
+  },
+
+  // Subscribe to real-time driver updates
+  subscribe: (callback) => {
+    const q = query(collection(db, DRIVERS_COLLECTION), orderBy('name', 'asc'));
+    return onSnapshot(q, (snapshot) => {
+      const drivers = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      callback(drivers);
+    }, (error) => {
+      console.error('Firestore drivers subscription error:', error);
     });
   }
 };

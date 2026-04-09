@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { dashboardApi, deliveriesApi, invoicesApi, driversApi, damageReportsApi, ecoScoresApi, adminDriversApi, notificationsApi } from '../services/api';
+import { firestoreDrivers } from '../services/firebase';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
@@ -60,6 +61,27 @@ export const AdminDashboard = () => {
   const [showAssignDriver, setShowAssignDriver] = useState(null);
   const [showNewDriver, setShowNewDriver] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [firestoreDriversList, setFirestoreDriversList] = useState([]);
+
+  // Fetch Firestore drivers
+  useEffect(() => {
+    const fetchFirestoreDrivers = async () => {
+      try {
+        const driversFromFirestore = await firestoreDrivers.getAll();
+        setFirestoreDriversList(driversFromFirestore);
+      } catch (error) {
+        console.log('Firestore drivers not available, using backend');
+      }
+    };
+    fetchFirestoreDrivers();
+    
+    // Subscribe to real-time updates
+    const unsubscribe = firestoreDrivers.subscribe((drivers) => {
+      setFirestoreDriversList(drivers);
+    });
+    
+    return () => unsubscribe && unsubscribe();
+  }, []);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -778,7 +800,7 @@ Généré par Transporter-Pro
 
       {/* New Delivery Dialog */}
       <Dialog open={showNewDelivery} onOpenChange={setShowNewDelivery}>
-        <DialogContent className="bg-[#121214] border-[#27272A] text-white">
+        <DialogContent className="bg-[#121214] border border-[#27272A] text-white">
           <DialogHeader>
             <DialogTitle>Nouvelle livraison</DialogTitle>
           </DialogHeader>
@@ -786,43 +808,40 @@ Généré par Transporter-Pro
         </DialogContent>
       </Dialog>
 
-      {/* Assign Driver Dialog */}
+      {/* Assign Driver Dialog - NOUVEAU POPUP COMPLET */}
       <Dialog open={!!showAssignDriver} onOpenChange={() => setShowAssignDriver(null)}>
-        <DialogContent className="bg-[#121214] border-[#27272A] text-white">
+        <DialogContent className="bg-[#121214] border border-[#27272A] text-white sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>Assigner un chauffeur</DialogTitle>
+            <DialogTitle className="text-xl">Assigner une livraison</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            {drivers.length === 0 ? (
-              <p className="text-center text-zinc-400 py-4">Aucun chauffeur disponible</p>
-            ) : (
-              drivers.filter(d => d.status !== 'inactive').map((driver) => (
-                <button
-                  key={driver.id}
-                  onClick={() => handleAssignDriver(showAssignDriver, driver.id)}
-                  className="w-full flex items-center gap-4 p-4 bg-[#1A1A1E] hover:bg-[#27272A] rounded-lg transition-colors"
-                  data-testid={`select-driver-${driver.id}`}
-                >
-                  <div className="w-10 h-10 rounded-full bg-[#0A0A0B] flex items-center justify-center">
-                    <span className="font-medium">{driver.name?.[0]?.toUpperCase()}</span>
-                  </div>
-                  <div className="text-left flex-1">
-                    <p className="font-medium">{driver.name}</p>
-                    <p className="text-sm text-zinc-400">{driver.vehicle_plate || driver.email}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm text-zinc-400">{driver.in_progress || 0} en cours</p>
-                  </div>
-                </button>
-              ))
-            )}
-          </div>
+          <AssignDeliveryForm 
+            trackingId={showAssignDriver}
+            delivery={deliveries.find(d => d.tracking_id === showAssignDriver)}
+            drivers={firestoreDriversList.length > 0 ? firestoreDriversList : drivers}
+            onSubmit={async (data) => {
+              try {
+                await handleAssignDriver(showAssignDriver, data.driver_id);
+                // Update delivery info if changed
+                if (data.client_name || data.address) {
+                  await deliveriesApi.update(showAssignDriver, {
+                    recipient_name: data.client_name,
+                    recipient_address: data.address
+                  });
+                }
+                setShowAssignDriver(null);
+                fetchData();
+              } catch (error) {
+                toast.error('Erreur lors de l\'assignation');
+              }
+            }}
+            onCancel={() => setShowAssignDriver(null)}
+          />
         </DialogContent>
       </Dialog>
 
       {/* New Driver Dialog */}
       <Dialog open={showNewDriver} onOpenChange={setShowNewDriver}>
-        <DialogContent className="bg-[#121214] border-[#27272A] text-white">
+        <DialogContent className="bg-[#121214] border border-[#27272A] text-white">
           <DialogHeader>
             <DialogTitle>Nouveau chauffeur</DialogTitle>
           </DialogHeader>
@@ -1045,6 +1064,119 @@ const NewDriverForm = ({ onSubmit, onCancel }) => {
         </Button>
         <Button type="submit" className="flex-1 bg-[#0066FF] hover:bg-[#0052CC]">
           Créer le compte
+        </Button>
+      </div>
+    </form>
+  );
+};
+
+// Formulaire d'assignation de livraison avec dropdown chauffeurs
+const AssignDeliveryForm = ({ trackingId, delivery, drivers, onSubmit, onCancel }) => {
+  const [formData, setFormData] = useState({
+    client_name: delivery?.recipient_name || '',
+    address: delivery?.recipient_address || '',
+    driver_id: ''
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!formData.driver_id) {
+      toast.error('Veuillez sélectionner un chauffeur');
+      return;
+    }
+    setIsSubmitting(true);
+    await onSubmit(formData);
+    setIsSubmitting(false);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-5" data-testid="assign-delivery-form">
+      {/* Tracking ID Display */}
+      <div className="p-3 bg-[#1A1A1E] rounded-lg">
+        <p className="text-xs text-zinc-400">Livraison</p>
+        <p className="font-mono font-semibold text-[#0066FF]">{trackingId}</p>
+      </div>
+
+      {/* Nom du Client */}
+      <div className="space-y-2">
+        <Label htmlFor="client_name">Nom du Client</Label>
+        <Input
+          id="client_name"
+          value={formData.client_name}
+          onChange={(e) => setFormData({ ...formData, client_name: e.target.value })}
+          placeholder="Entrez le nom du client"
+          className="h-12 bg-[#0A0A0B] border border-[#27272A] focus:border-[#0066FF]"
+          data-testid="client-name-input"
+        />
+      </div>
+
+      {/* Adresse de Livraison */}
+      <div className="space-y-2">
+        <Label htmlFor="address">Adresse de Livraison</Label>
+        <Input
+          id="address"
+          value={formData.address}
+          onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+          placeholder="Entrez l'adresse complète"
+          className="h-12 bg-[#0A0A0B] border border-[#27272A] focus:border-[#0066FF]"
+          data-testid="address-input"
+        />
+      </div>
+
+      {/* Liste déroulante des Chauffeurs */}
+      <div className="space-y-2">
+        <Label htmlFor="driver">Chauffeur</Label>
+        <Select 
+          value={formData.driver_id} 
+          onValueChange={(value) => setFormData({ ...formData, driver_id: value })}
+        >
+          <SelectTrigger 
+            className="h-12 bg-[#0A0A0B] border border-[#27272A] focus:border-[#0066FF]"
+            data-testid="driver-select"
+          >
+            <SelectValue placeholder="Sélectionnez un chauffeur" />
+          </SelectTrigger>
+          <SelectContent className="bg-[#1A1A1E] border border-[#27272A]">
+            {drivers.length === 0 ? (
+              <SelectItem value="none" disabled>Aucun chauffeur disponible</SelectItem>
+            ) : (
+              drivers.map((driver) => (
+                <SelectItem 
+                  key={driver.id} 
+                  value={driver.id}
+                  className="hover:bg-[#27272A] cursor-pointer"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">{driver.name}</span>
+                    {driver.vehicle_plate && (
+                      <span className="text-zinc-400 text-sm">({driver.vehicle_plate})</span>
+                    )}
+                  </div>
+                </SelectItem>
+              ))
+            )}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Boutons */}
+      <div className="flex gap-3 pt-2">
+        <Button 
+          type="button" 
+          variant="outline" 
+          onClick={onCancel} 
+          className="flex-1 h-12 border border-[#27272A] hover:bg-[#1A1A1E]"
+        >
+          Annuler
+        </Button>
+        <Button 
+          type="submit" 
+          disabled={isSubmitting || !formData.driver_id}
+          className="flex-1 h-12 bg-[#0066FF] hover:bg-[#0052CC] disabled:opacity-50"
+          data-testid="confirm-assign-btn"
+        >
+          {isSubmitting ? 'Assignation...' : 'Confirmer l\'Assignation'}
         </Button>
       </div>
     </form>
