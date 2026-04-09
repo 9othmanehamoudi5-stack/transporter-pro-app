@@ -102,41 +102,69 @@ code, .font-mono {
   *, *::before, *::after {
     border-style: solid;
     border-width: 0;
-    border-color: transparent;
+    border-color: transparent !important;
   }
   body {
     @apply bg-background text-foreground;
   }
 }
 
-/* Explicit borders only when class is applied */
-.border {
+/* Only show borders when explicitly set with border class + color */
+.border.border-\[\\#27272A\],
+.border.border-zinc-800,
+[class*="border-[#27272A]"].border {
   border-width: 1px !important;
   border-color: #27272A !important;
 }
-.border-t {
-  border-top-width: 1px !important;
-}
-.border-b {
-  border-bottom-width: 1px !important;
-}
-.border-l {
-  border-left-width: 1px !important;
-}
-.border-r {
-  border-right-width: 1px !important;
-}
-.border-\[\\#27272A\], .border-zinc-800 {
-  border-color: #27272A !important;
-}
-.border-\[\\#0066FF\] {
+
+.border.border-\[\\#0066FF\],
+[class*="border-[#0066FF]"].border {
+  border-width: 1px !important;
   border-color: #0066FF !important;
 }
 
-/* Remove divide borders completely */
-.divide-y > *,
-.divide-x > * {
-  border-width: 0 !important;
+/* Sidebar specific borders */
+.border-r.border-\[\\#27272A\],
+aside.border-r {
+  border-right-width: 1px !important;
+  border-right-color: #27272A !important;
+}
+
+.border-b.border-\[\\#27272A\] {
+  border-bottom-width: 1px !important;
+  border-bottom-color: #27272A !important;
+}
+
+.border-t.border-\[\\#27272A\] {
+  border-top-width: 1px !important;
+  border-top-color: #27272A !important;
+}
+
+/* Card borders */
+.rounded-xl.border,
+.rounded-2xl.border,
+.rounded-lg.border {
+  border-width: 1px !important;
+  border-color: #27272A !important;
+}
+
+/* Input borders */
+input.border,
+.border.bg-\[\\#0A0A0B\] {
+  border-width: 1px !important;
+  border-color: #27272A !important;
+}
+
+/* Ring for popular plan */
+.ring-1.ring-\[\\#0066FF\] {
+  --tw-ring-color: #0066FF !important;
+}
+
+/* Remove all other default borders */
+hr, 
+[class*="divide-"] > *,
+table, thead, tbody, tr, td, th {
+  border-color: transparent !important;
 }
 
 /* Animation for alerts */

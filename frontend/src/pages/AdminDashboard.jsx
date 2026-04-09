@@ -140,10 +140,11 @@ export const AdminDashboard = () => {
     if (!window.confirm('Êtes-vous sûr de vouloir désactiver ce chauffeur ?')) return;
     try {
       await adminDriversApi.delete(driverId);
+      // Mise à jour immédiate de l'état local
+      setDrivers(prev => prev.filter(d => d.id !== driverId));
       toast.success('Chauffeur désactivé');
-      fetchData();
     } catch (error) {
-      toast.error('Erreur');
+      toast.error('Erreur lors de la suppression');
     }
   };
 
@@ -185,7 +186,7 @@ export const AdminDashboard = () => {
       )}
 
       {/* Sidebar */}
-      <aside className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-[#121214] border-r border-[#27272A] transform transition-transform lg:transform-none ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+      <aside className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-[#121214] border-r border-[#27272A] transform transition-transform lg:transform-none flex flex-col ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
         <div className="flex items-center gap-3 p-4 border-b border-[#27272A]">
           <div className="w-10 h-10 bg-[#0066FF] rounded-lg flex items-center justify-center">
             <Truck className="w-6 h-6 text-white" />
@@ -196,7 +197,7 @@ export const AdminDashboard = () => {
           </button>
         </div>
 
-        <nav className="p-4 space-y-1">
+        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
           {sidebarItems.map((item) => (
             <button
               key={item.id}
@@ -217,8 +218,8 @@ export const AdminDashboard = () => {
           ))}
         </nav>
 
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-[#27272A]">
-          <div className="flex items-center gap-3 mb-4">
+        <div className="p-4 bg-[#121214] border-t border-[#27272A]">
+          <div className="flex items-center gap-3 mb-3">
             <div className="w-10 h-10 rounded-full bg-[#1A1A1E] flex items-center justify-center">
               <span className="text-sm font-medium">{user?.name?.[0]?.toUpperCase()}</span>
             </div>
@@ -230,7 +231,7 @@ export const AdminDashboard = () => {
           <Button 
             onClick={logout} 
             variant="outline" 
-            className="w-full border-[#27272A] text-zinc-400 hover:text-white"
+            className="w-full border border-[#27272A] text-zinc-400 hover:text-white hover:bg-[#1A1A1E]"
             data-testid="logout-btn"
           >
             <LogOut className="w-4 h-4 mr-2" />
@@ -496,9 +497,11 @@ export const AdminDashboard = () => {
                           <td className="px-4 py-3 font-mono">{inv.amount?.toLocaleString('fr-FR')} €</td>
                           <td className="px-4 py-3">
                             <span className={`px-2 py-1 rounded-full text-xs ${
-                              inv.status === 'paid' ? 'text-green-400 bg-green-400/10' : 'text-yellow-400 bg-yellow-400/10'
+                              inv.status === 'paid' ? 'text-green-400 bg-green-400/10' : 
+                              inv.status === 'ready_to_send' ? 'text-blue-400 bg-blue-400/10' :
+                              'text-yellow-400 bg-yellow-400/10'
                             }`}>
-                              {inv.status === 'paid' ? 'Payée' : 'En attente'}
+                              {inv.status === 'paid' ? 'Payée' : inv.status === 'ready_to_send' ? 'Prête' : 'En attente'}
                             </span>
                           </td>
                           <td className="px-4 py-3">
@@ -506,7 +509,8 @@ export const AdminDashboard = () => {
                               <Button 
                                 size="sm" 
                                 onClick={() => handleMarkPaid(inv.invoice_id)}
-                                className="bg-green-600 hover:bg-green-700"
+                                className="bg-green-600 hover:bg-green-700 cursor-pointer"
+                                data-testid={`mark-paid-${inv.invoice_id}`}
                               >
                                 Marquer payée
                               </Button>
@@ -789,24 +793,29 @@ Généré par Transporter-Pro
             <DialogTitle>Assigner un chauffeur</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            {drivers.filter(d => d.status === 'active').map((driver) => (
-              <button
-                key={driver.id}
-                onClick={() => handleAssignDriver(showAssignDriver, driver.id)}
-                className="w-full flex items-center gap-4 p-4 bg-[#1A1A1E] hover:bg-[#27272A] rounded-lg transition-colors"
-              >
-                <div className="w-10 h-10 rounded-full bg-[#0A0A0B] flex items-center justify-center">
-                  <span className="font-medium">{driver.name?.[0]?.toUpperCase()}</span>
-                </div>
-                <div className="text-left flex-1">
-                  <p className="font-medium">{driver.name}</p>
-                  <p className="text-sm text-zinc-400">{driver.vehicle_plate || driver.email}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm text-zinc-400">{driver.in_progress || 0} en cours</p>
-                </div>
-              </button>
-            ))}
+            {drivers.length === 0 ? (
+              <p className="text-center text-zinc-400 py-4">Aucun chauffeur disponible</p>
+            ) : (
+              drivers.filter(d => d.status !== 'inactive').map((driver) => (
+                <button
+                  key={driver.id}
+                  onClick={() => handleAssignDriver(showAssignDriver, driver.id)}
+                  className="w-full flex items-center gap-4 p-4 bg-[#1A1A1E] hover:bg-[#27272A] rounded-lg transition-colors"
+                  data-testid={`select-driver-${driver.id}`}
+                >
+                  <div className="w-10 h-10 rounded-full bg-[#0A0A0B] flex items-center justify-center">
+                    <span className="font-medium">{driver.name?.[0]?.toUpperCase()}</span>
+                  </div>
+                  <div className="text-left flex-1">
+                    <p className="font-medium">{driver.name}</p>
+                    <p className="text-sm text-zinc-400">{driver.vehicle_plate || driver.email}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm text-zinc-400">{driver.in_progress || 0} en cours</p>
+                  </div>
+                </button>
+              ))
+            )}
           </div>
         </DialogContent>
       </Dialog>
