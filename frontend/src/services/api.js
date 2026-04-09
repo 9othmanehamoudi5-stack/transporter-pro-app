@@ -22,54 +22,69 @@ export const authApi = {
 
 // ==================== DELIVERIES (Hybrid: Backend + Firestore) ====================
 export const deliveriesApi = {
-  // Get all - from Firestore for real-time, fallback to backend
+  // Get all - from backend (primary), sync to Firestore
   getAll: async (status) => {
     try {
-      const missions = await firestoreMissions.getAll(status ? { status } : {});
-      return { data: missions };
+      // Always use backend as source of truth
+      const response = await api.get('/deliveries', { params: status ? { status } : {} });
+      return response;
     } catch (error) {
-      console.warn('Firestore failed, falling back to backend:', error);
-      return api.get('/deliveries', { params: status ? { status } : {} });
+      console.error('Backend getAll failed:', error);
+      // Try Firestore as fallback
+      try {
+        const missions = await firestoreMissions.getAll(status ? { status } : {});
+        return { data: missions };
+      } catch (firestoreError) {
+        console.error('Firestore fallback also failed:', firestoreError);
+        throw error;
+      }
     }
   },
   
   // Get one by tracking ID
   getOne: async (trackingId) => {
     try {
-      const mission = await firestoreMissions.getByTrackingId(trackingId);
-      if (mission) return { data: mission };
-      throw new Error('Not found in Firestore');
+      return await api.get(`/deliveries/${trackingId}`);
     } catch (error) {
-      return api.get(`/deliveries/${trackingId}`);
+      // Try Firestore as fallback
+      try {
+        const mission = await firestoreMissions.getByTrackingId(trackingId);
+        if (mission) return { data: mission };
+      } catch (e) {
+        console.warn('Firestore fallback failed');
+      }
+      throw error;
     }
   },
   
-  // Create - save to both backend and Firestore
+  // Create - save to backend (primary), sync to Firestore
   create: async (data) => {
     // First create in backend to get tracking_id
     const response = await api.post('/deliveries', data);
     
-    // Then sync to Firestore
+    // Then sync to Firestore (non-blocking)
     try {
       await firestoreMissions.create({
         ...response.data,
         tracking_id: response.data.tracking_id
       });
     } catch (error) {
-      console.warn('Failed to sync to Firestore:', error);
+      console.warn('Failed to sync to Firestore (non-blocking):', error.message);
     }
     
     return response;
   },
   
-  // Update - update both
+  // Update - update backend (primary), sync to Firestore
   update: async (trackingId, data) => {
+    // Update backend first (this is the source of truth)
     const response = await api.patch(`/deliveries/${trackingId}`, data);
     
+    // Sync to Firestore (non-blocking - don't fail if Firestore fails)
     try {
       await firestoreMissions.update(trackingId, data);
     } catch (error) {
-      console.warn('Failed to sync update to Firestore:', error);
+      console.warn('Failed to sync update to Firestore (non-blocking):', error.message);
     }
     
     return response;
@@ -81,10 +96,11 @@ export const deliveriesApi = {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
     });
     
+    // Sync to Firestore (non-blocking)
     try {
       await firestoreMissions.assignDriver(trackingId, driverId, response.data.driver_name || '');
     } catch (error) {
-      console.warn('Failed to sync assign to Firestore:', error);
+      console.warn('Failed to sync assign to Firestore (non-blocking):', error.message);
     }
     
     return response;

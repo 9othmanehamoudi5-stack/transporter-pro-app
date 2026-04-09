@@ -106,7 +106,9 @@ export const firestoreMissions = {
       const snapshot = await getDocs(q);
       
       if (snapshot.empty) {
-        throw new Error('Mission not found');
+        // Document doesn't exist in Firestore, skip update silently
+        console.log('Mission not found in Firestore, skipping sync:', trackingId);
+        return null;
       }
       
       const docRef = doc(db, MISSIONS_COLLECTION, snapshot.docs[0].id);
@@ -117,8 +119,9 @@ export const firestoreMissions = {
       
       return { tracking_id: trackingId, ...updateData };
     } catch (error) {
-      console.error('Firestore update error:', error);
-      throw error;
+      console.warn('Firestore update error (non-blocking):', error.message);
+      // Don't throw - just return null to indicate Firestore sync failed
+      return null;
     }
   },
 

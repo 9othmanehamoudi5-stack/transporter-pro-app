@@ -79,13 +79,18 @@ export const DriverDashboard = () => {
     try {
       if (isOnline) {
         await deliveriesApi.update(tracking_id, { status: 'in_transit' });
+        toast.success('Livraison démarrée !');
+        // Update local state immediately
+        setDeliveries(prev => prev.map(d => 
+          d.tracking_id === tracking_id ? { ...d, status: 'in_transit' } : d
+        ));
       } else {
         addToQueue('delivery_update', { tracking_id, status: 'in_transit' });
+        toast.info('Mise à jour en file d\'attente (mode hors-ligne)');
       }
-      toast.success('Livraison démarrée');
-      fetchData();
     } catch (error) {
-      toast.error('Erreur');
+      console.error('Error starting delivery:', error);
+      toast.error('Erreur lors du démarrage');
     }
   };
 
@@ -96,19 +101,24 @@ export const DriverDashboard = () => {
           status: 'delivered', 
           signature_data: signatureData 
         });
+        toast.success('Livraison terminée avec succès !');
+        // Update local state immediately
+        setDeliveries(prev => prev.map(d => 
+          d.tracking_id === tracking_id ? { ...d, status: 'delivered' } : d
+        ));
       } else {
         addToQueue('delivery_update', { 
           tracking_id, 
           status: 'delivered',
           signature_data: signatureData
         });
+        toast.info('Mise à jour en file d\'attente (mode hors-ligne)');
       }
-      toast.success('Livraison terminée !');
       setShowSignature(false);
       setSelectedDelivery(null);
-      fetchData();
     } catch (error) {
-      toast.error('Erreur');
+      console.error('Error completing delivery:', error);
+      toast.error('Erreur lors de la validation');
     }
   };
 
