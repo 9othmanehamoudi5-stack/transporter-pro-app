@@ -1,4 +1,5 @@
 import axios from 'axios';
+import firestoreMissions from './firebase';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -19,20 +20,84 @@ export const authApi = {
   refresh: () => api.post('/auth/refresh')
 };
 
-// ==================== DELIVERIES ====================
+// ==================== DELIVERIES (Hybrid: Backend + Firestore) ====================
 export const deliveriesApi = {
-  getAll: (status) => api.get('/deliveries', { params: status ? { status } : {} }),
-  getOne: (trackingId) => api.get(`/deliveries/${trackingId}`),
-  create: (data) => api.post('/deliveries', data),
-  update: (trackingId, data) => api.patch(`/deliveries/${trackingId}`, data),
-  assignDriver: (trackingId, driverId) => 
-    api.post(`/deliveries/${trackingId}/assign`, `driver_id=${driverId}`, {
+  // Get all - from Firestore for real-time, fallback to backend
+  getAll: async (status) => {
+    try {
+      const missions = await firestoreMissions.getAll(status ? { status } : {});
+      return { data: missions };
+    } catch (error) {
+      console.warn('Firestore failed, falling back to backend:', error);
+      return api.get('/deliveries', { params: status ? { status } : {} });
+    }
+  },
+  
+  // Get one by tracking ID
+  getOne: async (trackingId) => {
+    try {
+      const mission = await firestoreMissions.getByTrackingId(trackingId);
+      if (mission) return { data: mission };
+      throw new Error('Not found in Firestore');
+    } catch (error) {
+      return api.get(`/deliveries/${trackingId}`);
+    }
+  },
+  
+  // Create - save to both backend and Firestore
+  create: async (data) => {
+    // First create in backend to get tracking_id
+    const response = await api.post('/deliveries', data);
+    
+    // Then sync to Firestore
+    try {
+      await firestoreMissions.create({
+        ...response.data,
+        tracking_id: response.data.tracking_id
+      });
+    } catch (error) {
+      console.warn('Failed to sync to Firestore:', error);
+    }
+    
+    return response;
+  },
+  
+  // Update - update both
+  update: async (trackingId, data) => {
+    const response = await api.patch(`/deliveries/${trackingId}`, data);
+    
+    try {
+      await firestoreMissions.update(trackingId, data);
+    } catch (error) {
+      console.warn('Failed to sync update to Firestore:', error);
+    }
+    
+    return response;
+  },
+  
+  // Assign driver
+  assignDriver: async (trackingId, driverId) => {
+    const response = await api.post(`/deliveries/${trackingId}/assign`, `driver_id=${driverId}`, {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-    }),
+    });
+    
+    try {
+      await firestoreMissions.assignDriver(trackingId, driverId, response.data.driver_name || '');
+    } catch (error) {
+      console.warn('Failed to sync assign to Firestore:', error);
+    }
+    
+    return response;
+  },
+  
+  // Update GPS
   updateGps: (trackingId, lat, lng) => 
     api.post(`/deliveries/${trackingId}/gps`, `lat=${lat}&lng=${lng}`, {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-    })
+    }),
+  
+  // Subscribe to real-time updates (Firestore only)
+  subscribe: (filters, callback) => firestoreMissions.subscribe(filters, callback)
 };
 
 // ==================== INVOICES ====================
