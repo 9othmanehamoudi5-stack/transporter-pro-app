@@ -83,10 +83,8 @@ export const SubscriptionPage = () => {
   const { user } = useAuth();
 
   const handleSelectPlan = async (planId) => {
-    // Guard: redirect to login if not authenticated
     if (!user) {
       toast.error('Veuillez vous connecter pour changer de plan');
-      window.location.href = '/login';
       return;
     }
 

@@ -1,0 +1,96 @@
+{
+  "summary": "Auth persistence bug fix verified. All tests pass - login works, user stays on dashboard, no error toasts, subscription plan changes work without 401 errors.",
+  
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  
+  "passed_tests": [
+    "Backend: POST /api/auth/login returns valid cookies (access_token, refresh_token) - PASS",
+    "Backend: GET /api/auth/me with valid cookie returns user data - PASS",
+    "Backend: POST /api/auth/refresh with valid refresh cookie returns new token - PASS",
+    "Backend: GET /api/auth/me without cookie returns 401 - PASS",
+    "Backend: POST /api/auth/refresh without cookie returns 401 - PASS",
+    "Backend: Driver login (driver@test.com / driver123) succeeds - PASS",
+    "Backend: Driver can access deliveries after login - PASS",
+    "Backend: POST /api/subscription/update requires auth (401 without) - PASS",
+    "Backend: POST /api/subscription/update with auth succeeds - PASS",
+    "Backend: GET /api/subscription/current with auth returns plan - PASS",
+    "Backend: GET /api/dashboard/stats with auth succeeds - PASS",
+    "Backend: GET /api/dashboard/cash-flow with auth succeeds - PASS",
+    "Backend: Full auth flow (login -> me -> refresh -> me -> protected endpoint) - PASS",
+    "Frontend: Login as admin (admin@transporter-pro.com / admin123) - dashboard loads WITHOUT error toasts - PASS",
+    "Frontend: After login, user stays on /dashboard - NO redirect to /login - PASS",
+    "Frontend: Dashboard data loads correctly (stats, deliveries, sidebar, cash-flow) - PASS",
+    "Frontend: Navigate between tabs (Vue d'ensemble, Livraisons, Cash-Flow, Litiges, Abonnement) - no auth errors - PASS",
+    "Frontend: Change subscription plan (Croissance, Flotte Pro, Solo) - no 401 errors, success toasts appear - PASS",
+    "Frontend: Visit /dashboard when not logged in - spinner shown, then redirect to /login - PASS",
+    "Frontend: Login as driver (driver@test.com / driver123) - driver dashboard loads correctly - PASS",
+    "Frontend: No console errors about 401 or authentication failures during normal use - PASS"
+  ],
+  
+  "failed_tests": [],
+  
+  "test_report_links": [
+    "/app/backend/tests/test_auth_persistence.py",
+    "/app/test_reports/pytest/pytest_auth_persistence.xml"
+  ],
+  
+  "action_items": [],
+  
+  "critical_code_review_comments": [
+    "AuthGate component correctly blocks rendering until loading=false - prevents race condition",
+    "AuthContext.checkAuth() correctly tries token refresh on 401 before setting user=false",
+    "Axios 401 interceptor correctly does NOT redirect - only refreshes and retries, lets React Router handle auth",
+    "SubscriptionContext.updatePlan no longer does window.location redirect",
+    "SubscriptionPage.handleSelectPlan no longer redirects",
+    "All window.location.href='/login' redirects removed from frontend code"
+  ],
+  
+  "updated_files": [
+    "/app/backend/tests/test_auth_persistence.py"
+  ],
+  
+  "success_rate": {
+    "backend": "100% (13/13 tests passed)",
+    "frontend": "100% (all UI flows working)"
+  },
+  
+  "test_credentials": {
+    "admin": "admin@transporter-pro.com / admin123",
+    "driver": "driver@test.com / driver123",
+    "client": "client@test.com / client123"
+  },
+  
+  "seed_data_creation": "None - used existing test accounts",
+  
+  "retest_needed": false,
+  
+  "should_main_agent_self_test": true,
+  
+  "context_for_next_testing_agent": "Auth persistence bug fix verified in iteration 8. The fix removed window.location.href='/login' from axios 401 interceptor and added AuthGate component to block rendering until auth state is confirmed. AuthContext now tries token refresh before declaring user not authenticated. All subscription plan changes work without 401 errors. Firestore permission errors in console are non-blocking and expected in preview environment.",
+  
+  "mocked_apis": {
+    "blockchain_proof": "SHA256 hash generation (not real blockchain)",
+    "firestore_sync": "May fail with Permission Denied in preview environment (non-blocking)"
+  },
+  
+  "bug_fix_verification": {
+    "original_issue": "App was redirecting to login immediately after logging in on mobile. 'Erreur lors du chargement des données' toast appeared and user was kicked to login.",
+    "root_cause": "axios 401 interceptor was doing window.location.href='/login' on refresh failure, causing race condition with initial data loading",
+    "fix_applied": [
+      "AuthGate component wraps everything, blocks rendering until auth state confirmed",
+      "AuthContext tries token refresh before declaring user not authenticated",
+      "Axios interceptor no longer redirects (React Router handles it)",
+      "Removed all window.location.href redirects from SubscriptionContext and SubscriptionPage"
+    ],
+    "verification_status": "FIXED - All tests pass, no 401 errors, user stays on dashboard after login"
+  }
+}

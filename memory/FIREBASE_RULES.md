@@ -7,7 +7,7 @@
 4. Remplacez le contenu par les règles ci-dessous
 5. Cliquez **Publier**
 
-## Règles à copier
+## Règles à copier (Développement)
 
 ```
 rules_version = '2';
@@ -29,13 +29,18 @@ service cloud.firestore {
     match /chauffeurs/{docId} {
       allow read, write: if true;
     }
+
+    // GPS positions des chauffeurs
+    match /driver_locations/{docId} {
+      allow read, write: if true;
+    }
   }
 }
 ```
 
 ## Note de sécurité
 Ces règles sont **permissives** (allow read, write: if true) pour le développement.
-Pour la production, vous devriez restreindre avec Firebase Authentication :
+Pour la production, restreignez avec Firebase Authentication :
 
 ```
 rules_version = '2';
@@ -43,16 +48,16 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     match /entreprises/{docId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null;
+      allow read, write: if request.auth != null;
     }
     match /missions/{docId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null;
+      allow read, write: if request.auth != null;
     }
     match /chauffeurs/{docId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null;
+      allow read, write: if request.auth != null;
+    }
+    match /driver_locations/{docId} {
+      allow read, write: if request.auth != null;
     }
   }
 }

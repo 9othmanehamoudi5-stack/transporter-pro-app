@@ -11,7 +11,7 @@ const api = axios.create({
   }
 });
 
-// 401 interceptor: attempt token refresh once, then redirect to login
+// 401 interceptor: attempt token refresh once, then reject (no redirect here)
 let isRefreshing = false;
 let failedQueue = [];
 
@@ -28,7 +28,13 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Only intercept 401s, and never retry the refresh endpoint itself
+    if (
+      error.response?.status === 401 &&
+      !originalRequest._retry &&
+      !originalRequest.url?.includes('/auth/refresh') &&
+      !originalRequest.url?.includes('/auth/login')
+    ) {
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
@@ -44,10 +50,7 @@ api.interceptors.response.use(
         return api(originalRequest);
       } catch (refreshError) {
         processQueue(refreshError);
-        // Redirect to login if refresh also fails
-        if (window.location.pathname !== '/login') {
-          window.location.href = '/login';
-        }
+        // Do NOT redirect here — let React ProtectedRoute handle it
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import axios from 'axios';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
@@ -23,14 +23,28 @@ function formatApiErrorDetail(detail) {
 }
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null); // null = checking, false = not authenticated
+  // Three states: null = still checking, false = confirmed not auth, object = authenticated
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const didCheck = useRef(false);
 
   const checkAuth = useCallback(async () => {
     try {
       const { data } = await axios.get(`${API_URL}/api/auth/me`, { withCredentials: true });
       setUser(data);
-    } catch {
+    } catch (err) {
+      // Only try refresh if we got a 401 (not a network error)
+      if (err.response?.status === 401) {
+        try {
+          await axios.post(`${API_URL}/api/auth/refresh`, {}, { withCredentials: true });
+          // Retry /me after refresh
+          const { data } = await axios.get(`${API_URL}/api/auth/me`, { withCredentials: true });
+          setUser(data);
+          return;
+        } catch {
+          // Refresh also failed — truly not authenticated
+        }
+      }
       setUser(false);
     } finally {
       setLoading(false);
@@ -38,7 +52,10 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   useEffect(() => {
-    checkAuth();
+    if (!didCheck.current) {
+      didCheck.current = true;
+      checkAuth();
+    }
   }, [checkAuth]);
 
   const login = async (email, password) => {
@@ -73,7 +90,7 @@ export const AuthProvider = ({ children }) => {
     try {
       await axios.post(`${API_URL}/api/auth/logout`, {}, { withCredentials: true });
     } catch {
-      // Ignore errors
+      // Ignore
     }
     setUser(false);
   };

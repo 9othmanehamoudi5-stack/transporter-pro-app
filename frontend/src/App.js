@@ -115,10 +115,27 @@ const PublicRoute = ({ children }) => {
   return children;
 };
 
+// Full-screen loading spinner while auth state is being determined
+const AuthGate = ({ children }) => {
+  const { loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#0A0A0B] flex flex-col items-center justify-center gap-4">
+        <div className="w-12 h-12 border-3 border-[#0066FF] border-t-transparent rounded-full animate-spin" />
+        <p className="text-sm text-zinc-500">Chargement...</p>
+      </div>
+    );
+  }
+
+  return children;
+};
+
 function App() {
   return (
     <AuthProvider>
-      <SubscriptionProvider>
+      <AuthGate>
+        <SubscriptionProvider>
         <div className="App min-h-screen bg-[#0A0A0B]">
           <Toaster richColors position="top-right" />
           <BrowserRouter>
@@ -161,6 +178,7 @@ function App() {
           </BrowserRouter>
         </div>
       </SubscriptionProvider>
+      </AuthGate>
     </AuthProvider>
   );
 }
