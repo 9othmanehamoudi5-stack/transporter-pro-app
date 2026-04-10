@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
 import { dashboardApi, deliveriesApi, invoicesApi, driversApi, damageReportsApi, ecoScoresApi, adminDriversApi, notificationsApi } from '../services/api';
 import { firestoreDrivers } from '../services/firebase';
+import { generateInvoicePDF, generateAllInvoicesPDF } from '../services/pdfGenerator';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
@@ -408,7 +409,14 @@ export const AdminDashboard = () => {
                   feature="pdfGeneration"
                   hasFeature={hasFeature}
                   getMessage={getRestrictionMessage}
-                  onClick={() => toast.info('Génération PDF e-CMR bientôt disponible')}
+                  onClick={() => {
+                    const result = generateAllInvoicesPDF(invoices);
+                    if (result.count > 0) {
+                      toast.success(`${result.count} facture(s) PDF générée(s)`);
+                    } else {
+                      toast.info('Aucune facture en attente');
+                    }
+                  }}
                 />
                 <GatedButton
                   label="Carte GPS"
@@ -565,7 +573,12 @@ export const AdminDashboard = () => {
                         toast.error(getRestrictionMessage('pdfGeneration'));
                         return;
                       }
-                      toast.info('Génération PDF e-CMR bientôt disponible');
+                      const result = generateAllInvoicesPDF(invoices);
+                      if (result.count > 0) {
+                        toast.success(`${result.count} facture(s) PDF générée(s)`);
+                      } else {
+                        toast.info('Aucune facture en attente à générer');
+                      }
                     }}
                     className={`mt-3 ${hasFeature('pdfGeneration') ? 'bg-[#0066FF] hover:bg-[#0052CC]' : 'bg-zinc-700 cursor-not-allowed'}`}
                     data-testid="generate-pdf-btn"
@@ -608,7 +621,24 @@ export const AdminDashboard = () => {
                               {inv.status === 'paid' ? 'Payée' : inv.status === 'ready_to_send' ? 'Prête' : 'En attente'}
                             </span>
                           </td>
-                          <td className="px-4 py-3">
+                          <td className="px-4 py-3 flex items-center gap-2">
+                            <Button 
+                              size="sm" 
+                              onClick={() => {
+                                if (!hasFeature('pdfGeneration')) {
+                                  toast.error(getRestrictionMessage('pdfGeneration'));
+                                  return;
+                                }
+                                generateInvoicePDF(inv);
+                                toast.success(`PDF ${inv.invoice_id} téléchargé`);
+                              }}
+                              variant="outline"
+                              className="border-[#27272A] text-zinc-400 hover:text-white"
+                              data-testid={`pdf-${inv.invoice_id}`}
+                            >
+                              <FileText className="w-3.5 h-3.5 mr-1" />
+                              PDF
+                            </Button>
                             {inv.status !== 'paid' && (
                               <Button 
                                 size="sm" 
