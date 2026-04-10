@@ -1,80 +1,73 @@
-# Transporter-Pro - Product Requirements Document
+# Transporter-Pro - PRD (Product Requirements Document)
 
-## Original Problem Statement
-SaaS Logistique pour le dernier kilomètre avec:
-- Cash-Flow Instantané (facturation Factur-X, pont de trésorerie)
-- IA Anti-Litige (Gemini 3 Flash Vision pour détection dommages)
-- Module Économie Réelle (éco-score, CO2)
-- Mode Offline-Sync
-- Portail Client White Label
-- Gestion des rôles (Admin/Chauffeur/Client)
-- Système d'abonnement (3 plans)
+## Problème Original
+Application SaaS logistique "Transporter-Pro" pour éliminer la friction administrative et maximiser la profitabilité des PME de transport. Fonctionnalités clés : dashboard cash-flow instantané (Factur-X), IA anti-litige (analyse photo via Gemini 3 Flash Vision), module économie réelle (éco-conduite, CO2), mode offline-sync, portail client white-label.
 
-## User Personas
-1. **Admin (Le Patron)**: Accès total, création chauffeurs, gestion flotte, Cash-Flow, documents légaux, litiges
-2. **Chauffeur (L'Exécutant)**: Interface mobile simplifiée, missions assignées, signature, photo IA
-3. **Client (Destinataire)**: Portail tracking public, preuve de livraison
+## Personas
+- **Admin** : Gérant de PME transport, gère les livraisons, chauffeurs, facturation
+- **Chauffeur** : Interface mobile "One-Hand", démarrage livraison, photo, signature
+- **Client** : Suivi de colis via portail public
 
-## Core Requirements
-- Design "Dark Elegant" avec bleu électrique #0066FF
-- UX Chauffeur "One-Hand Design" 
-- JWT-based B2B authentication
-- Gemini 3 Flash Vision pour analyse photos
-- Blockchain simulation pour horodatage
+## Architecture Technique
+- **Frontend** : React + Tailwind CSS + shadcn/ui
+- **Backend** : FastAPI + MongoDB (Motor)
+- **Intégrations** : Firebase Firestore (sync missions/subscriptions), Gemini 3 Flash Vision (IA anti-litige)
+- **Auth** : JWT (Custom) avec bcrypt
 
-## What's Been Implemented (April 2026)
+## Fonctionnalités Implémentées
 
-### Backend (FastAPI + MongoDB)
-- ✅ Authentication JWT (login, register, roles, cookies httpOnly)
-- ✅ Gestion des livraisons (CRUD, assignation, statuts)
-- ✅ Système de facturation auto (Factur-X simulé)
-- ✅ Détection dommages IA (Gemini 3 Flash Vision)
-- ✅ Horodatage blockchain (simulation SHA256)
-- ✅ Éco-scores (calcul CO2, conduite)
-- ✅ Notifications temps réel
-- ✅ Gestion abonnements (3 plans)
-- ✅ Admin: création/gestion chauffeurs
+### Phase 1 - MVP (DONE)
+- [x] Setup React + FastAPI + MongoDB
+- [x] Auth multi-rôle (Admin, Driver, Client) avec JWT
+- [x] Dashboard Admin (stats, cash-flow, livraisons, litiges, éco-scores)
+- [x] Dashboard Driver (livraisons, photo, signature, éco-score)
+- [x] Portail Client (suivi public)
+- [x] Firebase Firestore intégration (sync missions)
+- [x] Popup d'assignation chauffeur avec dropdown
 
-### Frontend (React + Tailwind)
-- ✅ Login/Register avec design dark elegant
-- ✅ Dashboard Admin (Vue d'ensemble, Cash-Flow, Livraisons, Chauffeurs, Litiges, Éco-scores, Abonnement)
-- ✅ Dashboard Chauffeur mobile-first (one-hand design)
-- ✅ Portail Client tracking (glass morphism)
-- ✅ Système de notifications avec badge
-- ✅ Page Abonnement avec 3 plans + toggle mensuel/annuel
+### Phase 2 - Monétisation (DONE - 10 Avril 2026)
+- [x] Page Abonnement (3 plans : Solo/Duo 49€, Croissance 199€, Flotte Pro 499€)
+- [x] Gating des abonnements :
+  - Badge plan dans la sidebar (Solo gris, Croissance bleu, Pro orange)
+  - Verrouillage Cash-Flow et Éco-scores pour Solo
+  - Boutons d'actions rapides verrouillés selon le plan (e-CMR, GPS, Scan, Portail Client)
+  - Messages toast de restriction
+  - Overlay "Fonctionnalité verrouillée" avec CTA upgrade
+- [x] Sauvegarde MongoDB (primaire) + Firestore sync (secondaire non-bloquant)
 
-### Flux Logique Implémenté
-1. Admin crée une livraison
-2. Admin assigne un chauffeur → Chauffeur reçoit notification
-3. Chauffeur valide la livraison → Admin notifié + Facture auto-générée
+## Backlog P1 (Prioritaire)
+- [ ] Gemini 3 Flash Vision IA anti-litige (analyse photo dans dashboard Driver)
+- [ ] Génération PDF réelle (Factur-X / e-CMR)
+- [ ] Corriger règles sécurité Firebase (Permission Denied sur writes)
 
-## Test Credentials
-- Admin: admin@transporter-pro.com / admin123
-- Driver: driver@test.com / driver123
-- Client: client@test.com / client123
+## Backlog P2 (Futur)
+- [ ] Mode hors-ligne (localStorage + file sync)
+- [ ] Score éco-conduite & calcul CO2 (logique réelle)
 
-## Prioritized Backlog
+## Problèmes Connus
+- Firestore writes échouent silencieusement (Permission Denied) - Règles Firebase à mettre à jour par l'utilisateur (voir /app/memory/FIREBASE_RULES.md)
+- Blockchain timestamping est MOCKÉ (SHA256 hash)
 
-### P0 (Critique)
-- ✅ Auth complète
-- ✅ CRUD livraisons
-- ✅ Assignation chauffeurs
-- ✅ Notifications
+## Data Models
+- `users`: {email, password_hash, role, name, status, phone, vehicle_plate}
+- `deliveries`: {tracking_id, status, driver_id, recipient_name, recipient_address, ...}
+- `invoices`: {invoice_id, delivery_id, amount, status, facturx_generated}
+- `subscriptions`: {admin_id, plan, billing_cycle, price, status, features}
+- `eco_scores`: {driver_id, score, distance_km, co2_kg, fuel_liters}
+- `damage_reports`: {report_id, delivery_id, ai_analysis, blockchain_proof}
+- `notifications`: {user_id, type, title, message, read}
 
-### P1 (Important)
-- ✅ Page abonnement
-- ✅ Gestion chauffeurs admin
-- ⏳ Paiement Stripe réel
-- ⏳ Génération PDF Factur-X
-
-### P2 (Nice to Have)
-- ⏳ Mode offline avec IndexedDB
-- ⏳ Push notifications
-- ⏳ Intégration cartographie temps réel
-- ⏳ Export rapports éco-conduite PDF
-
-## Next Tasks
-1. Intégrer Stripe pour paiements réels
-2. Générer vrais PDFs Factur-X
-3. Améliorer le mode offline avec Service Worker
-4. Ajouter cartographie live (Mapbox/Leaflet)
+## API Endpoints
+- POST /api/auth/login, /api/auth/register, /api/auth/logout
+- GET /api/auth/me, POST /api/auth/refresh
+- GET/POST /api/deliveries, PATCH /api/deliveries/{id}
+- POST /api/deliveries/{id}/assign, /api/deliveries/{id}/gps
+- GET/POST /api/invoices, PATCH /api/invoices/{id}/pay
+- GET/POST /api/damage-reports
+- GET/POST /api/eco-scores, GET /api/eco-scores/summary
+- GET /api/dashboard/stats, /api/dashboard/cash-flow
+- GET /api/subscription/plans, /api/subscription/current
+- POST /api/subscription/update
+- GET/POST /api/notifications, GET /api/notifications/unread-count
+- POST /api/notifications/mark-read
+- GET /api/admin/drivers, POST /api/admin/drivers, DELETE /api/admin/drivers/{id}
