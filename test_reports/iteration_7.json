@@ -1,0 +1,95 @@
+{
+  "summary": "Tested 401 Unauthorized bug fix for subscription update on mobile. All backend and frontend tests passed. Cookie fix (secure=True, samesite=none) and axios 401 interceptor working correctly.",
+  
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  
+  "passed_tests": [
+    "Backend: POST /api/auth/login returns cookies that work for authenticated requests - PASS",
+    "Backend: POST /api/auth/refresh refreshes access_token correctly - PASS",
+    "Backend: POST /api/auth/refresh without token returns 401 - PASS",
+    "Backend: POST /api/subscription/update with valid auth returns 200 - PASS",
+    "Backend: POST /api/subscription/update to croissance plan - PASS",
+    "Backend: POST /api/subscription/update to flotte_pro plan - PASS",
+    "Backend: POST /api/subscription/update to solo plan - PASS",
+    "Backend: GET /api/subscription/current returns current plan - PASS",
+    "Backend: GET /api/subscription/plans returns all plans - PASS",
+    "Backend: POST /api/subscription/update without auth returns 401 - PASS",
+    "Backend: GET /api/subscription/current without auth returns 401 - PASS",
+    "Backend: Driver cannot update subscription (403) - PASS",
+    "Backend: Full subscription flow (login -> update -> verify persistence) - PASS",
+    "Frontend: Login as admin (admin@transporter-pro.com / admin123) - PASS",
+    "Frontend: Navigate to Subscription page - PASS",
+    "Frontend: Click 'Choisir ce plan' on Croissance - no 401 error - PASS",
+    "Frontend: Click 'Choisir ce plan' on Flotte Pro - plan changes successfully - PASS",
+    "Frontend: Toast messages appear on plan change ('Plan FLOTTE PRO activé !') - PASS",
+    "Frontend: Plan badge updates in sidebar after plan change - PASS"
+  ],
+  
+  "failed_tests": [],
+  
+  "test_report_links": [
+    "/app/backend/tests/test_subscription_auth.py",
+    "/app/test_reports/pytest/pytest_subscription_auth.xml"
+  ],
+  
+  "action_items": [],
+  
+  "critical_code_review_comments": [
+    "Backend cookies correctly set with secure=True, samesite='none' for cross-site HTTPS requests",
+    "Frontend axios interceptor correctly handles 401 with token refresh queue pattern",
+    "SubscriptionContext.jsx correctly checks user auth before API call and redirects to /login if not authenticated",
+    "SubscriptionPage.jsx correctly guards handleSelectPlan with user auth check"
+  ],
+  
+  "updated_files": [
+    "/app/backend/tests/test_subscription_auth.py"
+  ],
+  
+  "success_rate": {
+    "backend": "100% (13/13 tests passed)",
+    "frontend": "100% (all UI flows working)"
+  },
+  
+  "test_credentials": {
+    "admin": "admin@transporter-pro.com / admin123",
+    "driver": "driver@test.com / driver123"
+  },
+  
+  "seed_data_creation": "None - used existing test accounts",
+  
+  "retest_needed": false,
+  
+  "should_main_agent_self_test": true,
+  
+  "context_for_next_testing_agent": "401 bug fix verified. Subscription update works correctly with secure cookies (secure=True, samesite=none). Axios 401 interceptor with token refresh queue pattern working. Test file /app/backend/tests/test_subscription_auth.py covers all subscription and auth cookie scenarios. Firestore permission errors in console are non-blocking and expected in preview environment.",
+  
+  "mocked_apis": {
+    "blockchain_proof": "SHA256 hash generation (not real blockchain)",
+    "firestore_sync": "May fail with Permission Denied in preview environment (non-blocking)"
+  },
+  
+  "console_warnings": [
+    "Firestore getAll drivers error: Missing or insufficient permissions (non-blocking)",
+    "Firestore sync failed (non-blocking): Missing or insufficient permissions"
+  ],
+  
+  "bug_fix_verification": {
+    "original_issue": "401 Unauthorized error when clicking 'Choisir ce plan' on mobile",
+    "root_cause": "Cookies had secure=False + samesite=lax, which breaks on HTTPS mobile",
+    "fix_applied": [
+      "Backend: Changed all cookies to secure=True, samesite='none'",
+      "Frontend: Added axios 401 interceptor with automatic token refresh",
+      "Frontend: Added login redirect if user not authenticated when selecting plan"
+    ],
+    "verification_status": "FIXED - All tests pass, no 401 errors on subscription update"
+  }
+}

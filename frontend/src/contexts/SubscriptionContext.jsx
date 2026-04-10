@@ -109,7 +109,11 @@ export const SubscriptionProvider = ({ children }) => {
 
   // Update plan: MongoDB primary + Firestore sync (non-blocking)
   const updatePlan = useCallback(async (newPlan, billingCycle = 'monthly') => {
-    if (!user?.id) return { success: false, error: 'Non connecté' };
+    if (!user?.id) {
+      // Not authenticated — redirect to login
+      window.location.href = '/login';
+      return { success: false, error: 'Session expirée, veuillez vous reconnecter' };
+    }
 
     try {
       // Save to MongoDB backend (primary)
@@ -133,6 +137,10 @@ export const SubscriptionProvider = ({ children }) => {
 
       return { success: true };
     } catch (error) {
+      // If 401 after refresh attempt, the interceptor will redirect to /login
+      if (error.response?.status === 401) {
+        return { success: false, error: 'Session expirée, veuillez vous reconnecter' };
+      }
       console.error('Error updating plan:', error);
       return { success: false, error: error.message };
     }

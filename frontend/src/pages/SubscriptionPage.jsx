@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { useSubscription } from '../contexts/SubscriptionContext';
+import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/button';
 import { Switch } from '../components/ui/switch';
 import { 
   Check, Crown, Truck, Zap, Shield, Clock, 
-  ChevronRight, Sparkles, Building2, Lock
+  ChevronRight, Sparkles, Building2, Lock, LogIn
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -79,8 +80,16 @@ export const SubscriptionPage = () => {
   const [isYearly, setIsYearly] = useState(false);
   const [updating, setUpdating] = useState(false);
   const { plan: currentPlan, loading, updatePlan } = useSubscription();
+  const { user } = useAuth();
 
   const handleSelectPlan = async (planId) => {
+    // Guard: redirect to login if not authenticated
+    if (!user) {
+      toast.error('Veuillez vous connecter pour changer de plan');
+      window.location.href = '/login';
+      return;
+    }
+
     if (currentPlan === planId) {
       toast.info('Vous êtes déjà sur ce plan');
       return;
