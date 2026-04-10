@@ -131,13 +131,14 @@ const LiveMapPanel = () => {
       {/* Map + Driver List */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4" style={{ height: '520px' }}>
         {/* Map */}
-        <div className="lg:col-span-3 bg-[#121214] border border-[#27272A] rounded-xl overflow-hidden relative" data-testid="live-map-container">
+        <div className="lg:col-span-3 bg-[#0a0a0c] border border-[#1a1a1e] rounded-xl overflow-hidden relative" data-testid="live-map-container">
           <MapContainer
             center={defaultCenter}
             zoom={defaultZoom}
             className="leaflet-dark-theme"
-            style={{ height: '100%', width: '100%', borderRadius: '0.75rem' }}
+            style={{ height: '100%', width: '100%' }}
             zoomControl={false}
+            attributionControl={false}
           >
             <TileLayer
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'

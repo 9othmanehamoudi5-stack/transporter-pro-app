@@ -221,7 +221,7 @@ table, thead, tbody, tr, td, th {
 
 /* ── Leaflet Dark Theme ── */
 .leaflet-dark-theme {
-  background: #0a0a0c;
+  background: #0a0a0c !important;
 }
 
 .leaflet-dark-theme .leaflet-tile-pane {
@@ -229,13 +229,7 @@ table, thead, tbody, tr, td, th {
 }
 
 .leaflet-dark-theme .leaflet-control-attribution {
-  background: rgba(18, 18, 20, 0.85) !important;
-  color: #52525b !important;
-  font-size: 9px !important;
-}
-
-.leaflet-dark-theme .leaflet-control-attribution a {
-  color: #0066FF !important;
+  display: none !important;
 }
 
 .leaflet-dark-theme .leaflet-popup-content-wrapper {
@@ -252,6 +246,10 @@ table, thead, tbody, tr, td, th {
 
 .leaflet-dark-theme .leaflet-popup-close-button {
   color: #a1a1aa !important;
+}
+
+.leaflet-container {
+  background: #0a0a0c !important;
 }
 
 @keyframes pulse-glow {
