@@ -521,11 +521,22 @@ const CameraModal = ({ delivery, onCapture, onClose }) => {
     if (videoRef.current && canvasRef.current) {
       const video = videoRef.current;
       const canvas = canvasRef.current;
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
+      
+      // Resize to max 1280px to reduce payload and avoid Gemini errors
+      const maxDim = 1280;
+      let w = video.videoWidth;
+      let h = video.videoHeight;
+      if (Math.max(w, h) > maxDim) {
+        const ratio = maxDim / Math.max(w, h);
+        w = Math.round(w * ratio);
+        h = Math.round(h * ratio);
+      }
+      
+      canvas.width = w;
+      canvas.height = h;
       const ctx = canvas.getContext('2d');
-      ctx.drawImage(video, 0, 0);
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+      ctx.drawImage(video, 0, 0, w, h);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
       const base64 = dataUrl.split(',')[1];
       setPhoto(base64);
       

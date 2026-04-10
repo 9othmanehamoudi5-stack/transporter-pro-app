@@ -186,10 +186,50 @@ def create_blockchain_hash(data: dict) -> dict:
 
 # ==================== AI DAMAGE DETECTION ====================
 
+def preprocess_image_base64(image_base64: str) -> str:
+    """Compress and convert image to JPEG before sending to Gemini"""
+    import base64 as b64module
+    from io import BytesIO
+    from PIL import Image
+    
+    try:
+        # Strip data URI prefix if present
+        if "," in image_base64[:100]:
+            image_base64 = image_base64.split(",", 1)[1]
+        
+        raw = b64module.b64decode(image_base64)
+        img = Image.open(BytesIO(raw))
+        
+        # Convert RGBA/palette to RGB
+        if img.mode in ("RGBA", "P", "LA"):
+            img = img.convert("RGB")
+        
+        # Resize if too large (max 1280px on longest side)
+        max_dim = 1280
+        if max(img.size) > max_dim:
+            ratio = max_dim / max(img.size)
+            new_size = (int(img.size[0] * ratio), int(img.size[1] * ratio))
+            img = img.resize(new_size, Image.LANCZOS)
+        
+        # Save as JPEG with quality 80
+        buffer = BytesIO()
+        img.save(buffer, format="JPEG", quality=80)
+        return b64module.b64encode(buffer.getvalue()).decode()
+    except Exception as e:
+        logger.warning(f"Image preprocessing failed: {e}")
+        # Return original if preprocessing fails
+        if "," in image_base64[:100]:
+            return image_base64.split(",", 1)[1]
+        return image_base64
+
+
 async def analyze_package_damage(image_base64: str) -> dict:
     """Analyze package image for damage using Gemini 3 Flash Vision"""
     try:
         from emergentintegrations.llm.chat import LlmChat, UserMessage, ImageContent
+        
+        # Preprocess: compress + convert to JPEG
+        processed_image = preprocess_image_base64(image_base64)
         
         chat = LlmChat(
             api_key=EMERGENT_LLM_KEY,
@@ -206,7 +246,7 @@ async def analyze_package_damage(image_base64: str) -> dict:
             Sois précis et descriptif dans le champ description."""
         ).with_model("gemini", "gemini-3-flash-preview")
         
-        image_content = ImageContent(image_base64=image_base64)
+        image_content = ImageContent(image_base64=processed_image)
         
         user_message = UserMessage(
             text="Analyse cette photo de colis pour détecter tout dommage visible : bosses, déchirures, écrasement, dommages par l'eau ou tout autre signe de détérioration. Décris en français.",
@@ -221,7 +261,6 @@ async def analyze_package_damage(image_base64: str) -> dict:
             # Remove markdown code blocks if present
             if response_text.startswith("```"):
                 lines = response_text.split("\n")
-                # Remove first and last lines (``` markers)
                 lines = [line for line in lines if not line.strip().startswith("```")]
                 response_text = "\n".join(lines)
             if response_text.startswith("json"):
@@ -250,7 +289,7 @@ async def analyze_package_damage(image_base64: str) -> dict:
             "damage_severity": "unknown",
             "damage_type": None,
             "confidence": 0,
-            "description": f"Erreur d'analyse: {str(e)}"
+            "description": "Analyse automatique impossible - Image non reconnue ou format incompatible"
         }
 
 # ==================== NOTIFICATIONS ====================
@@ -844,6 +883,29 @@ async def get_damage_report_photo(report_id: str, user: dict = Depends(get_curre
     if not report:
         raise HTTPException(status_code=404, detail="Rapport non trouvé")
     return {"photo_base64": report.get("photo_base64", "")}
+
+
+@api_router.post("/damage-reports/{report_id}/retry")
+async def retry_damage_analysis(report_id: str, user: dict = Depends(get_current_user)):
+    """Re-run AI analysis on an existing damage report"""
+    report = await db.damage_reports.find_one({"report_id": report_id}, {"_id": 0, "photo_base64": 1, "report_id": 1})
+    if not report:
+        raise HTTPException(status_code=404, detail="Rapport non trouvé")
+    
+    photo = report.get("photo_base64", "")
+    if not photo or len(photo) < 200:
+        raise HTTPException(status_code=400, detail="Aucune photo disponible pour relancer l'analyse")
+    
+    # Re-run AI analysis
+    ai_analysis = await analyze_package_damage(photo)
+    
+    # Update the report
+    await db.damage_reports.update_one(
+        {"report_id": report_id},
+        {"$set": {"ai_analysis": ai_analysis}}
+    )
+    
+    return {"report_id": report_id, "ai_analysis": ai_analysis}
 
 # ==================== ECO SCORE ENDPOINTS ====================
 

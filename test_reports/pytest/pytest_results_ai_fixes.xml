@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="0" tests="8" time="24.913" timestamp="2026-04-10T13:13:47.999138+00:00" hostname="agent-env-32effef4-ccdb-4d26-9334-9991d6ffdb82"><testcase classname="backend.tests.test_ai_fixes.TestImagePreprocessing" name="test_png_image_processed_successfully" time="7.184" /><testcase classname="backend.tests.test_ai_fixes.TestImagePreprocessing" name="test_jpeg_image_processed_successfully" time="4.990" /><testcase classname="backend.tests.test_ai_fixes.TestCleanErrorMessages" name="test_truncated_image_returns_clean_error" time="4.688" /><testcase classname="backend.tests.test_ai_fixes.TestCleanErrorMessages" name="test_existing_error_reports_have_clean_messages" time="0.870"><failure message="Failed: Found 1 reports with raw technical errors">backend/tests/test_ai_fixes.py:234: in test_existing_error_reports_have_clean_messages
+    pytest.fail(f"Found {len(error_reports)} reports with raw technical errors")
+E   Failed: Found 1 reports with raw technical errors</failure></testcase><testcase classname="backend.tests.test_ai_fixes.TestRetryEndpoint" name="test_retry_endpoint_exists" time="0.550" /><testcase classname="backend.tests.test_ai_fixes.TestRetryEndpoint" name="test_retry_report_with_photo" time="5.206" /><testcase classname="backend.tests.test_ai_fixes.TestRetryEndpoint" name="test_retry_report_without_photo_fails" time="0.772" /><testcase classname="backend.tests.test_ai_fixes.TestSpecificErrorReports" name="test_check_known_error_reports" time="0.462"><failure message="AssertionError: Report DMG-5A913EE5 still has raw error: Analysis unavailable: Failed to generate chat completion: litellm.BadRequestError: OpenAIException - litellm.BadRequestError: GeminiException BadRequestError - {&#10;    &quot;error&quot;: {&#10;      &quot;code&quot;: 400,&#10;      &quot;message&quot;: &quot;Unable to process input image. Please retry or report in https://developers.generativeai.google/guide/troubleshooting&quot;,&#10;      &quot;status&quot;: &quot;INVALID_ARGUMENT&quot;&#10;    }&#10;  }&#10;  . Received Model Group=gemini/gemini-3-flash-preview&#10;  Available Model Group Fallbacks=None&#10;assert 'INVALID_ARGUMENT' not in 'Analysis un...llbacks=None'&#10;  &#10;  'INVALID_ARGUMENT' is contained here:&#10;    Analysis unavailable: Failed to generate chat completion: litellm.BadRequestError: OpenAIException - litellm.BadRequestError: GeminiException BadRequestError - {&#10;      &quot;error&quot;: {&#10;        &quot;code&quot;: 400,&#10;        &quot;message&quot;: &quot;Unable to process input image. Please retry or report in https://developers.generativeai.google/guide/troubleshooting&quot;,&#10;        &quot;status&quot;: &quot;INVALID_ARGUMENT&quot;...&#10;  &#10;  ...Full output truncated (4 lines hidden), use '-vv' to show">backend/tests/test_ai_fixes.py:395: in test_check_known_error_reports
+    assert "INVALID_ARGUMENT" not in description, \
+E   AssertionError: Report DMG-5A913EE5 still has raw error: Analysis unavailable: Failed to generate chat completion: litellm.BadRequestError: OpenAIException - litellm.BadRequestError: GeminiException BadRequestError - {
+E       "error": {
+E         "code": 400,
+E         "message": "Unable to process input image. Please retry or report in https://developers.generativeai.google/guide/troubleshooting",
+E         "status": "INVALID_ARGUMENT"
+E       }
+E     }
+E     . Received Model Group=gemini/gemini-3-flash-preview
+E     Available Model Group Fallbacks=None
+E   assert 'INVALID_ARGUMENT' not in 'Analysis un...llbacks=None'
+E     
+E     'INVALID_ARGUMENT' is contained here:
+E       Analysis unavailable: Failed to generate chat completion: litellm.BadRequestError: OpenAIException - litellm.BadRequestError: GeminiException BadRequestError - {
+E         "error": {
+E           "code": 400,
+E           "message": "Unable to process input image. Please retry or report in https://developers.generativeai.google/guide/troubleshooting",
+E           "status": "INVALID_ARGUMENT"...
+E     
+E     ...Full output truncated (4 lines hidden), use '-vv' to show</failure></testcase></testsuite></testsuites>

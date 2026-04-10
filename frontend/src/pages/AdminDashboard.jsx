@@ -760,7 +760,7 @@ export const AdminDashboard = () => {
                 </div>
               ) : (
                 damageReports.map((report) => (
-                  <DamageReportCard key={report.report_id} report={report} />
+                  <DamageReportCard key={report.report_id} report={report} onRetrySuccess={fetchData} />
                 ))
               )}
             </div>
@@ -1049,17 +1049,24 @@ const SEVERITY_CONFIG = {
   unknown: { label: 'Inconnue', color: 'text-zinc-400 bg-zinc-400/10', barColor: 'bg-zinc-400' }
 };
 
-const DamageReportCard = ({ report }) => {
+const DamageReportCard = ({ report, onRetrySuccess }) => {
   const [photoUrl, setPhotoUrl] = useState(null);
   const [loadingPhoto, setLoadingPhoto] = useState(false);
+  const [retrying, setRetrying] = useState(false);
   const analysis = report.ai_analysis || {};
   const severity = SEVERITY_CONFIG[analysis.damage_severity] || SEVERITY_CONFIG.unknown;
   const confidence = analysis.confidence || 0;
-  const hasError = analysis.description && (
-    analysis.description.includes('Erreur') || 
-    analysis.description.includes('Error') ||
-    analysis.description.includes('Failed') ||
-    analysis.description.includes('unavailable')
+  const hasError = !!(
+    analysis.damage_severity === 'unknown' ||
+    confidence === 0 ||
+    (analysis.description && (
+      analysis.description.includes('Analyse automatique impossible') ||
+      analysis.description.includes('Erreur') ||
+      analysis.description.includes('Error') ||
+      analysis.description.includes('Failed') ||
+      analysis.description.includes('INVALID_ARGUMENT') ||
+      analysis.description.includes('unavailable')
+    ))
   );
 
   const loadPhoto = async () => {
@@ -1075,6 +1082,25 @@ const DamageReportCard = ({ report }) => {
     }
     setLoadingPhoto(false);
   };
+
+  const handleRetry = async () => {
+    setRetrying(true);
+    try {
+      const res = await damageReportsApi.retry(report.report_id);
+      if (res.data?.ai_analysis) {
+        toast.success('Analyse relancée avec succès');
+        if (onRetrySuccess) onRetrySuccess();
+      }
+    } catch (e) {
+      toast.error('Échec de la relance');
+    }
+    setRetrying(false);
+  };
+
+  // Clean error message for display
+  const displayDescription = hasError
+    ? 'Analyse automatique impossible - Image non reconnue ou format incompatible'
+    : analysis.description;
 
   return (
     <div 
@@ -1147,13 +1173,13 @@ const DamageReportCard = ({ report }) => {
         </div>
 
         {/* AI Description */}
-        {analysis.description && !hasError && (
+        {displayDescription && !hasError && (
           <div className="p-4 bg-[#0066FF]/5 border border-[#0066FF]/20 rounded-lg mb-4">
             <div className="flex items-start gap-3">
               <Shield className="w-5 h-5 text-[#0066FF] flex-shrink-0 mt-0.5" />
               <div>
                 <p className="text-xs text-[#0066FF] font-medium mb-1">Analyse Gemini Vision</p>
-                <p className="text-sm text-zinc-300">{analysis.description}</p>
+                <p className="text-sm text-zinc-300">{displayDescription}</p>
               </div>
             </div>
           </div>
@@ -1161,12 +1187,29 @@ const DamageReportCard = ({ report }) => {
         
         {hasError && (
           <div className="p-4 bg-yellow-500/5 border border-yellow-500/20 rounded-lg mb-4">
-            <div className="flex items-start gap-3">
-              <AlertTriangle className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="text-xs text-yellow-400 font-medium mb-1">Analyse en erreur</p>
-                <p className="text-sm text-zinc-400">{analysis.description}</p>
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-start gap-3 flex-1">
+                <AlertTriangle className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-xs text-yellow-400 font-medium mb-1">Analyse en erreur</p>
+                  <p className="text-sm text-zinc-400">{displayDescription}</p>
+                </div>
               </div>
+              {report.has_photo && (
+                <Button
+                  size="sm"
+                  onClick={handleRetry}
+                  disabled={retrying}
+                  className="bg-yellow-600 hover:bg-yellow-700 text-white flex-shrink-0"
+                  data-testid={`retry-analysis-${report.report_id}`}
+                >
+                  {retrying ? (
+                    <><RefreshCw className="w-3.5 h-3.5 mr-1.5 animate-spin" /> Analyse...</>
+                  ) : (
+                    <><RefreshCw className="w-3.5 h-3.5 mr-1.5" /> Relancer</>
+                  )}
+                </Button>
+              )}
             </div>
           </div>
         )}
