@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { subscriptionApi } from '../services/api';
+import React, { useState } from 'react';
+import { useSubscription } from '../contexts/SubscriptionContext';
 import { Button } from '../components/ui/button';
 import { Switch } from '../components/ui/switch';
 import { 
   Check, Crown, Truck, Zap, Shield, Clock, 
-  ChevronRight, Sparkles, Building2
+  ChevronRight, Sparkles, Building2, Lock
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -17,9 +17,15 @@ const PLANS = [
     yearlyPrice: 490,
     features: [
       'Jusqu\'à 3 camions',
-      'e-CMR illimitées',
-      'Tracking client',
+      'Livraisons illimitées',
+      'Tracking client basique',
       'Support email'
+    ],
+    lockedFeatures: [
+      'Génération PDF e-CMR',
+      'Carte GPS temps réel',
+      'Dashboard Cash-Flow',
+      'Scan Code-barre'
     ],
     icon: Truck,
     popular: false
@@ -32,10 +38,17 @@ const PLANS = [
     yearlyPrice: 1990,
     features: [
       'Jusqu\'à 15 camions',
-      'e-CMR illimitées',
+      'e-CMR PDF illimitées',
+      'Carte GPS temps réel',
       'IA Anti-litige',
       'Cash-Flow Dashboard',
+      'Score Éco-conduite',
       'Support prioritaire'
+    ],
+    lockedFeatures: [
+      'Scan Code-barre',
+      'Portail Client avancé',
+      'API Access'
     ],
     icon: Zap,
     popular: true
@@ -48,13 +61,15 @@ const PLANS = [
     yearlyPrice: 4990,
     features: [
       'Camions illimités',
-      'IA Anti-litige avancée',
-      'Cash-Flow Dashboard',
-      'Score Éco-conduite',
+      'Toutes fonctionnalités',
+      'Scan Code-barre',
+      'Portail Client avancé',
+      'API Access complet',
+      'Carte Temps Réel',
       'Support 24/7',
-      'API Access',
       'Manager dédié'
     ],
+    lockedFeatures: [],
     icon: Building2,
     popular: false
   }
@@ -62,40 +77,25 @@ const PLANS = [
 
 export const SubscriptionPage = () => {
   const [isYearly, setIsYearly] = useState(false);
-  const [currentPlan, setCurrentPlan] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
-
-  useEffect(() => {
-    fetchCurrentPlan();
-  }, []);
-
-  const fetchCurrentPlan = async () => {
-    try {
-      const response = await subscriptionApi.getCurrent();
-      setCurrentPlan(response.data);
-    } catch (error) {
-      console.error('Error fetching subscription:', error);
-    }
-    setLoading(false);
-  };
+  const { plan: currentPlan, loading, updatePlan } = useSubscription();
 
   const handleSelectPlan = async (planId) => {
-    if (currentPlan?.plan === planId && 
-        currentPlan?.billing_cycle === (isYearly ? 'yearly' : 'monthly')) {
+    if (currentPlan === planId) {
       toast.info('Vous êtes déjà sur ce plan');
       return;
     }
 
     setUpdating(true);
     try {
-      await subscriptionApi.update({
-        plan: planId,
-        billing_cycle: isYearly ? 'yearly' : 'monthly'
-      });
-      toast.success('Abonnement mis à jour !');
-      fetchCurrentPlan();
+      const result = await updatePlan(planId, isYearly ? 'yearly' : 'monthly');
+      if (result.success) {
+        toast.success(`Plan ${PLANS.find(p => p.id === planId)?.name} activé !`);
+      } else {
+        toast.error(result.error || 'Erreur lors de la mise à jour');
+      }
     } catch (error) {
+      console.error('Plan update error:', error);
       toast.error('Erreur lors de la mise à jour');
     }
     setUpdating(false);
@@ -104,6 +104,15 @@ export const SubscriptionPage = () => {
   const savings = (monthly, yearly) => {
     const yearlySavings = (monthly * 12) - yearly;
     return Math.round((yearlySavings / (monthly * 12)) * 100);
+  };
+
+  const getPlanBadgeColor = (planId) => {
+    switch(planId) {
+      case 'solo': return 'bg-zinc-600';
+      case 'croissance': return 'bg-[#0066FF]';
+      case 'flotte_pro': return 'bg-gradient-to-r from-yellow-500 to-orange-500';
+      default: return 'bg-zinc-600';
+    }
   };
 
   return (
@@ -121,20 +130,17 @@ export const SubscriptionPage = () => {
             <div className="flex items-center gap-3">
               <Crown className="w-6 h-6 text-[#0066FF]" />
               <div>
-                <p className="font-semibold">Plan actuel : {PLANS.find(p => p.id === currentPlan.plan)?.name || currentPlan.plan}</p>
+                <p className="font-semibold">
+                  Plan actuel : {PLANS.find(p => p.id === currentPlan)?.name || currentPlan}
+                </p>
                 <p className="text-sm text-zinc-400">
-                  {currentPlan.status === 'trial' 
-                    ? `Essai gratuit - expire le ${new Date(currentPlan.trial_ends).toLocaleDateString('fr-FR')}`
-                    : `Facturation ${currentPlan.billing_cycle === 'yearly' ? 'annuelle' : 'mensuelle'}`
-                  }
+                  Facturation {isYearly ? 'annuelle' : 'mensuelle'}
                 </p>
               </div>
             </div>
-            {currentPlan.status !== 'trial' && (
-              <span className="px-3 py-1 bg-green-500/10 text-green-400 rounded-full text-sm">
-                Actif
-              </span>
-            )}
+            <span className={`px-3 py-1 rounded-full text-sm text-white ${getPlanBadgeColor(currentPlan)}`}>
+              Actif
+            </span>
           </div>
         </div>
       )}
@@ -161,7 +167,7 @@ export const SubscriptionPage = () => {
       {/* Plans Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {PLANS.map((plan) => {
-          const isCurrentPlan = currentPlan?.plan === plan.id;
+          const isCurrentPlan = currentPlan === plan.id;
           const price = isYearly ? plan.yearlyPrice : plan.monthlyPrice;
           const Icon = plan.icon;
 
@@ -213,7 +219,7 @@ export const SubscriptionPage = () => {
               </div>
 
               {/* Features */}
-              <ul className="space-y-3 mb-6">
+              <ul className="space-y-3 mb-4">
                 {plan.features.map((feature, idx) => (
                   <li key={idx} className="flex items-center gap-3 text-sm">
                     <Check className="w-5 h-5 text-green-400 flex-shrink-0" />
@@ -221,6 +227,18 @@ export const SubscriptionPage = () => {
                   </li>
                 ))}
               </ul>
+
+              {/* Locked Features */}
+              {plan.lockedFeatures && plan.lockedFeatures.length > 0 && (
+                <ul className="space-y-2 mb-6 pt-3 border-t border-[#27272A]">
+                  {plan.lockedFeatures.map((feature, idx) => (
+                    <li key={idx} className="flex items-center gap-3 text-sm text-zinc-500">
+                      <Lock className="w-4 h-4 flex-shrink-0" />
+                      <span className="line-through">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
 
               {/* CTA Button */}
               <Button

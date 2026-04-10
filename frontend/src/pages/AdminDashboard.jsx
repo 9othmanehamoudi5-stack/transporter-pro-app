@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useSubscription } from '../contexts/SubscriptionContext';
 import { dashboardApi, deliveriesApi, invoicesApi, driversApi, damageReportsApi, ecoScoresApi, adminDriversApi, notificationsApi } from '../services/api';
 import { firestoreDrivers } from '../services/firebase';
 import { Button } from '../components/ui/button';
@@ -9,7 +10,7 @@ import {
   Truck, Package, DollarSign, AlertTriangle, Leaf, Users, 
   Clock, CheckCircle, XCircle, TrendingUp, LogOut, Menu, X,
   Plus, Eye, MapPin, FileText, Shield, RefreshCw, Bell,
-  CreditCard, UserPlus, Trash2
+  CreditCard, UserPlus, Trash2, Lock, Crown
 } from 'lucide-react';
 import {
   Dialog,
@@ -45,6 +46,8 @@ const statusColors = {
 
 export const AdminDashboard = () => {
   const { user, logout } = useAuth();
+  const { plan, hasFeature, getRestrictionMessage, getPlanInfo, canAccessPage } = useSubscription();
+  const planInfo = getPlanInfo();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [stats, setStats] = useState(null);
@@ -213,31 +216,52 @@ export const AdminDashboard = () => {
           <div className="w-10 h-10 bg-[#0066FF] rounded-lg flex items-center justify-center">
             <Truck className="w-6 h-6 text-white" />
           </div>
-          <span className="font-bold text-lg">Transporter-Pro</span>
+          <div className="flex-1 min-w-0">
+            <span className="font-bold text-lg block">Transporter-Pro</span>
+            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider text-white ${planInfo.color}`} data-testid="plan-badge">
+              <Crown className="w-3 h-3" />
+              {planInfo.badge}
+            </span>
+          </div>
           <button className="lg:hidden ml-auto" onClick={() => setSidebarOpen(false)}>
             <X className="w-5 h-5" />
           </button>
         </div>
 
         <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-          {sidebarItems.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => { setActiveTab(item.id); setSidebarOpen(false); }}
-              data-testid={`nav-${item.id}`}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                activeTab === item.id 
-                  ? 'bg-[#0066FF] text-white' 
-                  : 'text-zinc-400 hover:bg-[#1A1A1E] hover:text-white'
-              }`}
-            >
-              <item.icon className="w-5 h-5" />
-              <span>{item.label}</span>
-              {item.id === 'litiges' && damageReports.filter(r => r.ai_analysis?.is_damaged).length > 0 && (
-                <span className="ml-auto w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-              )}
-            </button>
-          ))}
+          {sidebarItems.map((item) => {
+            const isLocked = !canAccessPage(item.id);
+            return (
+              <button
+                key={item.id}
+                onClick={() => {
+                  if (isLocked) {
+                    const featureMap = { cashflow: 'cashFlowDashboard', eco: 'ecoScore' };
+                    const msg = getRestrictionMessage(featureMap[item.id] || item.id);
+                    toast.error(msg);
+                    return;
+                  }
+                  setActiveTab(item.id);
+                  setSidebarOpen(false);
+                }}
+                data-testid={`nav-${item.id}`}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                  activeTab === item.id 
+                    ? 'bg-[#0066FF] text-white' 
+                    : isLocked
+                      ? 'text-zinc-600 hover:bg-[#1A1A1E] cursor-not-allowed'
+                      : 'text-zinc-400 hover:bg-[#1A1A1E] hover:text-white'
+                }`}
+              >
+                <item.icon className="w-5 h-5" />
+                <span>{item.label}</span>
+                {isLocked && <Lock className="w-4 h-4 ml-auto text-zinc-600" />}
+                {!isLocked && item.id === 'litiges' && damageReports.filter(r => r.ai_analysis?.is_damaged).length > 0 && (
+                  <span className="ml-auto w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                )}
+              </button>
+            );
+          })}
         </nav>
 
         <div className="p-4 bg-[#121214] border-t border-[#27272A]">
@@ -376,6 +400,42 @@ export const AdminDashboard = () => {
                 </div>
               </div>
 
+              {/* Quick Actions with Gating */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <GatedButton
+                  label="Générer e-CMR"
+                  icon={FileText}
+                  feature="pdfGeneration"
+                  hasFeature={hasFeature}
+                  getMessage={getRestrictionMessage}
+                  onClick={() => toast.info('Génération PDF e-CMR bientôt disponible')}
+                />
+                <GatedButton
+                  label="Carte GPS"
+                  icon={MapPin}
+                  feature="gpsMap"
+                  hasFeature={hasFeature}
+                  getMessage={getRestrictionMessage}
+                  onClick={() => toast.info('Carte GPS temps réel bientôt disponible')}
+                />
+                <GatedButton
+                  label="Scan Code-barre"
+                  icon={Eye}
+                  feature="scanBarcode"
+                  hasFeature={hasFeature}
+                  getMessage={getRestrictionMessage}
+                  onClick={() => toast.info('Scan barcode bientôt disponible')}
+                />
+                <GatedButton
+                  label="Portail Client"
+                  icon={Users}
+                  feature="clientPortal"
+                  hasFeature={hasFeature}
+                  getMessage={getRestrictionMessage}
+                  onClick={() => window.open('/track', '_blank')}
+                />
+              </div>
+
               {/* Recent Deliveries */}
               <div className="bg-[#121214] border border-[#27272A] rounded-xl overflow-hidden">
                 <div className="p-4 border-b border-[#27272A]">
@@ -467,6 +527,13 @@ export const AdminDashboard = () => {
 
           {/* Cash Flow Tab */}
           {activeTab === 'cashflow' && (
+            !hasFeature('cashFlowDashboard') ? (
+              <LockedFeatureOverlay
+                feature="cashFlowDashboard"
+                message={getRestrictionMessage('cashFlowDashboard')}
+                onUpgrade={() => setActiveTab('subscription')}
+              />
+            ) : (
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="bg-[#121214] border border-[#27272A] rounded-xl p-6">
@@ -492,6 +559,21 @@ export const AdminDashboard = () => {
                     {cashFlow?.pending_invoices_count || 0}
                   </div>
                   <p className="text-zinc-400">Factures en attente</p>
+                  <Button 
+                    onClick={() => {
+                      if (!hasFeature('pdfGeneration')) {
+                        toast.error(getRestrictionMessage('pdfGeneration'));
+                        return;
+                      }
+                      toast.info('Génération PDF e-CMR bientôt disponible');
+                    }}
+                    className={`mt-3 ${hasFeature('pdfGeneration') ? 'bg-[#0066FF] hover:bg-[#0052CC]' : 'bg-zinc-700 cursor-not-allowed'}`}
+                    data-testid="generate-pdf-btn"
+                  >
+                    {!hasFeature('pdfGeneration') && <Lock className="w-4 h-4 mr-2" />}
+                    <FileText className="w-4 h-4 mr-2" />
+                    Générer e-CMR PDF
+                  </Button>
                 </div>
               </div>
 
@@ -545,6 +627,7 @@ export const AdminDashboard = () => {
                 </div>
               </div>
             </>
+            )
           )}
 
           {/* Drivers Tab */}
@@ -698,6 +781,13 @@ export const AdminDashboard = () => {
 
           {/* Eco Scores Tab */}
           {activeTab === 'eco' && (
+            !hasFeature('ecoScore') ? (
+              <LockedFeatureOverlay
+                feature="ecoScore"
+                message={getRestrictionMessage('ecoScore')}
+                onUpgrade={() => setActiveTab('subscription')}
+              />
+            ) : (
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div className="bg-[#121214] border border-[#27272A] rounded-xl p-6">
@@ -794,6 +884,7 @@ Généré par Transporter-Pro
                 </div>
               </div>
             </>
+            )
           )}
         </div>
       </main>
@@ -893,6 +984,53 @@ Généré par Transporter-Pro
     </div>
   );
 };
+
+
+const LockedFeatureOverlay = ({ feature, message, onUpgrade }) => (
+  <div className="bg-[#121214] border border-[#27272A] rounded-2xl p-12 text-center" data-testid={`locked-${feature}`}>
+    <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-zinc-800/50 flex items-center justify-center">
+      <Lock className="w-8 h-8 text-zinc-500" />
+    </div>
+    <h3 className="text-xl font-semibold mb-2">Fonctionnalité verrouillée</h3>
+    <p className="text-zinc-400 mb-6 max-w-md mx-auto">{message}</p>
+    <Button
+      onClick={onUpgrade}
+      className="bg-[#0066FF] hover:bg-[#0052CC] px-8"
+      data-testid={`upgrade-from-${feature}`}
+    >
+      <Crown className="w-4 h-4 mr-2" />
+      Changer de plan
+    </Button>
+  </div>
+);
+
+const GatedButton = ({ label, icon: Icon, feature, hasFeature, getMessage, onClick }) => {
+  const locked = !hasFeature(feature);
+  return (
+    <button
+      onClick={() => {
+        if (locked) {
+          toast.error(getMessage(feature));
+          return;
+        }
+        onClick();
+      }}
+      className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-all ${
+        locked 
+          ? 'bg-[#121214] border-[#27272A] opacity-50 cursor-not-allowed' 
+          : 'bg-[#121214] border-[#27272A] hover:border-[#0066FF] hover:bg-[#0066FF]/5 cursor-pointer'
+      }`}
+      data-testid={`gated-${feature}`}
+    >
+      <div className="relative">
+        <Icon className={`w-6 h-6 ${locked ? 'text-zinc-600' : 'text-[#0066FF]'}`} />
+        {locked && <Lock className="w-3 h-3 text-zinc-500 absolute -bottom-1 -right-1" />}
+      </div>
+      <span className={`text-xs font-medium ${locked ? 'text-zinc-600' : 'text-zinc-300'}`}>{label}</span>
+    </button>
+  );
+};
+
 
 const StatCard = ({ title, value, icon: Icon, color, pulse }) => {
   const colorClasses = {

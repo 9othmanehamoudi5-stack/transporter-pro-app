@@ -2,6 +2,7 @@ import React from "react";
 import "@/App.css";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { SubscriptionProvider } from "./contexts/SubscriptionContext";
 import { LoginPage, RegisterPage } from "./pages/AuthPages";
 import AdminDashboard from "./pages/AdminDashboard";
 import DriverDashboard from "./pages/DriverDashboard";
@@ -117,47 +118,49 @@ const PublicRoute = ({ children }) => {
 function App() {
   return (
     <AuthProvider>
-      <div className="App min-h-screen bg-[#0A0A0B]">
-        <Toaster richColors position="top-right" />
-        <BrowserRouter>
-          <Routes>
-            {/* Public routes */}
-            <Route path="/login" element={
-              <PublicRoute>
-                <LoginPage />
-              </PublicRoute>
-            } />
-            <Route path="/register" element={
-              <PublicRoute>
-                <RegisterPage />
-              </PublicRoute>
-            } />
-            
-            {/* Client tracking portal - public */}
-            <Route path="/track" element={<TrackingSearch />} />
-            <Route path="/track/:trackingId" element={<ClientPortal />} />
-            
-            {/* Protected routes */}
-            <Route path="/dashboard" element={<DashboardRouter />} />
-            
-            <Route path="/driver" element={
-              <ProtectedRoute allowedRoles={["driver"]}>
-                <DriverDashboard />
-              </ProtectedRoute>
-            } />
-            
-            <Route path="/client-dashboard" element={
-              <ProtectedRoute allowedRoles={["client"]}>
-                <ClientDashboard />
-              </ProtectedRoute>
-            } />
-            
-            {/* Default redirect */}
-            <Route path="/" element={<Navigate to="/login" replace />} />
-            <Route path="*" element={<Navigate to="/login" replace />} />
-          </Routes>
-        </BrowserRouter>
-      </div>
+      <SubscriptionProvider>
+        <div className="App min-h-screen bg-[#0A0A0B]">
+          <Toaster richColors position="top-right" />
+          <BrowserRouter>
+            <Routes>
+              {/* Public routes */}
+              <Route path="/login" element={
+                <PublicRoute>
+                  <LoginPage />
+                </PublicRoute>
+              } />
+              <Route path="/register" element={
+                <PublicRoute>
+                  <RegisterPage />
+                </PublicRoute>
+              } />
+              
+              {/* Client tracking portal - public */}
+              <Route path="/track" element={<TrackingSearch />} />
+              <Route path="/track/:trackingId" element={<ClientPortal />} />
+              
+              {/* Protected routes */}
+              <Route path="/dashboard" element={<DashboardRouter />} />
+              
+              <Route path="/driver" element={
+                <ProtectedRoute allowedRoles={["driver"]}>
+                  <DriverDashboard />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/client-dashboard" element={
+                <ProtectedRoute allowedRoles={["client"]}>
+                  <ClientDashboard />
+                </ProtectedRoute>
+              } />
+              
+              {/* Default redirect */}
+              <Route path="/" element={<Navigate to="/login" replace />} />
+              <Route path="*" element={<Navigate to="/login" replace />} />
+            </Routes>
+          </BrowserRouter>
+        </div>
+      </SubscriptionProvider>
     </AuthProvider>
   );
 }
