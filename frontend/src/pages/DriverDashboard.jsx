@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useOfflineSync } from '../hooks/useOfflineSync';
 import { deliveriesApi, damageReportsApi, ecoScoresApi, dashboardApi, syncApi } from '../services/api';
+import { firestoreGPS } from '../services/firebase';
 import { Button } from '../components/ui/button';
 import { 
   Truck, Package, Camera, CheckCircle, MapPin, LogOut, 
@@ -74,6 +75,46 @@ export const DriverDashboard = () => {
       });
     }
   }, [isOnline, queueLength, processQueue, fetchData]);
+
+  // GPS Live Tracking — send position every 60s when there's an in_transit delivery
+  useEffect(() => {
+    const hasActiveDelivery = deliveries.some(d => d.status === 'in_transit');
+    if (!hasActiveDelivery || !user?.id) return;
+
+    let watchId = null;
+
+    const sendPosition = (position) => {
+      const { latitude, longitude } = position.coords;
+      firestoreGPS.updatePosition(user.id, user.name || 'Chauffeur', latitude, longitude);
+    };
+
+    // Get initial position
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(sendPosition, () => {}, { enableHighAccuracy: true });
+
+      // Watch position changes + interval fallback
+      watchId = navigator.geolocation.watchPosition(sendPosition, () => {}, {
+        enableHighAccuracy: true,
+        maximumAge: 30000,
+        timeout: 60000
+      });
+    }
+
+    // Also send on a 60s interval as fallback
+    const intervalId = setInterval(() => {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(sendPosition, () => {}, { enableHighAccuracy: true });
+      }
+    }, 60000);
+
+    return () => {
+      if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+      clearInterval(intervalId);
+      // Mark driver as offline when no active delivery
+      firestoreGPS.goOffline(user.id);
+    };
+  }, [deliveries, user?.id, user?.name]);
+
 
   const handleStartDelivery = async (tracking_id) => {
     try {

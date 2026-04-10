@@ -217,3 +217,49 @@ table, thead, tbody, tr, td, th {
     display: contents !important;
   }
 }
+
+
+/* ── Leaflet Dark Theme ── */
+.leaflet-dark-theme {
+  background: #0a0a0c;
+}
+
+.leaflet-dark-theme .leaflet-tile-pane {
+  filter: brightness(0.85) saturate(1.2) hue-rotate(10deg);
+}
+
+.leaflet-dark-theme .leaflet-control-attribution {
+  background: rgba(18, 18, 20, 0.85) !important;
+  color: #52525b !important;
+  font-size: 9px !important;
+}
+
+.leaflet-dark-theme .leaflet-control-attribution a {
+  color: #0066FF !important;
+}
+
+.leaflet-dark-theme .leaflet-popup-content-wrapper {
+  background: #121214 !important;
+  border: 1px solid #27272A !important;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
+}
+
+.leaflet-dark-theme .leaflet-popup-tip {
+  background: #121214 !important;
+  border: 1px solid #27272A !important;
+}
+
+.leaflet-dark-theme .leaflet-popup-close-button {
+  color: #a1a1aa !important;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 8px rgba(0, 102, 255, 0.4); }
+  50% { box-shadow: 0 0 20px rgba(0, 102, 255, 0.7); }
+}
+
+.custom-truck-marker {
+  background: transparent !important;
+  border: none !important;
+}

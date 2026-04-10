@@ -62,7 +62,7 @@ const PLAN_FEATURES = {
 
 const RESTRICTION_MESSAGES = {
   pdfGeneration: 'Génération PDF disponible dans le pack Croissance',
-  gpsMap: 'Carte GPS disponible dans le pack Croissance',
+  gpsMap: 'Carte GPS Live disponible dans le pack Croissance',
   scanBarcode: 'Scan Code-barre disponible dans le pack Flotte Pro',
   cashFlowDashboard: 'Dashboard Cash-Flow disponible dans le pack Croissance',
   clientPortal: 'Portail Client disponible dans le pack Flotte Pro',
@@ -155,6 +155,7 @@ export const SubscriptionProvider = ({ children }) => {
     const pageRequirements = {
       'cashflow': 'cashFlowDashboard',
       'eco': 'ecoScore',
+      'livemap': 'gpsMap',
       'litiges': 'basicDeliveries',
       'drivers': 'basicDeliveries',
       'deliveries': 'basicDeliveries',

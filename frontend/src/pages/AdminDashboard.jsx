@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
 import { dashboardApi, deliveriesApi, invoicesApi, driversApi, damageReportsApi, ecoScoresApi, adminDriversApi, notificationsApi } from '../services/api';
@@ -11,7 +11,7 @@ import {
   Truck, Package, DollarSign, AlertTriangle, Leaf, Users, 
   Clock, CheckCircle, XCircle, TrendingUp, LogOut, Menu, X,
   Plus, Eye, MapPin, FileText, Shield, RefreshCw, Bell,
-  CreditCard, UserPlus, Trash2, Lock, Crown, Camera
+  CreditCard, UserPlus, Trash2, Lock, Crown, Camera, Map
 } from 'lucide-react';
 import {
   Dialog,
@@ -28,6 +28,8 @@ import {
 } from "../components/ui/select";
 import { Toaster, toast } from 'sonner';
 import SubscriptionPage from './SubscriptionPage';
+
+const LiveMapPanel = lazy(() => import('./LiveMapPanel'));
 
 const statusLabels = {
   pending: 'En attente',
@@ -195,6 +197,7 @@ export const AdminDashboard = () => {
   const sidebarItems = [
     { id: 'overview', label: 'Vue d\'ensemble', icon: TrendingUp },
     { id: 'deliveries', label: 'Livraisons', icon: Package },
+    { id: 'livemap', label: 'Carte Live', icon: Map },
     { id: 'cashflow', label: 'Cash-Flow', icon: DollarSign },
     { id: 'drivers', label: 'Chauffeurs', icon: Users },
     { id: 'litiges', label: 'Litiges', icon: AlertTriangle },
@@ -237,7 +240,7 @@ export const AdminDashboard = () => {
                 key={item.id}
                 onClick={() => {
                   if (isLocked) {
-                    const featureMap = { cashflow: 'cashFlowDashboard', eco: 'ecoScore' };
+                    const featureMap = { cashflow: 'cashFlowDashboard', eco: 'ecoScore', livemap: 'gpsMap' };
                     const msg = getRestrictionMessage(featureMap[item.id] || item.id);
                     toast.error(msg);
                     return;
@@ -424,7 +427,7 @@ export const AdminDashboard = () => {
                   feature="gpsMap"
                   hasFeature={hasFeature}
                   getMessage={getRestrictionMessage}
-                  onClick={() => toast.info('Carte GPS temps réel bientôt disponible')}
+                  onClick={() => setActiveTab('livemap')}
                 />
                 <GatedButton
                   label="Scan Code-barre"
@@ -531,6 +534,26 @@ export const AdminDashboard = () => {
                 </table>
               </div>
             </div>
+          )}
+
+
+          {/* Live Map Tab */}
+          {activeTab === 'livemap' && (
+            !hasFeature('gpsMap') ? (
+              <LockedFeatureOverlay
+                feature="gpsMap"
+                message={getRestrictionMessage('gpsMap')}
+                onUpgrade={() => setActiveTab('subscription')}
+              />
+            ) : (
+              <Suspense fallback={
+                <div className="flex items-center justify-center h-96">
+                  <RefreshCw className="w-8 h-8 text-[#0066FF] animate-spin" />
+                </div>
+              }>
+                <LiveMapPanel />
+              </Suspense>
+            )
           )}
 
           {/* Cash Flow Tab */}

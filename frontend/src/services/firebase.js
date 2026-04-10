@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, doc, getDocs, getDoc, addDoc, updateDoc, deleteDoc, query, where, orderBy, onSnapshot, serverTimestamp } from 'firebase/firestore';
+import { getFirestore, collection, doc, getDocs, getDoc, addDoc, updateDoc, deleteDoc, setDoc, query, where, orderBy, onSnapshot, serverTimestamp } from 'firebase/firestore';
 import { getAnalytics } from 'firebase/analytics';
 
 // Configuration Firebase
@@ -248,6 +248,64 @@ export const firestoreDrivers = {
     }, (error) => {
       console.error('Firestore drivers subscription error:', error);
     });
+  }
+};
+
+// ==================== GPS LIVE TRACKING ====================
+
+const GPS_COLLECTION = 'driver_locations';
+
+export const firestoreGPS = {
+  // Update a driver's GPS position
+  updatePosition: async (driverId, driverName, lat, lng) => {
+    try {
+      const docRef = doc(db, GPS_COLLECTION, driverId);
+      await setDoc(docRef, {
+        driver_id: driverId,
+        driver_name: driverName,
+        lat,
+        lng,
+        updated_at: new Date().toISOString(),
+        online: true
+      }, { merge: true });
+      return true;
+    } catch (error) {
+      console.warn('GPS update to Firestore failed (non-blocking):', error.message);
+      return false;
+    }
+  },
+
+  // Mark driver as offline
+  goOffline: async (driverId) => {
+    try {
+      const docRef = doc(db, GPS_COLLECTION, driverId);
+      await setDoc(docRef, { online: false, updated_at: new Date().toISOString() }, { merge: true });
+    } catch (error) {
+      console.warn('GPS offline update failed:', error.message);
+    }
+  },
+
+  // Subscribe to all driver locations in real-time
+  subscribeAll: (callback) => {
+    const col = collection(db, GPS_COLLECTION);
+    return onSnapshot(col, (snapshot) => {
+      const locations = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      callback(locations);
+    }, (error) => {
+      console.warn('GPS subscription error:', error.message);
+      callback([]);
+    });
+  },
+
+  // Get all driver locations once
+  getAll: async () => {
+    try {
+      const snapshot = await getDocs(collection(db, GPS_COLLECTION));
+      return snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    } catch (error) {
+      console.warn('GPS getAll error:', error.message);
+      return [];
+    }
   }
 };
 
