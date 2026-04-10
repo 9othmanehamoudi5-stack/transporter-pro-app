@@ -1,48 +1,49 @@
-# Transporter-Pro - PRD (Product Requirements Document)
+# Transporter-Pro - PRD
 
 ## Problème Original
-Application SaaS logistique "Transporter-Pro" pour éliminer la friction administrative et maximiser la profitabilité des PME de transport.
+Application SaaS logistique "Transporter-Pro" pour PME de transport.
 
 ## Architecture Technique
-- **Frontend** : React + Tailwind CSS + shadcn/ui
+- **Frontend** : React + Tailwind CSS + shadcn/ui + Leaflet
 - **Backend** : FastAPI + MongoDB (Motor)
-- **Intégrations** : Firebase Firestore, Gemini 3 Flash Vision, jsPDF (Factur-X)
+- **Intégrations** : Firebase Firestore, Gemini 3 Flash Vision, jsPDF, Leaflet/OpenStreetMap
 - **Auth** : JWT (Custom) avec bcrypt
 
 ## Fonctionnalités Implémentées
 
 ### Phase 1 - MVP (DONE)
-- [x] Auth multi-rôle (Admin, Driver, Client) avec JWT
-- [x] Dashboard Admin (stats, cash-flow, livraisons, litiges, éco-scores, chauffeurs)
-- [x] Dashboard Driver (livraisons, photo, signature, éco-score)
-- [x] Portail Client (suivi public)
-- [x] Firebase Firestore intégration (sync missions)
+- [x] Auth multi-rôle (Admin, Driver, Client) + JWT
+- [x] Dashboards Admin/Driver/Client
+- [x] Firebase Firestore (sync missions)
 
 ### Phase 2 - Monétisation (DONE)
-- [x] Page Abonnement (Solo/Duo 49€, Croissance 199€, Flotte Pro 499€)
-- [x] Gating complet (badge, locks sidebar, toasts, overlay upgrade)
+- [x] 3 plans (Solo 49€, Croissance 199€, Flotte Pro 499€)
+- [x] Gating complet (badge, locks, toasts, overlay)
 
 ### Phase 3 - IA Anti-Litige (DONE)
-- [x] Gemini 3 Flash Vision (sévérité, description FR, confiance IA)
-- [x] Preprocessing images (max 1280px, JPEG)
-- [x] Messages d'erreur propres + bouton "Relancer"
-- [x] Overlay résultat IA côté Driver
+- [x] Gemini 3 Flash Vision (sévérité, description FR, confiance)
+- [x] Preprocessing images + messages d'erreur propres + bouton Relancer
 
-### Phase 4 - Génération PDF Factur-X (DONE - 10 Avril 2026)
-- [x] jsPDF + jspdf-autotable installés
-- [x] PDF professionnel : logo TP, n° facture, montant HT/TVA/TTC, statut, tampon "PAYÉ"
-- [x] Bouton "Générer e-CMR PDF" (factures non payées en lot)
-- [x] Bouton "PDF" individuel par facture dans le tableau
-- [x] Quick action "Générer e-CMR" dans Vue d'ensemble
-- [x] Gating respecté (verrouillé pour plan Solo)
+### Phase 4 - Génération PDF (DONE)
+- [x] jsPDF : logo TP, facture complète, tampon PAYÉ, bouton individuel/lot
 
-## Backlog P1 (Prioritaire)
+### Phase 5 - Suivi Live GPS (DONE - 10 Avril 2026)
+- [x] Leaflet + OpenStreetMap CartoDB dark tiles (gratuit, pas de clé API)
+- [x] Driver : envoi GPS auto toutes les 60s via Firestore quand livraison en cours
+- [x] Admin : onglet "Carte Live" avec marqueurs camion animés, popups, sidebar chauffeurs
+- [x] Stats : En ligne / Hors ligne / Positions connues
+- [x] Empty state : "Aucune position active"
+- [x] CSS dark filter : carte noire et bleue aux couleurs Transporter-Pro
+- [x] Gating : Solo verrouillé, Croissance+ débloqué
+- [x] Quick action "Carte GPS" navigue vers Carte Live
+
+## Backlog P1
 - [ ] Corriger règles sécurité Firebase (voir /app/memory/FIREBASE_RULES.md)
 
-## Backlog P2 (Futur)
+## Backlog P2
 - [ ] Mode hors-ligne (localStorage + file sync)
-- [ ] Score éco-conduite & calcul CO2 (logique réelle)
+- [ ] Score éco-conduite & calcul CO2 réel
 
 ## Problèmes Connus
-- Firestore writes échouent silencieusement (Permission Denied)
-- Blockchain timestamping est MOCKÉ (SHA256 hash)
+- Firestore writes échouent silencieusement (Permission Denied) - non-bloquant
+- Blockchain timestamping MOCKÉ (SHA256)
