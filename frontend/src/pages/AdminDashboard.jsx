@@ -10,7 +10,7 @@ import {
   Truck, Package, DollarSign, AlertTriangle, Leaf, Users, 
   Clock, CheckCircle, XCircle, TrendingUp, LogOut, Menu, X,
   Plus, Eye, MapPin, FileText, Shield, RefreshCw, Bell,
-  CreditCard, UserPlus, Trash2, Lock, Crown
+  CreditCard, UserPlus, Trash2, Lock, Crown, Camera
 } from 'lucide-react';
 import {
   Dialog,
@@ -722,58 +722,45 @@ export const AdminDashboard = () => {
 
           {/* Litiges Tab */}
           {activeTab === 'litiges' && (
-            <div className="space-y-4">
+            <div className="space-y-4" data-testid="litiges-tab">
+              {/* Stats */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <StatCard
+                  title="Total rapports"
+                  value={damageReports.length}
+                  icon={Shield}
+                  color="blue"
+                />
+                <StatCard
+                  title="Dommages détectés"
+                  value={damageReports.filter(r => r.ai_analysis?.is_damaged).length}
+                  icon={AlertTriangle}
+                  color="red"
+                  pulse={damageReports.filter(r => r.ai_analysis?.is_damaged).length > 0}
+                />
+                <StatCard
+                  title="Colis intacts"
+                  value={damageReports.filter(r => !r.ai_analysis?.is_damaged).length}
+                  icon={CheckCircle}
+                  color="green"
+                />
+                <StatCard
+                  title="Confiance moy."
+                  value={damageReports.length > 0 ? Math.round(damageReports.reduce((a, r) => a + (r.ai_analysis?.confidence || 0), 0) / damageReports.length) + '%' : '0%'}
+                  icon={Eye}
+                  color="blue"
+                />
+              </div>
+
               {damageReports.length === 0 ? (
                 <div className="bg-[#121214] border border-[#27272A] rounded-xl p-12 text-center">
                   <Shield className="w-12 h-12 mx-auto mb-4 text-green-400" />
                   <p className="text-lg font-medium">Aucun litige détecté</p>
-                  <p className="text-zinc-400">Tous les colis sont en bon état</p>
+                  <p className="text-zinc-400">Les chauffeurs peuvent signaler des dommages via le bouton Photo</p>
                 </div>
               ) : (
                 damageReports.map((report) => (
-                  <div 
-                    key={report.report_id} 
-                    className={`bg-[#121214] border rounded-xl p-6 ${
-                      report.ai_analysis?.is_damaged ? 'border-red-500/50' : 'border-[#27272A]'
-                    }`}
-                  >
-                    <div className="flex items-start justify-between mb-4">
-                      <div>
-                        <p className="font-mono text-sm text-zinc-400">{report.report_id}</p>
-                        <p className="font-semibold mt-1">Livraison: {report.delivery_id}</p>
-                      </div>
-                      {report.ai_analysis?.is_damaged && (
-                        <span className="flex items-center gap-2 px-3 py-1 rounded-full text-sm bg-red-500/10 text-red-400">
-                          <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                          Dommage détecté
-                        </span>
-                      )}
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="p-4 bg-[#1A1A1E] rounded-lg">
-                        <p className="text-xs text-zinc-400 mb-1">Sévérité</p>
-                        <p className="font-semibold capitalize">{report.ai_analysis?.damage_severity || 'N/A'}</p>
-                      </div>
-                      <div className="p-4 bg-[#1A1A1E] rounded-lg">
-                        <p className="text-xs text-zinc-400 mb-1">Confiance IA</p>
-                        <p className="font-mono font-semibold">{report.ai_analysis?.confidence || 0}%</p>
-                      </div>
-                      <div className="p-4 bg-[#1A1A1E] rounded-lg">
-                        <p className="text-xs text-zinc-400 mb-1">Blockchain</p>
-                        <p className="font-mono text-xs text-green-400 truncate">
-                          {report.blockchain_proof?.hash?.substring(0, 16)}...
-                        </p>
-                      </div>
-                    </div>
-                    {report.ai_analysis?.description && !report.ai_analysis.description.includes('Failed to') && !report.ai_analysis.description.includes('Error') && (
-                      <p className="mt-4 text-sm text-zinc-400">{report.ai_analysis.description}</p>
-                    )}
-                    {report.ai_analysis?.description && (report.ai_analysis.description.includes('Failed to') || report.ai_analysis.description.includes('Error') || report.ai_analysis.description.includes('Unable')) && (
-                      <div className="mt-4 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
-                        <p className="text-sm text-yellow-400">⚠️ Analyse IA indisponible - Vérification manuelle requise</p>
-                      </div>
-                    )}
-                  </div>
+                  <DamageReportCard key={report.report_id} report={report} />
                 ))
               )}
             </div>
@@ -1053,6 +1040,171 @@ const StatCard = ({ title, value, icon: Icon, color, pulse }) => {
     </div>
   );
 };
+
+const SEVERITY_CONFIG = {
+  none: { label: 'Aucun', color: 'text-green-400 bg-green-400/10', barColor: 'bg-green-400' },
+  minor: { label: 'Faible', color: 'text-yellow-400 bg-yellow-400/10', barColor: 'bg-yellow-400' },
+  moderate: { label: 'Moyenne', color: 'text-orange-400 bg-orange-400/10', barColor: 'bg-orange-400' },
+  severe: { label: 'Élevée', color: 'text-red-400 bg-red-400/10', barColor: 'bg-red-400' },
+  unknown: { label: 'Inconnue', color: 'text-zinc-400 bg-zinc-400/10', barColor: 'bg-zinc-400' }
+};
+
+const DamageReportCard = ({ report }) => {
+  const [photoUrl, setPhotoUrl] = useState(null);
+  const [loadingPhoto, setLoadingPhoto] = useState(false);
+  const analysis = report.ai_analysis || {};
+  const severity = SEVERITY_CONFIG[analysis.damage_severity] || SEVERITY_CONFIG.unknown;
+  const confidence = analysis.confidence || 0;
+  const hasError = analysis.description && (
+    analysis.description.includes('Erreur') || 
+    analysis.description.includes('Error') ||
+    analysis.description.includes('Failed') ||
+    analysis.description.includes('unavailable')
+  );
+
+  const loadPhoto = async () => {
+    if (photoUrl || !report.has_photo) return;
+    setLoadingPhoto(true);
+    try {
+      const res = await damageReportsApi.getPhoto(report.report_id);
+      if (res.data?.photo_base64) {
+        setPhotoUrl(`data:image/jpeg;base64,${res.data.photo_base64}`);
+      }
+    } catch (e) {
+      console.warn('Failed to load photo');
+    }
+    setLoadingPhoto(false);
+  };
+
+  return (
+    <div 
+      className={`bg-[#121214] border rounded-xl overflow-hidden ${
+        analysis.is_damaged ? 'border-red-500/30' : 'border-[#27272A]'
+      }`}
+      data-testid={`damage-report-${report.report_id}`}
+    >
+      <div className="p-6">
+        {/* Header */}
+        <div className="flex items-start justify-between mb-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <p className="font-mono text-sm text-zinc-500">{report.report_id}</p>
+              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${severity.color}`}>
+                {severity.label}
+              </span>
+            </div>
+            <p className="font-semibold mt-1">Livraison : {report.delivery_id}</p>
+            {report.driver_name && <p className="text-sm text-zinc-400">Chauffeur : {report.driver_name}</p>}
+          </div>
+          {analysis.is_damaged ? (
+            <span className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm bg-red-500/10 text-red-400 border border-red-500/20">
+              <AlertTriangle className="w-4 h-4" />
+              Dommage détecté
+            </span>
+          ) : (
+            <span className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm bg-green-500/10 text-green-400 border border-green-500/20">
+              <CheckCircle className="w-4 h-4" />
+              Colis intact
+            </span>
+          )}
+        </div>
+
+        {/* AI Analysis Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          {/* Severity */}
+          <div className="p-4 bg-[#1A1A1E] rounded-lg">
+            <p className="text-xs text-zinc-400 mb-2">Sévérité</p>
+            <span className={`inline-flex px-3 py-1 rounded-full text-sm font-semibold ${severity.color}`}>
+              {severity.label}
+            </span>
+            {analysis.damage_type && (
+              <p className="text-xs text-zinc-500 mt-2">Type : {analysis.damage_type}</p>
+            )}
+          </div>
+
+          {/* Confidence */}
+          <div className="p-4 bg-[#1A1A1E] rounded-lg">
+            <p className="text-xs text-zinc-400 mb-2">Confiance IA</p>
+            <p className="text-2xl font-bold font-mono mb-2">{confidence}%</p>
+            <div className="w-full h-2 bg-[#27272A] rounded-full overflow-hidden">
+              <div 
+                className={`h-full rounded-full transition-all ${severity.barColor}`}
+                style={{ width: `${confidence}%` }}
+              />
+            </div>
+          </div>
+
+          {/* Blockchain Proof */}
+          <div className="p-4 bg-[#1A1A1E] rounded-lg">
+            <p className="text-xs text-zinc-400 mb-2">Preuve horodatée</p>
+            <p className="font-mono text-xs text-green-400 truncate mb-1">
+              {report.blockchain_proof?.hash?.substring(0, 24)}...
+            </p>
+            <p className="text-xs text-zinc-500">
+              {report.created_at ? new Date(report.created_at).toLocaleString('fr-FR') : ''}
+            </p>
+          </div>
+        </div>
+
+        {/* AI Description */}
+        {analysis.description && !hasError && (
+          <div className="p-4 bg-[#0066FF]/5 border border-[#0066FF]/20 rounded-lg mb-4">
+            <div className="flex items-start gap-3">
+              <Shield className="w-5 h-5 text-[#0066FF] flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-xs text-[#0066FF] font-medium mb-1">Analyse Gemini Vision</p>
+                <p className="text-sm text-zinc-300">{analysis.description}</p>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {hasError && (
+          <div className="p-4 bg-yellow-500/5 border border-yellow-500/20 rounded-lg mb-4">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-xs text-yellow-400 font-medium mb-1">Analyse en erreur</p>
+                <p className="text-sm text-zinc-400">{analysis.description}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Photo Preview */}
+        {report.has_photo && (
+          <div>
+            {!photoUrl ? (
+              <Button 
+                onClick={loadPhoto} 
+                variant="outline" 
+                className="border-[#27272A] text-zinc-400"
+                disabled={loadingPhoto}
+                data-testid={`load-photo-${report.report_id}`}
+              >
+                {loadingPhoto ? (
+                  <><RefreshCw className="w-4 h-4 mr-2 animate-spin" /> Chargement...</>
+                ) : (
+                  <><Camera className="w-4 h-4 mr-2" /> Voir la photo</>
+                )}
+              </Button>
+            ) : (
+              <div className="mt-2">
+                <img 
+                  src={photoUrl} 
+                  alt="Photo du colis" 
+                  className="max-h-64 rounded-lg border border-[#27272A] object-contain"
+                  data-testid={`photo-preview-${report.report_id}`}
+                />
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 
 const NewDeliveryForm = ({ onSubmit, onCancel }) => {
   const [formData, setFormData] = useState({

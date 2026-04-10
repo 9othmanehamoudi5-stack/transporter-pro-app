@@ -147,7 +147,8 @@ export const notificationsApi = {
 // ==================== DAMAGE REPORTS ====================
 export const damageReportsApi = {
   getAll: () => api.get('/damage-reports'),
-  create: (data) => api.post('/damage-reports', data)
+  create: (data) => api.post('/damage-reports', data),
+  getPhoto: (reportId) => api.get(`/damage-reports/${reportId}/photo`)
 };
 
 // ==================== ECO SCORES ====================

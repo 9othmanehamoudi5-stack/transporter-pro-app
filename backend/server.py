@@ -194,44 +194,54 @@ async def analyze_package_damage(image_base64: str) -> dict:
         chat = LlmChat(
             api_key=EMERGENT_LLM_KEY,
             session_id=f"damage-{uuid.uuid4()}",
-            system_message="""You are an AI specialized in detecting package damage for logistics. 
-            Analyze the image and respond with ONLY a JSON object (no markdown):
+            system_message="""Tu es un expert en analyse de dommages sur les colis pour la logistique. 
+            Analyse l'image et réponds UNIQUEMENT avec un objet JSON (pas de markdown, pas de backticks):
             {
                 "is_damaged": boolean,
                 "damage_severity": "none" | "minor" | "moderate" | "severe",
                 "damage_type": string or null,
                 "confidence": 0-100,
-                "description": string
-            }"""
+                "description": string en français décrivant ce que tu observes
+            }
+            Sois précis et descriptif dans le champ description."""
         ).with_model("gemini", "gemini-3-flash-preview")
         
         image_content = ImageContent(image_base64=image_base64)
         
         user_message = UserMessage(
-            text="Analyze this package image for any visible damage. Check for dents, tears, crushing, water damage, or any other signs of damage.",
+            text="Analyse cette photo de colis pour détecter tout dommage visible : bosses, déchirures, écrasement, dommages par l'eau ou tout autre signe de détérioration. Décris en français.",
             file_contents=[image_content]
         )
         
         response = await chat.send_message(user_message)
         
-        # Parse response
         import json
         try:
-            # Try to extract JSON from response
             response_text = response.strip()
+            # Remove markdown code blocks if present
             if response_text.startswith("```"):
-                response_text = response_text.split("```")[1]
-                if response_text.startswith("json"):
-                    response_text = response_text[4:]
+                lines = response_text.split("\n")
+                # Remove first and last lines (``` markers)
+                lines = [line for line in lines if not line.strip().startswith("```")]
+                response_text = "\n".join(lines)
+            if response_text.startswith("json"):
+                response_text = response_text[4:].strip()
             result = json.loads(response_text)
+            # Validate expected fields
+            result.setdefault("is_damaged", False)
+            result.setdefault("damage_severity", "none")
+            result.setdefault("damage_type", None)
+            result.setdefault("confidence", 50)
+            result.setdefault("description", "Analyse terminée")
             return result
-        except:
+        except json.JSONDecodeError:
+            logger.warning(f"AI response not valid JSON: {response[:200]}")
             return {
                 "is_damaged": False,
                 "damage_severity": "none",
                 "damage_type": None,
                 "confidence": 50,
-                "description": response[:200] if response else "Unable to analyze image"
+                "description": response[:300] if response else "Analyse terminée sans résultat structuré"
             }
     except Exception as e:
         logger.error(f"AI Analysis error: {e}")
@@ -240,7 +250,7 @@ async def analyze_package_damage(image_base64: str) -> dict:
             "damage_severity": "unknown",
             "damage_type": None,
             "confidence": 0,
-            "description": f"Analysis unavailable: {str(e)}"
+            "description": f"Erreur d'analyse: {str(e)}"
         }
 
 # ==================== NOTIFICATIONS ====================
@@ -716,7 +726,7 @@ async def assign_driver(tracking_id: str, driver_id: str = Form(...), user: dict
 
 @api_router.post("/deliveries/{tracking_id}/gps")
 async def update_gps(tracking_id: str, lat: float = Form(...), lng: float = Form(...), user: dict = Depends(require_role("driver"))):
-    result = await db.deliveries.update_one(
+    await db.deliveries.update_one(
         {"tracking_id": tracking_id},
         {"$set": {"gps_location": {"lat": lat, "lng": lng, "updated_at": datetime.now(timezone.utc).isoformat()}}}
     )
@@ -784,11 +794,15 @@ async def create_damage_report(data: DamageReportCreate, user: dict = Depends(re
     # Analyze image with AI
     ai_analysis = await analyze_package_damage(data.photo_base64)
     
+    # Store photo thumbnail (limit to ~200KB base64 for display in admin)
+    photo_preview = data.photo_base64[:200000] if len(data.photo_base64) > 200000 else data.photo_base64
+    
     report = {
         "report_id": f"DMG-{uuid.uuid4().hex[:8].upper()}",
         "delivery_id": data.delivery_id,
         "driver_id": user["id"],
-        "photo_base64": data.photo_base64[:100] + "...",  # Store truncated for safety
+        "driver_name": user.get("name", ""),
+        "photo_base64": photo_preview,
         "description": data.description,
         "ai_analysis": ai_analysis,
         "created_at": datetime.now(timezone.utc),
@@ -798,8 +812,10 @@ async def create_damage_report(data: DamageReportCreate, user: dict = Depends(re
             "timestamp": datetime.now(timezone.utc).isoformat()
         })
     }
-    result = await db.damage_reports.insert_one(report)
-    report["id"] = str(result.inserted_id)
+    await db.damage_reports.insert_one(report)
+    
+    # Clean response (remove _id, convert dates)
+    report.pop("_id", None)
     report["created_at"] = report["created_at"].isoformat()
     
     return report
@@ -815,8 +831,19 @@ async def get_damage_reports(user: dict = Depends(get_current_user)):
     for r in reports:
         if isinstance(r.get("created_at"), datetime):
             r["created_at"] = r["created_at"].isoformat()
+        # Include a flag indicating if a photo is available
+        has_photo = r.get("photo_base64") and len(r.get("photo_base64", "")) > 200
+        r["has_photo"] = has_photo
     
     return reports
+
+@api_router.get("/damage-reports/{report_id}/photo")
+async def get_damage_report_photo(report_id: str, user: dict = Depends(get_current_user)):
+    """Get the photo for a specific damage report"""
+    report = await db.damage_reports.find_one({"report_id": report_id}, {"photo_base64": 1})
+    if not report:
+        raise HTTPException(status_code=404, detail="Rapport non trouvé")
+    return {"photo_base64": report.get("photo_base64", "")}
 
 # ==================== ECO SCORE ENDPOINTS ====================
 
@@ -1083,7 +1110,7 @@ async def startup():
     driver_email = "driver@test.com"
     existing_driver = await db.users.find_one({"email": driver_email})
     if not existing_driver:
-        result = await db.users.insert_one({
+        await db.users.insert_one({
             "email": driver_email,
             "password_hash": hash_password("driver123"),
             "name": "Jean Dupont",

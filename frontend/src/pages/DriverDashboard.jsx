@@ -122,6 +122,8 @@ export const DriverDashboard = () => {
     }
   };
 
+  const [analysisResult, setAnalysisResult] = useState(null);
+
   const handleDamageReport = async (tracking_id, photoBase64) => {
     try {
       const data = {
@@ -132,10 +134,14 @@ export const DriverDashboard = () => {
       
       if (isOnline) {
         const response = await damageReportsApi.create(data);
-        if (response.data.ai_analysis?.is_damaged) {
-          toast.warning('Dommage détecté par IA !');
+        const analysis = response.data.ai_analysis;
+        // Show detailed result
+        setAnalysisResult(analysis);
+        if (analysis?.is_damaged) {
+          const severityLabels = { minor: 'Faible', moderate: 'Moyenne', severe: 'Élevée' };
+          toast.warning(`Dommage détecté - Sévérité: ${severityLabels[analysis.damage_severity] || analysis.damage_severity}`);
         } else {
-          toast.success('Colis en bon état');
+          toast.success('Colis en bon état - Confiance: ' + (analysis?.confidence || 0) + '%');
         }
       } else {
         addToQueue('damage_report', data);
@@ -144,6 +150,7 @@ export const DriverDashboard = () => {
       setShowCamera(false);
     } catch (error) {
       toast.error('Erreur lors de l\'analyse');
+      setShowCamera(false);
     }
   };
 
@@ -338,6 +345,60 @@ export const DriverDashboard = () => {
           </button>
         </div>
       </nav>
+
+      {/* AI Analysis Result Overlay */}
+      {analysisResult && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4" data-testid="ai-result-overlay">
+          <div className="bg-[#121214] border border-[#27272A] rounded-2xl p-6 max-w-sm w-full">
+            <div className="text-center mb-4">
+              {analysisResult.is_damaged ? (
+                <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-red-500/10 flex items-center justify-center">
+                  <AlertTriangle className="w-8 h-8 text-red-400" />
+                </div>
+              ) : (
+                <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-green-500/10 flex items-center justify-center">
+                  <CheckCircle className="w-8 h-8 text-green-400" />
+                </div>
+              )}
+              <h3 className="text-lg font-bold">
+                {analysisResult.is_damaged ? 'Dommage détecté' : 'Colis intact'}
+              </h3>
+            </div>
+
+            <div className="space-y-3 mb-4">
+              <div className="flex justify-between items-center p-3 bg-[#1A1A1E] rounded-lg">
+                <span className="text-sm text-zinc-400">Sévérité</span>
+                <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
+                  analysisResult.damage_severity === 'severe' ? 'text-red-400 bg-red-400/10' :
+                  analysisResult.damage_severity === 'moderate' ? 'text-orange-400 bg-orange-400/10' :
+                  analysisResult.damage_severity === 'minor' ? 'text-yellow-400 bg-yellow-400/10' :
+                  'text-green-400 bg-green-400/10'
+                }`}>
+                  {{none: 'Aucune', minor: 'Faible', moderate: 'Moyenne', severe: 'Élevée'}[analysisResult.damage_severity] || 'Inconnue'}
+                </span>
+              </div>
+              <div className="flex justify-between items-center p-3 bg-[#1A1A1E] rounded-lg">
+                <span className="text-sm text-zinc-400">Confiance IA</span>
+                <span className="text-sm font-mono font-bold">{analysisResult.confidence || 0}%</span>
+              </div>
+            </div>
+
+            {analysisResult.description && (
+              <p className="text-sm text-zinc-400 mb-4 p-3 bg-[#1A1A1E] rounded-lg">
+                {analysisResult.description}
+              </p>
+            )}
+
+            <Button 
+              onClick={() => { setAnalysisResult(null); setSelectedDelivery(null); }}
+              className="w-full h-12 bg-[#0066FF] hover:bg-[#0052CC] rounded-xl"
+              data-testid="close-ai-result"
+            >
+              Compris
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Camera Modal */}
       {showCamera && selectedDelivery && (
