@@ -37,6 +37,12 @@ Application SaaS logistique "Transporter-Pro" pour PME de transport.
 - [x] Gating : Solo verrouillé, Croissance+ débloqué
 - [x] Quick action "Carte GPS" navigue vers Carte Live
 
+### Phase 6 - Fallback Galerie Caméra (DONE - 11 Avril 2026)
+- [x] Bouton "Choisir depuis la galerie" (`<input type="file" accept="image/*">`) sous "Prendre une photo"
+- [x] Si caméra échoue (Safari iPhone etc.) : galerie devient option PRIMAIRE (bleu)
+- [x] Redimensionnement/compression image identique au flux caméra (max 1280px, JPEG 70%)
+- [x] data-testid sur tous les éléments interactifs
+
 ## Backlog P1
 - [ ] Corriger règles sécurité Firebase (voir /app/memory/FIREBASE_RULES.md)
 
