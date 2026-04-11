@@ -334,7 +334,9 @@ async def register(data: UserCreate):
         "id": user_id,
         "email": email,
         "name": data.name,
-        "role": data.role
+        "role": data.role,
+        "access_token": access_token,
+        "refresh_token": refresh_token
     })
     response.set_cookie("access_token", access_token, httponly=True, secure=True, samesite="none", max_age=3600, path="/")
     response.set_cookie("refresh_token", refresh_token, httponly=True, secure=True, samesite="none", max_age=604800, path="/")
@@ -377,7 +379,9 @@ async def login(data: UserLogin, request: Request):
         "id": user_id,
         "email": email,
         "name": user["name"],
-        "role": user["role"]
+        "role": user["role"],
+        "access_token": access_token,
+        "refresh_token": refresh_token
     })
     response.set_cookie("access_token", access_token, httponly=True, secure=True, samesite="none", max_age=3600, path="/")
     response.set_cookie("refresh_token", refresh_token, httponly=True, secure=True, samesite="none", max_age=604800, path="/")
@@ -396,7 +400,18 @@ async def get_me(user: dict = Depends(get_current_user)):
 
 @api_router.post("/auth/refresh")
 async def refresh_token(request: Request):
+    # Try cookie first, then body, then Authorization header
     token = request.cookies.get("refresh_token")
+    if not token:
+        try:
+            body = await request.json()
+            token = body.get("refresh_token")
+        except Exception:
+            pass
+    if not token:
+        auth_header = request.headers.get("Authorization", "")
+        if auth_header.startswith("Bearer "):
+            token = auth_header[7:]
     if not token:
         raise HTTPException(status_code=401, detail="No refresh token")
     try:
@@ -410,7 +425,7 @@ async def refresh_token(request: Request):
         user_id = str(user["_id"])
         access_token = create_access_token(user_id, user["email"], user["role"])
         
-        response = JSONResponse(content={"message": "Token refreshed"})
+        response = JSONResponse(content={"message": "Token refreshed", "access_token": access_token})
         response.set_cookie("access_token", access_token, httponly=True, secure=True, samesite="none", max_age=3600, path="/")
         return response
     except jwt.ExpiredSignatureError:

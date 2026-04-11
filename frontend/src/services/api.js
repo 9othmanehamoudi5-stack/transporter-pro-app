@@ -1,5 +1,6 @@
 import axios from 'axios';
 import firestoreMissions from './firebase';
+import { tokenStore } from './tokenStore';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -11,7 +12,16 @@ const api = axios.create({
   }
 });
 
-// 401 interceptor: attempt token refresh once, then reject (no redirect here)
+// Request interceptor: attach token from localStorage as fallback
+api.interceptors.request.use((config) => {
+  const token = tokenStore.getAccess();
+  if (token && !config.headers.Authorization) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// 401 interceptor: attempt token refresh once via body (not just cookie)
 let isRefreshing = false;
 let failedQueue = [];
 
@@ -28,7 +38,6 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // Only intercept 401s, and never retry the refresh endpoint itself
     if (
       error.response?.status === 401 &&
       !originalRequest._retry &&
@@ -45,12 +54,23 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        await axios.post(`${API_URL}/api/auth/refresh`, {}, { withCredentials: true });
+        // Send refresh_token in body as fallback for missing cookies
+        const refreshToken = tokenStore.getRefresh();
+        const res = await axios.post(
+          `${API_URL}/api/auth/refresh`,
+          refreshToken ? { refresh_token: refreshToken } : {},
+          { withCredentials: true }
+        );
+        // Save new access_token to localStorage
+        if (res.data?.access_token) {
+          tokenStore.save(res.data.access_token, null);
+        }
         processQueue(null);
         return api(originalRequest);
       } catch (refreshError) {
         processQueue(refreshError);
-        // Do NOT redirect here — let React ProtectedRoute handle it
+        // Clear stale tokens
+        tokenStore.clear();
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;

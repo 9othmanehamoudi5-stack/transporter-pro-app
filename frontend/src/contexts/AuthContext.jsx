@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import axios from 'axios';
+import { tokenStore } from '../services/tokenStore';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -13,36 +14,46 @@ export const useAuth = () => {
   return context;
 };
 
-function formatApiErrorDetail(detail) {
-  if (detail == null) return "Something went wrong. Please try again.";
-  if (typeof detail === "string") return detail;
-  if (Array.isArray(detail))
-    return detail.map((e) => (e && typeof e.msg === "string" ? e.msg : JSON.stringify(e))).filter(Boolean).join(" ");
-  if (detail && typeof detail.msg === "string") return detail.msg;
-  return String(detail);
-}
+// Build headers with localStorage token as fallback
+const authHeaders = () => {
+  const token = tokenStore.getAccess();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
 
 export const AuthProvider = ({ children }) => {
-  // Three states: null = still checking, false = confirmed not auth, object = authenticated
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const didCheck = useRef(false);
 
   const checkAuth = useCallback(async () => {
     try {
-      const { data } = await axios.get(`${API_URL}/api/auth/me`, { withCredentials: true });
+      const { data } = await axios.get(`${API_URL}/api/auth/me`, {
+        withCredentials: true,
+        headers: authHeaders()
+      });
       setUser(data);
     } catch (err) {
-      // Only try refresh if we got a 401 (not a network error)
       if (err.response?.status === 401) {
+        // Try refresh — send token in body as fallback for missing cookie
+        const refreshToken = tokenStore.getRefresh();
         try {
-          await axios.post(`${API_URL}/api/auth/refresh`, {}, { withCredentials: true });
-          // Retry /me after refresh
-          const { data } = await axios.get(`${API_URL}/api/auth/me`, { withCredentials: true });
+          const refreshRes = await axios.post(
+            `${API_URL}/api/auth/refresh`,
+            refreshToken ? { refresh_token: refreshToken } : {},
+            { withCredentials: true }
+          );
+          // Save new access_token
+          if (refreshRes.data?.access_token) {
+            tokenStore.save(refreshRes.data.access_token, null);
+          }
+          const { data } = await axios.get(`${API_URL}/api/auth/me`, {
+            withCredentials: true,
+            headers: authHeaders()
+          });
           setUser(data);
           return;
         } catch {
-          // Refresh also failed — truly not authenticated
+          tokenStore.clear();
         }
       }
       setUser(false);
@@ -65,10 +76,16 @@ export const AuthProvider = ({ children }) => {
         { email, password },
         { withCredentials: true }
       );
+      // Save tokens to localStorage for mobile persistence
+      tokenStore.save(data.access_token, data.refresh_token);
       setUser(data);
       return { success: true };
     } catch (e) {
-      return { success: false, error: formatApiErrorDetail(e.response?.data?.detail) || e.message };
+      const detail = e.response?.data?.detail;
+      const msg = typeof detail === 'string' ? detail
+        : Array.isArray(detail) ? detail.map(d => d.msg || d).join(', ')
+        : e.message;
+      return { success: false, error: msg };
     }
   };
 
@@ -79,19 +96,28 @@ export const AuthProvider = ({ children }) => {
         { email, password, name, role },
         { withCredentials: true }
       );
+      tokenStore.save(data.access_token, data.refresh_token);
       setUser(data);
       return { success: true };
     } catch (e) {
-      return { success: false, error: formatApiErrorDetail(e.response?.data?.detail) || e.message };
+      const detail = e.response?.data?.detail;
+      const msg = typeof detail === 'string' ? detail
+        : Array.isArray(detail) ? detail.map(d => d.msg || d).join(', ')
+        : e.message;
+      return { success: false, error: msg };
     }
   };
 
   const logout = async () => {
     try {
-      await axios.post(`${API_URL}/api/auth/logout`, {}, { withCredentials: true });
+      await axios.post(`${API_URL}/api/auth/logout`, {}, {
+        withCredentials: true,
+        headers: authHeaders()
+      });
     } catch {
       // Ignore
     }
+    tokenStore.clear();
     setUser(false);
   };
 
