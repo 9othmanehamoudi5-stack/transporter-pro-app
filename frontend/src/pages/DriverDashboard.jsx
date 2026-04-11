@@ -532,88 +532,19 @@ const DeliveryCard = ({ delivery, onStart, onPhoto, onComplete }) => {
 };
 
 const CameraModal = ({ delivery, onCapture, onClose }) => {
-  const videoRef = useRef(null);
   const canvasRef = useRef(null);
-  const fileInputRef = useRef(null);
-  const [stream, setStream] = useState(null);
+  const cameraInputRef = useRef(null);
+  const galleryInputRef = useRef(null);
   const [photo, setPhoto] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
   const [analyzing, setAnalyzing] = useState(false);
-  const [cameraError, setCameraError] = useState(null);
 
-  useEffect(() => {
-    startCamera();
-    return () => {
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-      }
-    };
-  }, []);
-
-  const startCamera = async () => {
-    setCameraError(null);
-
-    if (!navigator.mediaDevices?.getUserMedia) {
-      setCameraError('Caméra non disponible sur cet appareil ou connexion non sécurisée (HTTPS requis)');
-      return;
-    }
-
-    try {
-      const mediaStream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 960 } },
-        audio: false
-      });
-      setStream(mediaStream);
-      if (videoRef.current) {
-        videoRef.current.srcObject = mediaStream;
-      }
-    } catch (error) {
-      if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
-        setCameraError('Permission caméra refusée. Autorisez l\'accès dans les paramètres de votre navigateur puis réessayez.');
-      } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
-        setCameraError('Aucune caméra détectée sur cet appareil.');
-      } else if (error.name === 'NotReadableError' || error.name === 'TrackStartError') {
-        setCameraError('La caméra est utilisée par une autre application. Fermez-la puis réessayez.');
-      } else {
-        setCameraError(`Erreur caméra : ${error.message}`);
-      }
-    }
-  };
-
-  const takePhoto = () => {
-    if (videoRef.current && canvasRef.current) {
-      const video = videoRef.current;
-      const canvas = canvasRef.current;
-      
-      const maxDim = 1280;
-      let w = video.videoWidth;
-      let h = video.videoHeight;
-      if (Math.max(w, h) > maxDim) {
-        const ratio = maxDim / Math.max(w, h);
-        w = Math.round(w * ratio);
-        h = Math.round(h * ratio);
-      }
-      
-      canvas.width = w;
-      canvas.height = h;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(video, 0, 0, w, h);
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
-      const base64 = dataUrl.split(',')[1];
-      setPhoto(base64);
-      
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-      }
-    }
-  };
-
-  const handleFileSelect = (e) => {
-    const file = e.target.files?.[0];
+  const processImage = (file) => {
     if (!file) return;
-
     const img = new Image();
     const reader = new FileReader();
     reader.onload = (ev) => {
+      setPreviewUrl(ev.target.result);
       img.onload = () => {
         const canvas = canvasRef.current;
         if (!canvas) return;
@@ -627,170 +558,125 @@ const CameraModal = ({ delivery, onCapture, onClose }) => {
         }
         canvas.width = w;
         canvas.height = h;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, w, h);
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
-        setPhoto(dataUrl.split(',')[1]);
-        // Stop camera if it was running
-        if (stream) {
-          stream.getTracks().forEach(track => track.stop());
-        }
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        setPhoto(canvas.toDataURL('image/jpeg', 0.7).split(',')[1]);
       };
       img.src = ev.target.result;
     };
     reader.readAsDataURL(file);
-    // Reset input so same file can be re-selected
-    e.target.value = '';
   };
 
-  const handleSubmit = async () => {
-    if (photo) {
-      setAnalyzing(true);
-      await onCapture(photo);
-      setAnalyzing(false);
-    }
+  const handleConfirm = async () => {
+    if (!photo) return;
+    setAnalyzing(true);
+    await onCapture(photo);
+    setAnalyzing(false);
+  };
+
+  const handleReset = () => {
+    setPhoto(null);
+    setPreviewUrl(null);
+    if (cameraInputRef.current) cameraInputRef.current.value = '';
+    if (galleryInputRef.current) galleryInputRef.current.value = '';
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black">
-      {/* Hidden file input for gallery */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={handleFileSelect}
-        data-testid="gallery-file-input"
-      />
+    <div className="fixed inset-0 z-50 bg-[#0A0A0B] flex flex-col" data-testid="camera-modal">
+      {/* Hidden file inputs */}
+      <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => processImage(e.target.files?.[0])} data-testid="camera-file-input" />
+      <input ref={galleryInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => processImage(e.target.files?.[0])} data-testid="gallery-file-input" />
+      <canvas ref={canvasRef} className="hidden" />
 
-      {/* Close button */}
-      <button 
-        onClick={onClose}
-        className="absolute top-4 right-4 z-10 w-10 h-10 bg-black/50 rounded-full flex items-center justify-center"
-      >
-        <X className="w-6 h-6" />
-      </button>
-
-      {/* Camera/Photo view */}
-      <div className="h-full flex flex-col">
-        <div className="flex-1 relative bg-black">
-          {cameraError ? (
-            <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
-              <Camera className="w-16 h-16 text-zinc-600 mb-4" />
-              <p className="text-base text-zinc-300 mb-2 font-medium">Caméra indisponible</p>
-              <p className="text-sm text-zinc-500 mb-6 max-w-xs">{cameraError}</p>
-              <Button
-                onClick={startCamera}
-                variant="outline"
-                className="border-[#27272A] px-6 mb-3"
-                data-testid="retry-camera-btn"
-              >
-                <RefreshCw className="w-4 h-4 mr-2" />
-                Réessayer la caméra
-              </Button>
-            </div>
-          ) : !photo ? (
-            <video 
-              ref={videoRef} 
-              autoPlay 
-              playsInline 
-              muted
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <img 
-              src={`data:image/jpeg;base64,${photo}`}
-              alt="Captured"
-              className="w-full h-full object-cover"
-            />
-          )}
-          <canvas ref={canvasRef} className="hidden" />
-          
-          {/* Overlay info */}
-          {!cameraError && !photo && (
-            <div className="absolute top-4 left-4 bg-black/50 backdrop-blur px-3 py-2 rounded-lg">
-              <p className="text-sm font-mono">{delivery.tracking_id}</p>
-            </div>
-          )}
-          {photo && (
-            <div className="absolute top-4 left-4 bg-black/50 backdrop-blur px-3 py-2 rounded-lg">
-              <p className="text-sm font-mono">{delivery.tracking_id}</p>
-            </div>
-          )}
+      {/* Header */}
+      <div className="flex items-center justify-between p-4 border-b border-[#27272A]">
+        <div>
+          <p className="font-mono text-sm text-zinc-400">{delivery.tracking_id}</p>
+          <p className="font-semibold text-white">Photo du colis</p>
         </div>
+        <button onClick={onClose} className="w-10 h-10 bg-[#1A1A1E] rounded-full flex items-center justify-center" data-testid="close-camera-btn">
+          <X className="w-5 h-5 text-zinc-400" />
+        </button>
+      </div>
 
-        {/* Action buttons */}
-        <div className="p-4 bg-[#121214] safe-area-inset-bottom">
-          {cameraError ? (
-            <div className="space-y-3">
-              {/* Gallery is PRIMARY when camera fails */}
-              <Button 
-                onClick={() => fileInputRef.current?.click()}
-                className="w-full h-16 text-lg bg-[#0066FF] hover:bg-[#0052CC] rounded-xl"
-                data-testid="gallery-btn-primary"
-              >
-                <Upload className="w-6 h-6 mr-2" />
-                Choisir depuis la galerie
-              </Button>
-              <Button 
-                onClick={onClose}
-                variant="outline"
-                className="w-full h-12 border-[#27272A] rounded-xl text-zinc-400"
-                data-testid="close-camera-btn"
-              >
-                Fermer
-              </Button>
+      {/* Content */}
+      <div className="flex-1 flex flex-col items-center justify-center p-6 overflow-hidden">
+        {previewUrl ? (
+          <div className="w-full max-w-sm space-y-4">
+            <div className="relative rounded-2xl overflow-hidden border-2 border-[#0066FF]/40 shadow-lg shadow-[#0066FF]/10">
+              <img src={previewUrl} alt="Preview" className="w-full h-auto max-h-[55vh] object-contain bg-black" data-testid="photo-preview" />
+              <div className="absolute top-3 left-3 bg-black/60 backdrop-blur px-2.5 py-1 rounded-lg">
+                <p className="text-xs font-mono text-white/80">{delivery.tracking_id}</p>
+              </div>
             </div>
-          ) : !photo ? (
-            <div className="space-y-3">
-              <Button 
-                onClick={takePhoto}
-                className="w-full h-16 text-lg bg-[#0066FF] hover:bg-[#0052CC] rounded-xl"
-                data-testid="take-photo-btn"
-              >
-                <Camera className="w-6 h-6 mr-2" />
-                Prendre une photo
-              </Button>
-              <button 
-                onClick={() => fileInputRef.current?.click()}
-                className="w-full text-center text-sm text-zinc-400 hover:text-zinc-200 transition-colors py-2"
-                data-testid="gallery-btn-secondary"
-              >
-                <Upload className="w-4 h-4 inline mr-1.5 -mt-0.5" />
-                Choisir depuis la galerie
-              </button>
+            <p className="text-center text-sm text-zinc-400">Vérifiez que la photo est nette avant de confirmer</p>
+          </div>
+        ) : (
+          <div className="w-full max-w-sm space-y-5 text-center">
+            <div className="w-20 h-20 mx-auto bg-[#1A1A1E] rounded-2xl flex items-center justify-center">
+              <Camera className="w-10 h-10 text-zinc-500" />
             </div>
-          ) : (
-            <div className="grid grid-cols-2 gap-3">
-              <Button 
-                onClick={() => { setPhoto(null); startCamera(); }}
-                variant="outline"
-                className="h-16 text-lg border-[#27272A] rounded-xl"
-                data-testid="retake-photo-btn"
-              >
-                Reprendre
-              </Button>
-              <Button 
-                onClick={handleSubmit}
-                disabled={analyzing}
-                className="h-16 text-lg bg-green-600 hover:bg-green-700 rounded-xl"
-                data-testid="submit-photo-btn"
-              >
-                {analyzing ? (
-                  <>
-                    <RefreshCw className="w-5 h-5 mr-2 animate-spin" />
-                    Analyse IA...
-                  </>
-                ) : (
-                  <>
-                    <Upload className="w-5 h-5 mr-2" />
-                    Analyser
-                  </>
-                )}
-              </Button>
+            <div>
+              <p className="text-lg font-semibold text-white mb-1">Photographier le colis</p>
+              <p className="text-sm text-zinc-400">Prenez une photo ou choisissez-en une depuis votre galerie</p>
             </div>
-          )}
-        </div>
+          </div>
+        )}
+      </div>
+
+      {/* Action Buttons */}
+      <div className="p-4 pb-6 bg-[#121214] border-t border-[#27272A] safe-area-inset-bottom">
+        {previewUrl ? (
+          <div className="space-y-3 max-w-sm mx-auto">
+            <Button
+              onClick={handleConfirm}
+              disabled={analyzing || !photo}
+              className="w-full h-16 text-lg bg-[#0066FF] hover:bg-[#0052CC] rounded-xl font-semibold"
+              data-testid="confirm-photo-btn"
+            >
+              {analyzing ? (
+                <>
+                  <RefreshCw className="w-5 h-5 mr-2 animate-spin" />
+                  Analyse IA en cours...
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="w-6 h-6 mr-2" />
+                  Confirmer la photo
+                </>
+              )}
+            </Button>
+            <Button
+              onClick={handleReset}
+              disabled={analyzing}
+              variant="outline"
+              className="w-full h-12 border-[#27272A] rounded-xl text-zinc-400"
+              data-testid="retake-photo-btn"
+            >
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Changer de photo
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-3 max-w-sm mx-auto">
+            <Button
+              onClick={() => cameraInputRef.current?.click()}
+              className="w-full h-16 text-lg bg-[#0066FF] hover:bg-[#0052CC] rounded-xl font-semibold"
+              data-testid="take-photo-btn"
+            >
+              <Camera className="w-6 h-6 mr-2" />
+              Prendre une photo
+            </Button>
+            <Button
+              onClick={() => galleryInputRef.current?.click()}
+              variant="outline"
+              className="w-full h-14 text-base border-[#27272A] rounded-xl text-zinc-300"
+              data-testid="gallery-btn"
+            >
+              <Upload className="w-5 h-5 mr-2" />
+              Choisir depuis la galerie
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );
