@@ -984,11 +984,126 @@ async def get_eco_summary(user: dict = Depends(require_role("admin"))):
             "avg_score": {"$avg": "$score"},
             "total_distance": {"$sum": "$distance_km"},
             "total_co2": {"$sum": "$co2_kg"},
-            "total_fuel": {"$sum": "$fuel_liters"}
-        }}
+            "total_fuel": {"$sum": "$fuel_liters"},
+            "entries": {"$sum": 1}
+        }},
+        {"$sort": {"avg_score": -1}}
     ]
     results = await db.eco_scores.aggregate(pipeline).to_list(100)
+
+    # Enrich with driver names from users collection
+    for r in results:
+        from bson import ObjectId as BsonObjectId
+        try:
+            driver = await db.users.find_one({"_id": BsonObjectId(r["_id"])}, {"_id": 0, "name": 1})
+        except Exception:
+            driver = await db.users.find_one({"id": r["_id"]}, {"_id": 0, "name": 1})
+        r["driver_name"] = driver["name"] if driver and driver.get("name") else r["_id"]
+
     return results
+
+
+@api_router.get("/eco-scores/daily-avg")
+async def get_eco_daily_avg(user: dict = Depends(require_role("admin"))):
+    """Company-wide daily average eco-score for last 30 days"""
+    thirty_days_ago = (datetime.now(timezone.utc) - timedelta(days=30)).strftime("%Y-%m-%d")
+    pipeline = [
+        {"$match": {"date": {"$gte": thirty_days_ago}}},
+        {"$group": {
+            "_id": "$date",
+            "avg_score": {"$avg": "$score"},
+            "drivers_count": {"$addToSet": "$driver_id"}
+        }},
+        {"$project": {
+            "_id": 0,
+            "date": "$_id",
+            "avg_score": {"$round": ["$avg_score", 1]},
+            "drivers_count": {"$size": "$drivers_count"}
+        }},
+        {"$sort": {"date": 1}}
+    ]
+    results = await db.eco_scores.aggregate(pipeline).to_list(60)
+    return results
+
+
+@api_router.post("/eco-scores/recalculate")
+async def recalculate_eco_scores(user: dict = Depends(require_role("admin"))):
+    """Recalculate eco-scores for all drivers based on real delivery and damage data"""
+    from bson import ObjectId as BsonObjectId
+    all_drivers_cursor = db.users.find({"role": "driver"}, {"_id": 1, "name": 1})
+    all_drivers = []
+    async for d in all_drivers_cursor:
+        all_drivers.append({"id": str(d["_id"]), "name": d.get("name", "Chauffeur")})
+
+    recalculated = []
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+
+    for driver in all_drivers:
+        did = driver["id"]
+
+        # Count completed deliveries
+        completed = await db.deliveries.count_documents({"driver_id": did, "status": "delivered"})
+        total = await db.deliveries.count_documents({"driver_id": did})
+
+        # Get all tracking IDs for this driver
+        driver_deliveries = await db.deliveries.find({"driver_id": did}, {"tracking_id": 1, "_id": 0}).to_list(500)
+        tracking_ids = [d["tracking_id"] for d in driver_deliveries]
+
+        # Count damage reports with damage
+        damages = await db.damage_reports.count_documents({
+            "delivery_id": {"$in": tracking_ids},
+            "ai_analysis.is_damaged": True
+        }) if tracking_ids else 0
+
+        # Count severe damages
+        severe = await db.damage_reports.count_documents({
+            "delivery_id": {"$in": tracking_ids},
+            "ai_analysis.damage_severity": "severe"
+        }) if tracking_ids else 0
+
+        # Base score: start at 85
+        score = 85.0
+
+        # Bonus for delivery completion rate
+        if total > 0:
+            completion_rate = completed / total
+            score += completion_rate * 10  # up to +10
+
+        # Penalty for damages
+        if completed > 0:
+            damage_rate = damages / completed
+            score -= damage_rate * 20  # -20 per 100% damage rate
+            score -= severe * 5  # extra -5 per severe damage
+
+        # Estimated distance & CO2 (rough: 25km per delivery)
+        est_distance = completed * 25
+        co2 = est_distance * 0.12  # ~120g CO2/km for a van
+        fuel = est_distance / 10  # ~10 km/L
+
+        score = max(0, min(100, round(score)))
+
+        existing = await db.eco_scores.find_one({"driver_id": did, "date": today})
+
+        score_doc = {
+            "driver_id": did,
+            "date": today,
+            "score": score,
+            "distance_km": round(est_distance + (existing["distance_km"] if existing else 0), 1),
+            "co2_kg": round(co2 + (existing["co2_kg"] if existing else 0), 2),
+            "fuel_liters": round(fuel + (existing["fuel_liters"] if existing else 0), 2),
+            "harsh_braking_count": existing["harsh_braking_count"] if existing else 0,
+            "harsh_acceleration_count": existing["harsh_acceleration_count"] if existing else 0,
+            "created_at": datetime.now(timezone.utc)
+        }
+
+        await db.eco_scores.update_one(
+            {"driver_id": did, "date": today},
+            {"$set": score_doc},
+            upsert=True
+        )
+        recalculated.append({"driver_id": did, "name": driver.get("name", did), "score": score})
+
+    return {"recalculated": len(recalculated), "drivers": recalculated}
 
 # ==================== CASH FLOW / DASHBOARD ENDPOINTS ====================
 

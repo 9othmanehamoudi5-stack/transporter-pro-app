@@ -226,7 +226,9 @@ export const damageReportsApi = {
 export const ecoScoresApi = {
   getAll: (driverId) => api.get('/eco-scores', { params: driverId ? { driver_id: driverId } : {} }),
   update: (data) => api.post('/eco-scores', data),
-  getSummary: () => api.get('/eco-scores/summary')
+  getSummary: () => api.get('/eco-scores/summary'),
+  getDailyAvg: () => api.get('/eco-scores/daily-avg'),
+  recalculate: () => api.post('/eco-scores/recalculate')
 };
 
 // ==================== DASHBOARD ====================
