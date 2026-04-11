@@ -46,12 +46,21 @@ Application SaaS logistique "Transporter-Pro" pour PME de transport.
 - [x] Bouton "Changer de photo" pour reprendre
 - [x] Compression/redimensionnement (max 1280px, JPEG 70%) avant envoi
 
+### Phase 7 - Éco-scores Pro Mode (DONE - 11 Avril 2026)
+- [x] Noms chauffeurs dans le tableau (lookup users collection via ObjectId)
+- [x] Podium Top 3 de la semaine avec médailles or/argent/bronze
+- [x] Graphique AreaChart recharts — évolution score moyen 30 jours
+- [x] Calcul réel basé sur livraisons complétées, taux de dommages (Gemini), distance
+- [x] Endpoint `/api/eco-scores/recalculate` pour recalculer à la demande
+- [x] Endpoint `/api/eco-scores/daily-avg` pour historique 30j
+- [x] Cards KPI : Score moyen entreprise, CO2 total, Distance totale
+- [x] Bouton Exporter rapport
+
 ## Backlog P1
 - [ ] Corriger règles sécurité Firebase (voir /app/memory/FIREBASE_RULES.md)
 
 ## Backlog P2
 - [ ] Mode hors-ligne (localStorage + file sync)
-- [ ] Score éco-conduite & calcul CO2 réel
 
 ## Problèmes Connus
 - Firestore writes échouent silencieusement (Permission Denied) - non-bloquant
