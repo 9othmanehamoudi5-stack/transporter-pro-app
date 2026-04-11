@@ -250,6 +250,15 @@ table, thead, tbody, tr, td, th {
 
 .leaflet-container {
   background: #0a0a0c !important;
+  z-index: 1 !important;
+}
+
+.leaflet-pane {
+  z-index: 2 !important;
+}
+
+.leaflet-top, .leaflet-bottom {
+  z-index: 3 !important;
 }
 
 @keyframes pulse-glow {

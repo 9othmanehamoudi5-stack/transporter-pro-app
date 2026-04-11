@@ -227,11 +227,11 @@ export const AdminDashboard = () => {
       
       {/* Mobile overlay */}
       {sidebarOpen && (
-        <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
+        <div className="fixed inset-0 bg-black/60 z-[9998] lg:hidden" onClick={() => setSidebarOpen(false)} />
       )}
 
       {/* Sidebar */}
-      <aside className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-[#121214] border-r border-[#27272A] transform transition-transform lg:transform-none flex flex-col ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+      <aside className={`fixed lg:static inset-y-0 left-0 z-[9999] w-64 bg-[#0A0A0B] border-r border-[#27272A] transform transition-transform lg:transform-none flex flex-col ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
         <div className="flex items-center gap-3 p-4 border-b border-[#27272A]">
           <div className="w-10 h-10 bg-[#0066FF] rounded-lg flex items-center justify-center">
             <Truck className="w-6 h-6 text-white" />
@@ -284,7 +284,7 @@ export const AdminDashboard = () => {
           })}
         </nav>
 
-        <div className="p-4 bg-[#121214] border-t border-[#27272A]">
+        <div className="p-4 bg-[#0A0A0B] border-t border-[#27272A]">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-10 h-10 rounded-full bg-[#1A1A1E] flex items-center justify-center">
               <span className="text-sm font-medium">{user?.name?.[0]?.toUpperCase()}</span>
@@ -309,7 +309,7 @@ export const AdminDashboard = () => {
       {/* Main Content */}
       <main className="flex-1 min-h-screen overflow-auto">
         {/* Header */}
-        <header className="sticky top-0 z-30 bg-[#0A0A0B]/80 backdrop-blur-lg border-b border-[#27272A] px-4 lg:px-6 py-4">
+        <header className="sticky top-0 z-40 bg-[#0A0A0B]/95 backdrop-blur-lg border-b border-[#27272A] px-4 lg:px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <button className="lg:hidden" onClick={() => setSidebarOpen(true)}>

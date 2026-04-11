@@ -537,6 +537,7 @@ const CameraModal = ({ delivery, onCapture, onClose }) => {
   const [stream, setStream] = useState(null);
   const [photo, setPhoto] = useState(null);
   const [analyzing, setAnalyzing] = useState(false);
+  const [cameraError, setCameraError] = useState(null);
 
   useEffect(() => {
     startCamera();
@@ -548,16 +549,34 @@ const CameraModal = ({ delivery, onCapture, onClose }) => {
   }, []);
 
   const startCamera = async () => {
+    setCameraError(null);
+
+    // Check if getUserMedia is available
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setCameraError('Caméra non disponible sur cet appareil ou connexion non sécurisée (HTTPS requis)');
+      return;
+    }
+
     try {
+      // Try rear camera first
       const mediaStream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'environment' } 
+        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 960 } },
+        audio: false
       });
       setStream(mediaStream);
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
       }
     } catch (error) {
-      toast.error('Impossible d\'accéder à la caméra');
+      if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+        setCameraError('Permission caméra refusée. Autorisez l\'accès dans les paramètres de votre navigateur puis réessayez.');
+      } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
+        setCameraError('Aucune caméra détectée sur cet appareil.');
+      } else if (error.name === 'NotReadableError' || error.name === 'TrackStartError') {
+        setCameraError('La caméra est utilisée par une autre application. Fermez-la puis réessayez.');
+      } else {
+        setCameraError(`Erreur caméra : ${error.message}`);
+      }
     }
   };
 
@@ -611,12 +630,27 @@ const CameraModal = ({ delivery, onCapture, onClose }) => {
 
       {/* Camera/Photo view */}
       <div className="h-full flex flex-col">
-        <div className="flex-1 relative">
-          {!photo ? (
+        <div className="flex-1 relative bg-black">
+          {cameraError ? (
+            <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
+              <Camera className="w-16 h-16 text-zinc-600 mb-4" />
+              <p className="text-base text-zinc-300 mb-2 font-medium">Caméra indisponible</p>
+              <p className="text-sm text-zinc-500 mb-6 max-w-xs">{cameraError}</p>
+              <Button
+                onClick={startCamera}
+                className="bg-[#0066FF] hover:bg-[#0052CC] px-6"
+                data-testid="retry-camera-btn"
+              >
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Réessayer
+              </Button>
+            </div>
+          ) : !photo ? (
             <video 
               ref={videoRef} 
               autoPlay 
               playsInline 
+              muted
               className="w-full h-full object-cover"
             />
           ) : (
@@ -629,14 +663,24 @@ const CameraModal = ({ delivery, onCapture, onClose }) => {
           <canvas ref={canvasRef} className="hidden" />
           
           {/* Overlay info */}
-          <div className="absolute top-4 left-4 bg-black/50 backdrop-blur px-3 py-2 rounded-lg">
-            <p className="text-sm font-mono">{delivery.tracking_id}</p>
-          </div>
+          {!cameraError && (
+            <div className="absolute top-4 left-4 bg-black/50 backdrop-blur px-3 py-2 rounded-lg">
+              <p className="text-sm font-mono">{delivery.tracking_id}</p>
+            </div>
+          )}
         </div>
 
         {/* Action buttons */}
         <div className="p-4 bg-[#121214] safe-area-inset-bottom">
-          {!photo ? (
+          {cameraError ? (
+            <Button 
+              onClick={onClose}
+              variant="outline"
+              className="w-full h-16 text-lg border-[#27272A] rounded-xl"
+            >
+              Fermer
+            </Button>
+          ) : !photo ? (
             <Button 
               onClick={takePhoto}
               className="w-full h-16 text-lg bg-[#0066FF] hover:bg-[#0052CC] rounded-xl"
