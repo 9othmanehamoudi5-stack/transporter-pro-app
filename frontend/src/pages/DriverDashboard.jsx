@@ -35,21 +35,24 @@ export const DriverDashboard = () => {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [delRes, statsRes, ecoRes] = await Promise.all([
+      const results = await Promise.allSettled([
         deliveriesApi.getAll(),
         dashboardApi.getStats(),
         ecoScoresApi.getAll()
       ]);
-      setDeliveries(delRes.data);
-      setStats(statsRes.data);
-      if (ecoRes.data.length > 0) {
-        setEcoScore(ecoRes.data[0]);
+
+      const get = (i) => results[i].status === 'fulfilled' ? results[i].value.data : null;
+
+      if (get(0)) setDeliveries(get(0));
+      if (get(1)) setStats(get(1));
+      if (get(2) && get(2).length > 0) setEcoScore(get(2)[0]);
+
+      const failed = results.filter(r => r.status === 'rejected');
+      if (failed.length > 0 && !isOnline) {
+        toast.error('Mode hors-ligne activé');
       }
     } catch (error) {
       console.error('Error fetching data:', error);
-      if (!isOnline) {
-        toast.error('Mode hors-ligne activé');
-      }
     }
     setLoading(false);
   }, [isOnline]);
@@ -131,7 +134,7 @@ export const DriverDashboard = () => {
       }
     } catch (error) {
       console.error('Error starting delivery:', error);
-      toast.error('Erreur lors du démarrage');
+      toast.error(`Erreur démarrage : ${error.response?.data?.detail || error.message}`);
     }
   };
 
@@ -159,7 +162,7 @@ export const DriverDashboard = () => {
       setSelectedDelivery(null);
     } catch (error) {
       console.error('Error completing delivery:', error);
-      toast.error('Erreur lors de la validation');
+      toast.error(`Erreur validation : ${error.response?.data?.detail || error.message}`);
     }
   };
 
@@ -190,7 +193,7 @@ export const DriverDashboard = () => {
       }
       setShowCamera(false);
     } catch (error) {
-      toast.error('Erreur lors de l\'analyse');
+      toast.error(`Erreur analyse : ${error.response?.data?.detail || error.message}`);
       setShowCamera(false);
     }
   };

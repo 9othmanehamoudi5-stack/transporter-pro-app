@@ -92,7 +92,7 @@ export const AdminDashboard = () => {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [statsRes, cashRes, delRes, invRes, drvRes, dmgRes, ecoRes, notifRes, unreadRes] = await Promise.all([
+      const results = await Promise.allSettled([
         dashboardApi.getStats(),
         dashboardApi.getCashFlow(),
         deliveriesApi.getAll(),
@@ -103,18 +103,26 @@ export const AdminDashboard = () => {
         notificationsApi.getAll(),
         notificationsApi.getUnreadCount()
       ]);
-      setStats(statsRes.data);
-      setCashFlow(cashRes.data);
-      setDeliveries(delRes.data);
-      setInvoices(invRes.data);
-      setDrivers(drvRes.data);
-      setDamageReports(dmgRes.data);
-      setEcoSummary(ecoRes.data);
-      setNotifications(notifRes.data);
-      setUnreadCount(unreadRes.data.count);
+      
+      const get = (i) => results[i].status === 'fulfilled' ? results[i].value.data : null;
+      
+      if (get(0)) setStats(get(0));
+      if (get(1)) setCashFlow(get(1));
+      if (get(2)) setDeliveries(get(2));
+      if (get(3)) setInvoices(get(3));
+      if (get(4)) setDrivers(get(4));
+      if (get(5)) setDamageReports(get(5));
+      if (get(6)) setEcoSummary(get(6));
+      if (get(7)) setNotifications(get(7));
+      if (get(8)) setUnreadCount(get(8).count);
+
+      const failed = results.filter(r => r.status === 'rejected');
+      if (failed.length > 0) {
+        console.warn(`${failed.length} API(s) en erreur:`, failed.map(r => r.reason?.message));
+      }
     } catch (error) {
       console.error('Error fetching data:', error);
-      toast.error('Erreur lors du chargement des données');
+      toast.error(`Erreur chargement : ${error.message}`);
     }
     setLoading(false);
   }, []);
@@ -138,7 +146,11 @@ export const AdminDashboard = () => {
       setShowNewDelivery(false);
       fetchData();
     } catch (error) {
-      toast.error('Erreur lors de la création');
+      const detail = error.response?.data?.detail;
+      const msg = Array.isArray(detail)
+        ? detail.map(e => e.msg || e).join(', ')
+        : detail || error.message;
+      toast.error(`Erreur création : ${msg}`);
     }
   };
 
@@ -149,7 +161,9 @@ export const AdminDashboard = () => {
       setShowAssignDriver(null);
       fetchData();
     } catch (error) {
-      toast.error('Erreur lors de l\'assignation');
+      const detail = error.response?.data?.detail;
+      const msg = typeof detail === 'string' ? detail : error.message;
+      toast.error(`Erreur assignation : ${msg}`);
     }
   };
 
@@ -160,7 +174,9 @@ export const AdminDashboard = () => {
       setShowNewDriver(false);
       fetchData();
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Erreur lors de la création');
+      const detail = error.response?.data?.detail;
+      const msg = typeof detail === 'string' ? detail : error.message;
+      toast.error(`Erreur : ${msg}`);
     }
   };
 
@@ -172,7 +188,7 @@ export const AdminDashboard = () => {
       setDrivers(prev => prev.filter(d => d.id !== driverId));
       toast.success('Chauffeur désactivé');
     } catch (error) {
-      toast.error('Erreur lors de la suppression');
+      toast.error(`Erreur suppression : ${error.response?.data?.detail || error.message}`);
     }
   };
 
@@ -190,7 +206,7 @@ export const AdminDashboard = () => {
       toast.success('Facture marquée comme payée');
       fetchData();
     } catch (error) {
-      toast.error('Erreur');
+      toast.error(`Erreur paiement : ${error.response?.data?.detail || error.message}`);
     }
   };
 

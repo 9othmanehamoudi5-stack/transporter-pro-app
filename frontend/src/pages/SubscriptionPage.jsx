@@ -99,11 +99,11 @@ export const SubscriptionPage = () => {
       if (result.success) {
         toast.success(`Plan ${PLANS.find(p => p.id === planId)?.name} activé !`);
       } else {
-        toast.error(result.error || 'Erreur lors de la mise à jour');
+        toast.error(`Erreur : ${result.error || 'Mise à jour impossible'}`);
       }
     } catch (error) {
       console.error('Plan update error:', error);
-      toast.error('Erreur lors de la mise à jour');
+      toast.error(`Erreur : ${error.response?.data?.detail || error.message}`);
     }
     setUpdating(false);
   };
