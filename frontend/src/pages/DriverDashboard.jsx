@@ -534,6 +534,7 @@ const DeliveryCard = ({ delivery, onStart, onPhoto, onComplete }) => {
 const CameraModal = ({ delivery, onCapture, onClose }) => {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
+  const fileInputRef = useRef(null);
   const [stream, setStream] = useState(null);
   const [photo, setPhoto] = useState(null);
   const [analyzing, setAnalyzing] = useState(false);
@@ -551,14 +552,12 @@ const CameraModal = ({ delivery, onCapture, onClose }) => {
   const startCamera = async () => {
     setCameraError(null);
 
-    // Check if getUserMedia is available
     if (!navigator.mediaDevices?.getUserMedia) {
       setCameraError('Caméra non disponible sur cet appareil ou connexion non sécurisée (HTTPS requis)');
       return;
     }
 
     try {
-      // Try rear camera first
       const mediaStream = await navigator.mediaDevices.getUserMedia({ 
         video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 960 } },
         audio: false
@@ -585,7 +584,6 @@ const CameraModal = ({ delivery, onCapture, onClose }) => {
       const video = videoRef.current;
       const canvas = canvasRef.current;
       
-      // Resize to max 1280px to reduce payload and avoid Gemini errors
       const maxDim = 1280;
       let w = video.videoWidth;
       let h = video.videoHeight;
@@ -603,11 +601,46 @@ const CameraModal = ({ delivery, onCapture, onClose }) => {
       const base64 = dataUrl.split(',')[1];
       setPhoto(base64);
       
-      // Stop camera
       if (stream) {
         stream.getTracks().forEach(track => track.stop());
       }
     }
+  };
+
+  const handleFileSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const img = new Image();
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      img.onload = () => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const maxDim = 1280;
+        let w = img.width;
+        let h = img.height;
+        if (Math.max(w, h) > maxDim) {
+          const ratio = maxDim / Math.max(w, h);
+          w = Math.round(w * ratio);
+          h = Math.round(h * ratio);
+        }
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+        setPhoto(dataUrl.split(',')[1]);
+        // Stop camera if it was running
+        if (stream) {
+          stream.getTracks().forEach(track => track.stop());
+        }
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+    // Reset input so same file can be re-selected
+    e.target.value = '';
   };
 
   const handleSubmit = async () => {
@@ -620,6 +653,16 @@ const CameraModal = ({ delivery, onCapture, onClose }) => {
 
   return (
     <div className="fixed inset-0 z-50 bg-black">
+      {/* Hidden file input for gallery */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleFileSelect}
+        data-testid="gallery-file-input"
+      />
+
       {/* Close button */}
       <button 
         onClick={onClose}
@@ -638,11 +681,12 @@ const CameraModal = ({ delivery, onCapture, onClose }) => {
               <p className="text-sm text-zinc-500 mb-6 max-w-xs">{cameraError}</p>
               <Button
                 onClick={startCamera}
-                className="bg-[#0066FF] hover:bg-[#0052CC] px-6"
+                variant="outline"
+                className="border-[#27272A] px-6 mb-3"
                 data-testid="retry-camera-btn"
               >
                 <RefreshCw className="w-4 h-4 mr-2" />
-                Réessayer
+                Réessayer la caméra
               </Button>
             </div>
           ) : !photo ? (
@@ -663,7 +707,12 @@ const CameraModal = ({ delivery, onCapture, onClose }) => {
           <canvas ref={canvasRef} className="hidden" />
           
           {/* Overlay info */}
-          {!cameraError && (
+          {!cameraError && !photo && (
+            <div className="absolute top-4 left-4 bg-black/50 backdrop-blur px-3 py-2 rounded-lg">
+              <p className="text-sm font-mono">{delivery.tracking_id}</p>
+            </div>
+          )}
+          {photo && (
             <div className="absolute top-4 left-4 bg-black/50 backdrop-blur px-3 py-2 rounded-lg">
               <p className="text-sm font-mono">{delivery.tracking_id}</p>
             </div>
@@ -673,27 +722,51 @@ const CameraModal = ({ delivery, onCapture, onClose }) => {
         {/* Action buttons */}
         <div className="p-4 bg-[#121214] safe-area-inset-bottom">
           {cameraError ? (
-            <Button 
-              onClick={onClose}
-              variant="outline"
-              className="w-full h-16 text-lg border-[#27272A] rounded-xl"
-            >
-              Fermer
-            </Button>
+            <div className="space-y-3">
+              {/* Gallery is PRIMARY when camera fails */}
+              <Button 
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full h-16 text-lg bg-[#0066FF] hover:bg-[#0052CC] rounded-xl"
+                data-testid="gallery-btn-primary"
+              >
+                <Upload className="w-6 h-6 mr-2" />
+                Choisir depuis la galerie
+              </Button>
+              <Button 
+                onClick={onClose}
+                variant="outline"
+                className="w-full h-12 border-[#27272A] rounded-xl text-zinc-400"
+                data-testid="close-camera-btn"
+              >
+                Fermer
+              </Button>
+            </div>
           ) : !photo ? (
-            <Button 
-              onClick={takePhoto}
-              className="w-full h-16 text-lg bg-[#0066FF] hover:bg-[#0052CC] rounded-xl"
-            >
-              <Camera className="w-6 h-6 mr-2" />
-              Prendre une photo
-            </Button>
+            <div className="space-y-3">
+              <Button 
+                onClick={takePhoto}
+                className="w-full h-16 text-lg bg-[#0066FF] hover:bg-[#0052CC] rounded-xl"
+                data-testid="take-photo-btn"
+              >
+                <Camera className="w-6 h-6 mr-2" />
+                Prendre une photo
+              </Button>
+              <button 
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full text-center text-sm text-zinc-400 hover:text-zinc-200 transition-colors py-2"
+                data-testid="gallery-btn-secondary"
+              >
+                <Upload className="w-4 h-4 inline mr-1.5 -mt-0.5" />
+                Choisir depuis la galerie
+              </button>
+            </div>
           ) : (
             <div className="grid grid-cols-2 gap-3">
               <Button 
                 onClick={() => { setPhoto(null); startCamera(); }}
                 variant="outline"
                 className="h-16 text-lg border-[#27272A] rounded-xl"
+                data-testid="retake-photo-btn"
               >
                 Reprendre
               </Button>
@@ -701,6 +774,7 @@ const CameraModal = ({ delivery, onCapture, onClose }) => {
                 onClick={handleSubmit}
                 disabled={analyzing}
                 className="h-16 text-lg bg-green-600 hover:bg-green-700 rounded-xl"
+                data-testid="submit-photo-btn"
               >
                 {analyzing ? (
                   <>
