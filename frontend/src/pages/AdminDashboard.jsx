@@ -69,6 +69,7 @@ export const AdminDashboard = () => {
   const [showNewDriver, setShowNewDriver] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [firestoreDriversList, setFirestoreDriversList] = useState([]);
+  const [driverQuota, setDriverQuota] = useState({ driver_count: 0, max_drivers: 3, can_add: true, plan: 'solo' });
 
   // Fetch Firestore drivers
   useEffect(() => {
@@ -118,6 +119,12 @@ export const AdminDashboard = () => {
       if (get(7)) setNotifications(get(7));
       if (get(8)) setUnreadCount(get(8).count);
       if (get(9)) setEcoDailyAvg(get(9));
+
+      // Fetch quota separately (non-blocking)
+      try {
+        const quotaRes = await adminDriversApi.getQuota();
+        if (quotaRes.data) setDriverQuota(quotaRes.data);
+      } catch {}
 
       const failed = results.filter(r => r.status === 'rejected');
       if (failed.length > 0) {
@@ -349,7 +356,7 @@ export const AdminDashboard = () => {
                   Nouvelle livraison
                 </Button>
               )}
-              {activeTab === 'drivers' && (
+              {activeTab === 'drivers' && driverQuota.can_add && (
                 <Button onClick={() => setShowNewDriver(true)} className="bg-[#0066FF] hover:bg-[#0052CC]" data-testid="new-driver-btn">
                   <UserPlus className="w-4 h-4 mr-2" />
                   Nouveau chauffeur
@@ -705,6 +712,52 @@ export const AdminDashboard = () => {
           {/* Drivers Tab */}
           {activeTab === 'drivers' && (
             <div className="space-y-6">
+              {/* Quota bar */}
+              <div className="bg-[#121214] border border-[#27272A] rounded-xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4" data-testid="driver-quota-bar">
+                <div>
+                  <h3 className="font-semibold flex items-center gap-2">
+                    <Users className="w-5 h-5 text-[#0066FF]" />
+                    Gestion de Flotte
+                  </h3>
+                  <p className="text-sm text-zinc-400 mt-1">
+                    {driverQuota.max_drivers === -1 
+                      ? `${driverQuota.driver_count} chauffeurs (illimité)` 
+                      : `${driverQuota.driver_count} / ${driverQuota.max_drivers} chauffeurs`}
+                    <span className="ml-2 text-xs uppercase tracking-wider text-zinc-500">Plan {driverQuota.plan}</span>
+                  </p>
+                  {/* Progress bar */}
+                  {driverQuota.max_drivers !== -1 && (
+                    <div className="w-48 h-1.5 bg-[#27272A] rounded-full mt-2">
+                      <div
+                        className={`h-full rounded-full transition-all ${driverQuota.can_add ? 'bg-[#0066FF]' : 'bg-red-500'}`}
+                        style={{ width: `${Math.min(100, (driverQuota.driver_count / driverQuota.max_drivers) * 100)}%` }}
+                      />
+                    </div>
+                  )}
+                </div>
+                <div className="flex items-center gap-3">
+                  {!driverQuota.can_add && (
+                    <Button
+                      onClick={() => setActiveTab('subscription')}
+                      className="bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20"
+                      data-testid="upgrade-fleet-btn"
+                    >
+                      <Crown className="w-4 h-4 mr-2" />
+                      Passer au niveau supérieur
+                    </Button>
+                  )}
+                  <Button
+                    onClick={() => setShowNewDriver(true)}
+                    className="bg-[#0066FF] hover:bg-[#0052CC]"
+                    disabled={!driverQuota.can_add}
+                    data-testid="add-driver-btn"
+                  >
+                    <UserPlus className="w-4 h-4 mr-2" />
+                    Ajouter un chauffeur
+                  </Button>
+                </div>
+              </div>
+
               {/* Stats */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <StatCard

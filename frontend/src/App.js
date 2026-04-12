@@ -7,6 +7,8 @@ import { LoginPage, RegisterPage } from "./pages/AuthPages";
 import AdminDashboard from "./pages/AdminDashboard";
 import DriverDashboard from "./pages/DriverDashboard";
 import { ClientPortal, TrackingSearch } from "./pages/ClientPortal";
+import LandingPage from "./pages/LandingPage";
+import { CGUPage, ConfidentialitePage, ContactPage } from "./pages/LegalPages";
 import { Toaster } from "./components/ui/sonner";
 
 // Protected Route Component
@@ -172,8 +174,14 @@ function App() {
               } />
               
               {/* Default redirect */}
-              <Route path="/" element={<Navigate to="/login" replace />} />
-              <Route path="*" element={<Navigate to="/login" replace />} />
+              <Route path="/" element={<LandingPage />} />
+
+              {/* Legal pages */}
+              <Route path="/cgu" element={<CGUPage />} />
+              <Route path="/confidentialite" element={<ConfidentialitePage />} />
+              <Route path="/contact" element={<ContactPage />} />
+
+              <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </BrowserRouter>
         </div>

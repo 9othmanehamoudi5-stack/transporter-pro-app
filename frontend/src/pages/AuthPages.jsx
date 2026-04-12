@@ -5,6 +5,7 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Truck, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import Footer from '../components/Footer';
 
 export const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -120,6 +121,9 @@ export const LoginPage = () => {
         <div className="mt-4 text-center text-xs text-zinc-500">
           <p>Demo: admin@transporter-pro.com / admin123</p>
         </div>
+      </div>
+      <div className="fixed bottom-0 left-0 right-0 z-10">
+        <Footer />
       </div>
     </div>
   );
@@ -238,6 +242,18 @@ export const RegisterPage = () => {
               <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
+                  onClick={() => setRole('admin')}
+                  data-testid="register-role-admin"
+                  className={`h-12 rounded-lg border transition-colors ${
+                    role === 'admin' 
+                      ? 'bg-[#0066FF]/10 border-[#0066FF] text-[#0066FF]' 
+                      : 'bg-[#0A0A0B] border-[#27272A] text-zinc-400 hover:border-zinc-600'
+                  }`}
+                >
+                  Transporteur
+                </button>
+                <button
+                  type="button"
                   onClick={() => setRole('client')}
                   data-testid="register-role-client"
                   className={`h-12 rounded-lg border transition-colors ${
@@ -248,19 +264,10 @@ export const RegisterPage = () => {
                 >
                   Client
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setRole('driver')}
-                  data-testid="register-role-driver"
-                  className={`h-12 rounded-lg border transition-colors ${
-                    role === 'driver' 
-                      ? 'bg-[#0066FF]/10 border-[#0066FF] text-[#0066FF]' 
-                      : 'bg-[#0A0A0B] border-[#27272A] text-zinc-400 hover:border-zinc-600'
-                  }`}
-                >
-                  Chauffeur
-                </button>
               </div>
+              {role === 'admin' && (
+                <p className="text-xs text-zinc-500 mt-1">Vous pourrez inviter vos chauffeurs depuis votre dashboard.</p>
+              )}
             </div>
 
             <Button
@@ -280,6 +287,9 @@ export const RegisterPage = () => {
             </Link>
           </div>
         </div>
+      </div>
+      <div className="fixed bottom-0 left-0 right-0 z-10">
+        <Footer />
       </div>
     </div>
   );

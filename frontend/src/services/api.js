@@ -197,7 +197,8 @@ export const invoicesApi = {
 export const adminDriversApi = {
   getAll: () => api.get('/admin/drivers'),
   create: (data) => api.post('/admin/drivers', data),
-  delete: (driverId) => api.delete(`/admin/drivers/${driverId}`)
+  delete: (driverId) => api.delete(`/admin/drivers/${driverId}`),
+  getQuota: () => api.get('/auth/company-quota')
 };
 
 // ==================== SUBSCRIPTIONS ====================

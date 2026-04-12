@@ -157,6 +157,8 @@ async def get_current_user(request: Request) -> dict:
             "email": user["email"],
             "name": user["name"],
             "role": user["role"],
+            "company_id": user.get("company_id", str(user["_id"])),
+            "plan": user.get("plan", "solo"),
             "created_at": user.get("created_at", "").isoformat() if isinstance(user.get("created_at"), datetime) else str(user.get("created_at", ""))
         }
     except jwt.ExpiredSignatureError:
@@ -312,6 +314,10 @@ async def create_notification(user_id: str, notif_type: str, title: str, message
 
 @api_router.post("/auth/register")
 async def register(data: UserCreate):
+    # Block public driver registration — drivers must be created by admin
+    if data.role == "driver":
+        raise HTTPException(status_code=403, detail="Les comptes chauffeurs sont créés par l'administrateur de l'entreprise.")
+
     email = data.email.lower()
     existing = await db.users.find_one({"email": email})
     if existing:
@@ -322,10 +328,15 @@ async def register(data: UserCreate):
         "password_hash": hash_password(data.password),
         "name": data.name,
         "role": data.role,
+        "plan": "solo",
         "created_at": datetime.now(timezone.utc)
     }
     result = await db.users.insert_one(user_doc)
     user_id = str(result.inserted_id)
+
+    # For admin, company_id = their own user id
+    if data.role == "admin":
+        await db.users.update_one({"_id": result.inserted_id}, {"$set": {"company_id": user_id}})
     
     access_token = create_access_token(user_id, email, data.role)
     refresh_token = create_refresh_token(user_id)
@@ -398,6 +409,21 @@ async def logout():
 async def get_me(user: dict = Depends(get_current_user)):
     return user
 
+@api_router.get("/auth/company-quota")
+async def get_company_quota(user: dict = Depends(require_role("admin"))):
+    """Get current driver count vs plan limit"""
+    company_id = user["company_id"]
+    driver_count = await db.users.count_documents({"role": "driver", "company_id": company_id, "status": {"$ne": "inactive"}})
+    plan = user.get("plan", "solo")
+    limits = {"solo": 3, "croissance": 15, "flotte_pro": -1}
+    max_drivers = limits.get(plan, 3)
+    return {
+        "driver_count": driver_count,
+        "max_drivers": max_drivers,
+        "plan": plan,
+        "can_add": max_drivers == -1 or driver_count < max_drivers
+    }
+
 @api_router.post("/auth/refresh")
 async def refresh_token(request: Request):
     # Try cookie first, then body, then Authorization header
@@ -438,6 +464,17 @@ async def refresh_token(request: Request):
 @api_router.post("/admin/drivers")
 async def create_driver(data: DriverCreate, user: dict = Depends(require_role("admin"))):
     """Admin creates a new driver account"""
+    company_id = user["company_id"]
+
+    # Check plan quota
+    plan = user.get("plan", "solo")
+    limits = {"solo": 3, "croissance": 15, "flotte_pro": -1}
+    max_drivers = limits.get(plan, 3)
+    if max_drivers != -1:
+        current_count = await db.users.count_documents({"role": "driver", "company_id": company_id, "status": {"$ne": "inactive"}})
+        if current_count >= max_drivers:
+            raise HTTPException(status_code=403, detail=f"Limite de flotte atteinte pour votre plan ({plan}). Maximum : {max_drivers} chauffeurs.")
+
     email = data.email.lower()
     existing = await db.users.find_one({"email": email})
     if existing:
@@ -450,6 +487,7 @@ async def create_driver(data: DriverCreate, user: dict = Depends(require_role("a
         "role": "driver",
         "phone": data.phone,
         "vehicle_plate": data.vehicle_plate,
+        "company_id": company_id,
         "created_by": user["id"],
         "created_at": datetime.now(timezone.utc),
         "status": "active"
@@ -462,16 +500,21 @@ async def create_driver(data: DriverCreate, user: dict = Depends(require_role("a
         "name": data.name,
         "role": "driver",
         "phone": data.phone,
-        "vehicle_plate": data.vehicle_plate
+        "vehicle_plate": data.vehicle_plate,
+        "company_id": company_id
     }
 
 @api_router.get("/admin/drivers")
 async def get_admin_drivers(user: dict = Depends(require_role("admin"))):
-    """Get all drivers with their stats"""
-    drivers = await db.users.find({"role": "driver"}, {"password_hash": 0}).to_list(100)
+    """Get all drivers for this company with their stats"""
+    company_id = user["company_id"]
+    drivers = await db.users.find({"role": "driver", "company_id": company_id}, {"password_hash": 0}).to_list(100)
+    # Also include legacy drivers without company_id that were created by this admin
+    legacy = await db.users.find({"role": "driver", "company_id": {"$exists": False}, "created_by": user["id"]}, {"password_hash": 0}).to_list(100)
+    all_drivers = drivers + legacy
     
     result = []
-    for driver in drivers:
+    for driver in all_drivers:
         driver_id = str(driver["_id"])
         
         # Get delivery stats
