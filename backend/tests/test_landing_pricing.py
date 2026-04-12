@@ -1,6 +1,7 @@
 """
-Test suite for Landing Page Pricing and Trial Logic - Iteration 16
-Tests: Subscription plans API, auth/me with trial fields, admin/driver dashboard regression
+Test suite for Landing Page Pricing and Trial Logic - Iteration 17
+Tests: Subscription plans API with CORRECTED prices, auth/me with trial fields, admin/driver dashboard regression
+Prices: Solo 49€/470€, Croissance 199€/1900€, Flotte Pro 499€/4790€
 """
 import pytest
 import requests
@@ -9,7 +10,7 @@ import os
 BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', '').rstrip('/')
 
 class TestSubscriptionPlans:
-    """Test subscription plans endpoint with updated prices"""
+    """Test subscription plans endpoint with CORRECTED prices (Iteration 17)"""
     
     def test_get_subscription_plans(self):
         """GET /api/subscription/plans returns all plans with correct prices"""
@@ -23,25 +24,25 @@ class TestSubscriptionPlans:
         assert "croissance" in plans, "Croissance plan missing"
         assert "flotte_pro" in plans, "Flotte Pro plan missing"
         
-        # Verify Solo plan prices (49€ monthly, 39€ yearly)
+        # Verify Solo plan prices (49€ monthly, 470€ yearly)
         solo = plans["solo"]
         assert solo["monthly_price"] == 49, f"Solo monthly should be 49, got {solo['monthly_price']}"
-        assert solo["yearly_price"] == 39, f"Solo yearly should be 39, got {solo['yearly_price']}"
+        assert solo["yearly_price"] == 470, f"Solo yearly should be 470, got {solo['yearly_price']}"
         assert solo["max_trucks"] == 3, f"Solo max_trucks should be 3, got {solo['max_trucks']}"
         
-        # Verify Croissance plan prices (149€ monthly, 119€ yearly)
+        # Verify Croissance plan prices (199€ monthly, 1900€ yearly)
         croissance = plans["croissance"]
-        assert croissance["monthly_price"] == 149, f"Croissance monthly should be 149, got {croissance['monthly_price']}"
-        assert croissance["yearly_price"] == 119, f"Croissance yearly should be 119, got {croissance['yearly_price']}"
+        assert croissance["monthly_price"] == 199, f"Croissance monthly should be 199, got {croissance['monthly_price']}"
+        assert croissance["yearly_price"] == 1900, f"Croissance yearly should be 1900, got {croissance['yearly_price']}"
         assert croissance["max_trucks"] == 15, f"Croissance max_trucks should be 15, got {croissance['max_trucks']}"
         
-        # Verify Flotte Pro plan prices (499€ monthly, 399€ yearly)
+        # Verify Flotte Pro plan prices (499€ monthly, 4790€ yearly)
         flotte_pro = plans["flotte_pro"]
         assert flotte_pro["monthly_price"] == 499, f"Flotte Pro monthly should be 499, got {flotte_pro['monthly_price']}"
-        assert flotte_pro["yearly_price"] == 399, f"Flotte Pro yearly should be 399, got {flotte_pro['yearly_price']}"
+        assert flotte_pro["yearly_price"] == 4790, f"Flotte Pro yearly should be 4790, got {flotte_pro['yearly_price']}"
         assert flotte_pro["max_trucks"] == -1, f"Flotte Pro max_trucks should be -1 (unlimited), got {flotte_pro['max_trucks']}"
         
-        print("✓ All subscription plans have correct prices")
+        print("✓ All subscription plans have correct prices (Iteration 17)")
 
 
 class TestAuthWithTrialFields:

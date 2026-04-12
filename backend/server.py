@@ -565,21 +565,21 @@ SUBSCRIPTION_PLANS = {
     "solo": {
         "name": "SOLO",
         "monthly_price": 49,
-        "yearly_price": 39,
+        "yearly_price": 470,
         "max_trucks": 3,
         "features": ["e-CMR illimitées", "Support email", "Dashboard basique", "3 chauffeurs max"]
     },
     "croissance": {
         "name": "CROISSANCE",
-        "monthly_price": 149,
-        "yearly_price": 119,
+        "monthly_price": 199,
+        "yearly_price": 1900,
         "max_trucks": 15,
         "features": ["e-CMR illimitées", "IA Anti-litige", "Cash-Flow Dashboard", "Tracking GPS Live", "Support prioritaire", "15 chauffeurs max"]
     },
     "flotte_pro": {
         "name": "FLOTTE PRO",
         "monthly_price": 499,
-        "yearly_price": 399,
+        "yearly_price": 4790,
         "max_trucks": -1,  # unlimited
         "features": ["Camions illimités", "IA Anti-litige", "Cash-Flow Dashboard", "Éco-Score complet", "Support 24/7 dédié", "API Access", "White-label"]
     }

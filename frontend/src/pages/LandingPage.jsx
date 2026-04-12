@@ -1,8 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Shield, Truck, Leaf, ArrowRight, Eye, MapPin, Camera, FileText, Zap, Check, ChevronRight } from 'lucide-react';
+import { Shield, Truck, Leaf, ArrowRight, Eye, MapPin, Camera, FileText, Check, ChevronRight } from 'lucide-react';
 import Footer from '../components/Footer';
+
+const IMG_TRUCK_NIGHT = 'https://images.unsplash.com/photo-1610793148376-2b2b64b1bbb6?w=800&q=80';
+const IMG_WAREHOUSE = 'https://images.unsplash.com/photo-1694875522449-e852b63be76d?w=800&q=80';
+const IMG_TRUCK_ROAD = 'https://images.unsplash.com/photo-1668532069532-5bf7b1708aa0?w=800&q=80';
 
 const LandingPage = () => {
   const navigate = useNavigate();
@@ -36,38 +40,61 @@ const LandingPage = () => {
       </nav>
 
       {/* ─── HERO ─── */}
-      <section className="relative pt-32 pb-20 px-6 overflow-hidden" data-testid="hero-section">
+      <section className="relative pt-28 pb-20 px-6 overflow-hidden" data-testid="hero-section">
+        {/* Glows */}
         <div className="absolute top-16 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-[#0066FF]/[0.06] rounded-full blur-[150px] pointer-events-none" />
         <div className="absolute top-40 right-0 w-[300px] h-[300px] bg-blue-600/[0.03] rounded-full blur-[100px] pointer-events-none" />
 
-        <div className="max-w-4xl mx-auto text-center relative">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/[0.08] bg-white/[0.03] text-xs text-zinc-400 mb-8 backdrop-blur-sm">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#0066FF] animate-pulse" />
-            14 jours d'essai gratuit — Aucune carte bancaire requise
+        <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-12 items-center relative">
+          <div>
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/[0.08] bg-white/[0.03] text-xs text-zinc-400 mb-8 backdrop-blur-sm">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#0066FF] animate-pulse" />
+              14 jours d'essai gratuit — Aucune carte bancaire requise
+            </div>
+
+            <h1 className="text-4xl sm:text-5xl lg:text-[3.4rem] font-bold leading-[1.08] tracking-tight mb-7" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }} data-testid="hero-h1">
+              <span className="bg-gradient-to-b from-white via-white to-zinc-400 bg-clip-text text-transparent">Chaque minute, votre trésorerie fuit. </span>
+              <span className="bg-gradient-to-r from-[#0066FF] to-[#00AAFF] bg-clip-text text-transparent">Reprenez le contrôle.</span>
+            </h1>
+
+            <p className="text-base text-zinc-400 max-w-xl mb-10 leading-relaxed" data-testid="hero-subtitle">
+              Marre des litiges injustifiés, des marchandises dégradées en silence et des e-CMR papier qui se perdent ?{' '}
+              <span className="text-zinc-200">Transporter-Pro protège vos marges</span> grâce à une IA visionnaire qui responsabilise vos chauffeurs en temps réel.{' '}
+              <span className="text-[#0066FF] font-medium">14 jours d'essai gratuit, 0€ aujourd'hui.</span>
+            </p>
+
+            <div className="flex flex-col sm:flex-row items-start gap-4">
+              <button onClick={() => navigate('/register')} className="group flex items-center gap-2.5 bg-[#0066FF] hover:bg-[#0052CC] text-white font-semibold px-8 py-4 rounded-xl text-base transition-all hover:shadow-xl hover:shadow-blue-500/25 hover:-translate-y-0.5" data-testid="hero-cta-btn">
+                Démarrer mon essai gratuit
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </button>
+              <button onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })} className="flex items-center gap-2 text-sm text-zinc-400 hover:text-white transition-colors border border-white/[0.08] px-6 py-3.5 rounded-xl hover:border-white/[0.15]" data-testid="hero-demo-btn">
+                <Eye className="w-4 h-4" />
+                Voir la démo
+              </button>
+            </div>
           </div>
 
-          <h1 className="text-4xl sm:text-5xl lg:text-[3.5rem] font-bold leading-[1.08] tracking-tight mb-7" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }} data-testid="hero-h1">
-            <span className="bg-gradient-to-b from-white via-white to-zinc-400 bg-clip-text text-transparent">Chaque minute, votre</span>
-            <br />
-            <span className="bg-gradient-to-b from-white via-white to-zinc-400 bg-clip-text text-transparent">trésorerie fuit. </span>
-            <span className="bg-gradient-to-r from-[#0066FF] to-[#00AAFF] bg-clip-text text-transparent">Reprenez le contrôle.</span>
-          </h1>
-
-          <p className="text-base sm:text-lg text-zinc-400 max-w-2xl mx-auto mb-10 leading-relaxed" data-testid="hero-subtitle">
-            Marre des litiges injustifiés, des marchandises dégradées en silence et des e-CMR papier qui se perdent ?{' '}
-            <span className="text-zinc-200">Transporter-Pro protège vos marges</span> grâce à une IA visionnaire qui responsabilise vos chauffeurs en temps réel.{' '}
-            <span className="text-[#0066FF] font-medium">14 jours d'essai gratuit, 0€ aujourd'hui.</span>
-          </p>
-
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <button onClick={() => navigate('/register')} className="group flex items-center gap-2.5 bg-[#0066FF] hover:bg-[#0052CC] text-white font-semibold px-8 py-4 rounded-xl text-base transition-all hover:shadow-xl hover:shadow-blue-500/25 hover:-translate-y-0.5" data-testid="hero-cta-btn">
-              Démarrer mon essai gratuit
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </button>
-            <button onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })} className="flex items-center gap-2 text-sm text-zinc-400 hover:text-white transition-colors border border-white/[0.08] px-6 py-3.5 rounded-xl hover:border-white/[0.15]" data-testid="hero-demo-btn">
-              <Eye className="w-4 h-4" />
-              Voir la démo
-            </button>
+          {/* Hero Image */}
+          <div className="relative hidden lg:block">
+            <div className="rounded-2xl overflow-hidden border border-white/[0.08] shadow-2xl shadow-blue-500/5">
+              <img src={IMG_TRUCK_NIGHT} alt="Camion moderne de nuit" className="w-full h-[400px] object-cover" loading="eager" />
+              {/* Overlay gradient */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20 rounded-2xl" />
+            </div>
+            {/* Floating badge */}
+            <div className="absolute -bottom-3 -left-3 bg-[#0A0A0B] border border-[#0066FF]/20 rounded-xl px-4 py-2.5 shadow-xl shadow-black/50 backdrop-blur-sm">
+              <div className="flex items-center gap-2 text-xs">
+                <div className="w-6 h-6 rounded-full bg-[#0066FF]/10 flex items-center justify-center"><Shield className="w-3 h-3 text-[#0066FF]" /></div>
+                <span className="text-[#0066FF] font-semibold">IA Gemini Vision Active</span>
+              </div>
+            </div>
+            <div className="absolute -top-3 -right-3 bg-[#0A0A0B] border border-green-500/20 rounded-xl px-4 py-2.5 shadow-xl shadow-black/50 backdrop-blur-sm">
+              <div className="flex items-center gap-2 text-xs">
+                <div className="w-6 h-6 rounded-full bg-green-500/10 flex items-center justify-center"><Check className="w-3 h-3 text-green-400" /></div>
+                <span className="text-green-400 font-semibold">3 camions en route</span>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -100,7 +127,7 @@ const LandingPage = () => {
               </h2>
               <p className="text-zinc-400 leading-relaxed mb-6">
                 Une photo floue, une case non cochée sur votre e-CMR, et c'est{' '}
-                <span className="text-red-400 font-semibold">2 000€ d'amende pour votre pomme</span>.
+                <span className="text-red-400 font-semibold">2 000€ perdus pour votre trésorerie</span>.
                 Les litiges liés aux lettres de voiture représentent jusqu'à 8% du chiffre d'affaires des PME du transport.
               </p>
               <div className="bg-white/[0.02] border border-[#0066FF]/20 rounded-xl p-5">
@@ -111,10 +138,11 @@ const LandingPage = () => {
               </div>
             </div>
             <div className="relative">
-              <div className="rounded-2xl overflow-hidden border border-white/[0.06]">
-                <img src="https://images.unsplash.com/photo-1662568804208-5872bd7d9477?w=600&q=80" alt="Chauffeur en livraison" className="w-full h-72 object-cover" loading="lazy" />
+              <div className="rounded-2xl overflow-hidden border border-white/[0.06] shadow-xl shadow-black/40">
+                <img src={IMG_WAREHOUSE} alt="Entrepôt logistique moderne" className="w-full h-72 object-cover" loading="lazy" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent rounded-2xl" />
               </div>
-              <div className="absolute -bottom-4 -left-4 bg-[#121214] border border-white/[0.08] rounded-xl p-3 shadow-xl shadow-black/50">
+              <div className="absolute -bottom-4 -left-4 bg-[#0A0A0B] border border-white/[0.08] rounded-xl p-3 shadow-xl shadow-black/50">
                 <div className="flex items-center gap-2 text-xs">
                   <div className="w-6 h-6 rounded-full bg-green-500/10 flex items-center justify-center"><Check className="w-3 h-3 text-green-400" /></div>
                   <span className="text-green-400 font-medium">Colis intact — Confiance 94%</span>
@@ -135,23 +163,25 @@ const LandingPage = () => {
           <p className="text-zinc-400 text-center max-w-lg mx-auto mb-14 text-sm">Chaque fonctionnalité a été pensée pour éliminer un risque réel du transport routier.</p>
 
           <div className="grid md:grid-cols-3 gap-4" data-testid="bento-grid">
-            {/* Large card */}
-            <div className="md:col-span-2 group bg-white/[0.02] border border-white/[0.06] hover:border-blue-500/20 rounded-2xl p-6 transition-all duration-300 hover:-translate-y-0.5" data-testid="feature-ia">
-              <div className="flex items-start gap-5">
-                <div className="w-12 h-12 rounded-xl bg-[#0066FF]/10 flex items-center justify-center flex-shrink-0">
-                  <Camera className="w-6 h-6 text-[#0066FF]" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold mb-2" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>IA Anti-Litige</h3>
-                  <p className="text-sm text-zinc-400 leading-relaxed">Analyse photo instantanée par Gemini Vision. L'IA détecte les dommages, évalue la sévérité et génère un rapport probant en 3 secondes. Bloquez les réclamations abusives avant qu'elles ne vous coûtent un centime.</p>
+            {/* IA card — large */}
+            <div className="md:col-span-2 group bg-white/[0.02] border border-white/[0.06] hover:border-blue-500/20 rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-0.5" data-testid="feature-ia">
+              <div className="p-6 pb-0">
+                <div className="flex items-start gap-4 mb-4">
+                  <div className="w-11 h-11 rounded-xl bg-[#0066FF]/10 flex items-center justify-center flex-shrink-0">
+                    <Camera className="w-5 h-5 text-[#0066FF]" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>IA Anti-Litige</h3>
+                    <p className="text-sm text-zinc-400 leading-relaxed mt-1">Analyse photo instantanée par Gemini Vision. L'IA détecte les dommages, évalue la sévérité et génère un rapport probant en 3 secondes.</p>
+                  </div>
                 </div>
               </div>
-              <div className="mt-5 rounded-xl overflow-hidden border border-white/[0.04] h-40">
-                <img src="https://images.unsplash.com/photo-1608721294710-7c298262c329?w=800&q=80" alt="Analyse colis" className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity" loading="lazy" />
+              <div className="h-44 overflow-hidden">
+                <img src={IMG_TRUCK_ROAD} alt="Analyse IA en route" className="w-full h-full object-cover opacity-50 group-hover:opacity-70 group-hover:scale-105 transition-all duration-500" loading="lazy" />
               </div>
             </div>
 
-            {/* Small card */}
+            {/* Tracking — small */}
             <div className="group bg-white/[0.02] border border-white/[0.06] hover:border-emerald-500/20 rounded-2xl p-6 transition-all duration-300 hover:-translate-y-0.5" data-testid="feature-tracking">
               <div className="w-10 h-10 rounded-xl bg-emerald-400/10 flex items-center justify-center mb-4">
                 <MapPin className="w-5 h-5 text-emerald-400" />
@@ -160,7 +190,7 @@ const LandingPage = () => {
               <p className="text-sm text-zinc-400 leading-relaxed">Vos clients savent tout, vos chauffeurs sont assistés, vos amendes disparaissent. GPS temps réel + génération e-CMR automatique.</p>
             </div>
 
-            {/* Small card */}
+            {/* Eco — small */}
             <div className="group bg-white/[0.02] border border-white/[0.06] hover:border-amber-500/20 rounded-2xl p-6 transition-all duration-300 hover:-translate-y-0.5" data-testid="feature-eco">
               <div className="w-10 h-10 rounded-xl bg-amber-400/10 flex items-center justify-center mb-4">
                 <Leaf className="w-5 h-5 text-amber-400" />
@@ -169,14 +199,14 @@ const LandingPage = () => {
               <p className="text-sm text-zinc-400 leading-relaxed">Transformez la conduite en fierté. Le classement gamifié économise jusqu'à <strong className="text-amber-400">15% de carburant</strong> par mois.</p>
             </div>
 
-            {/* Medium card */}
+            {/* e-CMR — wide */}
             <div className="md:col-span-2 group bg-white/[0.02] border border-white/[0.06] hover:border-purple-500/20 rounded-2xl p-6 transition-all duration-300 hover:-translate-y-0.5" data-testid="feature-ecmr">
-              <div className="flex items-start gap-5">
-                <div className="w-12 h-12 rounded-xl bg-purple-400/10 flex items-center justify-center flex-shrink-0">
-                  <FileText className="w-6 h-6 text-purple-400" />
+              <div className="flex items-start gap-4">
+                <div className="w-11 h-11 rounded-xl bg-purple-400/10 flex items-center justify-center flex-shrink-0">
+                  <FileText className="w-5 h-5 text-purple-400" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold mb-2" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>Génération e-CMR & Factur-X</h3>
+                  <h3 className="text-lg font-bold mb-1" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>Génération e-CMR & Factur-X</h3>
                   <p className="text-sm text-zinc-400 leading-relaxed">Fini le papier. Générez vos lettres de voiture numériques en un clic. Conformité réglementaire totale, archivage automatique, signature électronique du destinataire.</p>
                 </div>
               </div>
@@ -214,7 +244,8 @@ const plans = [
     tagline: 'Pour les artisans du transport.',
     trucks: "Jusqu'à 3 camions",
     monthly: 49,
-    yearly: 39,
+    yearlyTotal: 470,
+    yearlyMonthly: 39,
     features: ['e-CMR illimitées', 'Support email', 'Dashboard basique', '3 chauffeurs max'],
     popular: false,
   },
@@ -223,8 +254,9 @@ const plans = [
     name: 'CROISSANCE',
     tagline: 'Le standard pour les PME en expansion.',
     trucks: "Jusqu'à 15 camions",
-    monthly: 149,
-    yearly: 119,
+    monthly: 199,
+    yearlyTotal: 1900,
+    yearlyMonthly: 158,
     features: ['Tout de Solo +', 'IA Anti-litige (Gemini)', 'Cash-Flow Dashboard', 'Tracking GPS Live', 'Support prioritaire', '15 chauffeurs max'],
     popular: true,
   },
@@ -234,7 +266,8 @@ const plans = [
     tagline: 'La puissance brute pour les empires logistiques.',
     trucks: 'Camions illimités',
     monthly: 499,
-    yearly: 399,
+    yearlyTotal: 4790,
+    yearlyMonthly: 399,
     features: ['Tout de Croissance +', 'Éco-Score complet', 'API Access', 'Support 24/7 dédié', 'Chauffeurs illimités', 'White-label'],
     popular: false,
   },
@@ -254,16 +287,12 @@ const PricingSection = ({ onNavigate }) => {
 
         {/* Toggle */}
         <div className="flex items-center justify-center gap-3 mb-12" data-testid="pricing-toggle">
-          <span className={`text-sm ${!annual ? 'text-white' : 'text-zinc-500'}`}>Mensuel</span>
-          <button
-            onClick={() => setAnnual(!annual)}
-            className={`relative w-14 h-7 rounded-full transition-colors ${annual ? 'bg-[#0066FF]' : 'bg-zinc-700'}`}
-            data-testid="toggle-billing"
-          >
-            <div className={`absolute top-0.5 w-6 h-6 rounded-full bg-white transition-transform ${annual ? 'translate-x-7' : 'translate-x-0.5'}`} />
+          <span className={`text-sm transition-colors ${!annual ? 'text-white font-medium' : 'text-zinc-500'}`}>Mensuel</span>
+          <button onClick={() => setAnnual(!annual)} className={`relative w-14 h-7 rounded-full transition-colors ${annual ? 'bg-[#0066FF]' : 'bg-zinc-700'}`} data-testid="toggle-billing">
+            <div className={`absolute top-0.5 w-6 h-6 rounded-full bg-white shadow-md transition-transform ${annual ? 'translate-x-7' : 'translate-x-0.5'}`} />
           </button>
-          <span className={`text-sm ${annual ? 'text-white' : 'text-zinc-500'}`}>
-            Annuel <span className="text-[#0066FF] text-xs font-semibold ml-1">-20% + 2 mois offerts</span>
+          <span className={`text-sm transition-colors ${annual ? 'text-white font-medium' : 'text-zinc-500'}`}>
+            Annuel <span className="text-[#0066FF] text-xs font-semibold ml-1">2 mois offerts</span>
           </span>
         </div>
 
@@ -278,7 +307,7 @@ const PricingSection = ({ onNavigate }) => {
               data-testid={`plan-${plan.id}`}
             >
               {plan.popular && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-[#0066FF] rounded-full text-xs font-bold uppercase tracking-wider" data-testid="popular-badge">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-[#0066FF] rounded-full text-xs font-bold uppercase tracking-wider whitespace-nowrap" data-testid="popular-badge">
                   Le choix des leaders
                 </div>
               )}
@@ -286,16 +315,24 @@ const PricingSection = ({ onNavigate }) => {
               <h3 className="text-lg font-bold mt-2" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>{plan.name}</h3>
               <p className="text-xs text-zinc-500 mb-4">{plan.trucks}</p>
 
-              <div className="flex items-baseline gap-1 mb-1">
-                <span className="text-4xl font-bold font-mono">{annual ? plan.yearly : plan.monthly}</span>
-                <span className="text-zinc-400 text-sm">€/mois</span>
-              </div>
-              {annual && (
-                <p className="text-xs text-zinc-500 mb-4 line-through">{plan.monthly}€/mois</p>
+              {annual ? (
+                <div className="mb-1">
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-4xl font-bold font-mono" data-testid={`price-${plan.id}`}>{plan.yearlyTotal.toLocaleString('fr-FR')}</span>
+                    <span className="text-zinc-400 text-sm">€ / an</span>
+                  </div>
+                  <p className="text-xs text-zinc-500 mt-1">Soit environ <span className="text-zinc-300 font-medium">{plan.yearlyMonthly}€ / mois</span></p>
+                </div>
+              ) : (
+                <div className="mb-1">
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-4xl font-bold font-mono" data-testid={`price-${plan.id}`}>{plan.monthly}</span>
+                    <span className="text-zinc-400 text-sm">€ / mois</span>
+                  </div>
+                </div>
               )}
-              {!annual && <div className="mb-4" />}
 
-              <p className="text-sm text-zinc-400 mb-5">{plan.tagline}</p>
+              <p className="text-sm text-zinc-400 mb-5 mt-3">{plan.tagline}</p>
 
               <button
                 onClick={() => onNavigate('/register')}
@@ -306,7 +343,7 @@ const PricingSection = ({ onNavigate }) => {
                 }`}
                 data-testid={`plan-cta-${plan.id}`}
               >
-                Démarrer l'essai gratuit
+                Démarrer l'essai gratuit — 14 jours
               </button>
 
               <ul className="mt-6 space-y-2.5">

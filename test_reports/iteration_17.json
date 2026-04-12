@@ -1,0 +1,104 @@
+{
+  "summary": "Iteration 17 - Price corrections verified. All requested features working: Monthly prices (Solo 49€, Croissance 199€, Flotte Pro 499€), Annual prices (Solo 470€/an, Croissance 1 900€/an, Flotte Pro 4 790€/an) with 'Soit environ X€ / mois' subtitle. Pain section text corrected to 'perdus pour votre trésorerie' (no 'pour votre pomme'). Hero has high-quality Unsplash truck image. All CTAs show '14 jours'. Backend API returns correct prices. Admin and driver dashboards working (regression passed).",
+
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+
+  "passed_tests": [
+    "Landing page loads at / - PASS",
+    "Monthly prices: Solo 49€, Croissance 199€, Flotte Pro 499€ - PASS",
+    "Toggle to annual mode (data-testid='toggle-billing') - PASS",
+    "Annual prices: Solo 470€/an, Croissance 1 900€/an, Flotte Pro 4 790€/an - PASS",
+    "Annual mode shows 'Soit environ X€ / mois' text below annual price - PASS",
+    "Pain section contains 'perdus pour votre trésorerie' - PASS",
+    "Pain section does NOT contain 'pour votre pomme' - PASS",
+    "Hero has high-quality Unsplash truck image (not placeholder) - PASS",
+    "Each plan CTA mentions '14 jours' - PASS",
+    "Popular badge shows 'Le choix des leaders' on Croissance - PASS",
+    "Backend GET /api/subscription/plans returns correct prices (solo 49/470, croissance 199/1900, flotte_pro 499/4790) - PASS",
+    "Admin login (admin@transporter-pro.com / admin123) - PASS",
+    "Admin dashboard loads with fleet management elements - PASS",
+    "Driver login (driver@test.com / driver123) - PASS",
+    "Driver dashboard loads with eco-score 85 - PASS"
+  ],
+
+  "failed_tests": [],
+
+  "test_report_links": [
+    "/app/backend/tests/test_landing_pricing.py",
+    "/app/test_reports/pytest/pytest_iteration17.xml"
+  ],
+
+  "action_items": [],
+
+  "critical_code_review_comments": [
+    "LandingPage.jsx: Prices correctly updated - Solo (49/470/39), Croissance (199/1900/158), Flotte Pro (499/4790/399). Annual view shows 'Soit environ X€ / mois' subtitle.",
+    "server.py: SUBSCRIPTION_PLANS correctly updated with yearly_price: solo=470, croissance=1900, flotte_pro=4790",
+    "Pain section text correctly shows '2 000€ perdus pour votre trésorerie' instead of 'pour votre pomme'",
+    "Hero uses high-quality Unsplash images (IMG_TRUCK_NIGHT, IMG_WAREHOUSE, IMG_TRUCK_ROAD)"
+  ],
+
+  "updated_files": [
+    "/app/backend/tests/test_landing_pricing.py"
+  ],
+
+  "success_rate": {
+    "backend": "100% (13/13 tests passed)",
+    "frontend": "100% (15/15 features verified)"
+  },
+
+  "test_credentials": {
+    "admin": "admin@transporter-pro.com / admin123",
+    "driver": "driver@test.com / driver123"
+  },
+
+  "seed_data_creation": "None - using existing seeded data",
+
+  "retest_needed": false,
+
+  "should_main_agent_self_test": true,
+
+  "context_for_next_testing_agent": "Iteration 17 verified price corrections from user demand. Key prices: SOLO 49€/mois or 470€/an (39€/mois equiv), CROISSANCE 199€/mois or 1900€/an (158€/mois equiv), FLOTTE PRO 499€/mois or 4790€/an (399€/mois equiv). Annual view shows total per year with 'Soit environ X€ / mois' subtitle. Pain section text: '2 000€ perdus pour votre trésorerie'. Hero has Unsplash truck images. All CTAs: 'Démarrer l'essai gratuit — 14 jours'. Backend /api/subscription/plans returns correct prices. Admin and driver dashboards working.",
+
+  "mocked_apis": {
+    "has_mocked_apis": false,
+    "mocked_apis_list": []
+  },
+
+  "feature_verification": {
+    "pricing_corrections": {
+      "solo_monthly": "VERIFIED - 49€/mois",
+      "solo_annual": "VERIFIED - 470€/an with 'Soit environ 39€ / mois'",
+      "croissance_monthly": "VERIFIED - 199€/mois",
+      "croissance_annual": "VERIFIED - 1 900€/an with 'Soit environ 158€ / mois'",
+      "flotte_pro_monthly": "VERIFIED - 499€/mois",
+      "flotte_pro_annual": "VERIFIED - 4 790€/an with 'Soit environ 399€ / mois'"
+    },
+    "text_corrections": {
+      "pain_section": "VERIFIED - Contains 'perdus pour votre trésorerie', NOT 'pour votre pomme'"
+    },
+    "images": {
+      "hero_image": "VERIFIED - High-quality Unsplash truck image (photo-1610793148376-2b2b64b1bbb6)"
+    },
+    "cta_buttons": {
+      "plan_cta_solo": "VERIFIED - 'Démarrer l'essai gratuit — 14 jours'",
+      "plan_cta_croissance": "VERIFIED - 'Démarrer l'essai gratuit — 14 jours'",
+      "plan_cta_flotte_pro": "VERIFIED - 'Démarrer l'essai gratuit — 14 jours'"
+    },
+    "backend_api": {
+      "subscription_plans": "VERIFIED - GET /api/subscription/plans returns solo(49/470), croissance(199/1900), flotte_pro(499/4790)"
+    },
+    "regression": {
+      "admin_dashboard": "VERIFIED - Login, Vue d'ensemble, Cash-Flow, Chauffeurs, Litiges, Éco-scores, Abonnement",
+      "driver_dashboard": "VERIFIED - Login, Éco-score 85, Livraisons en cours, Terminées aujourd'hui"
+    }
+  }
+}
