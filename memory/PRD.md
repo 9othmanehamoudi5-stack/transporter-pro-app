@@ -56,6 +56,19 @@ Application SaaS logistique "Transporter-Pro" pour PME de transport.
 - [x] Cards KPI : Score moyen entreprise, CO2 total, Distance totale
 - [x] Bouton Exporter rapport
 
+### Phase 8 - Landing Page & Architecture Multi-Tenancy (DONE - 12 Avril 2026)
+- [x] Landing Page psychologique (route /) : fond OLED #000, H1 gradient, 3 cartes Douleur/Solution, CTA bleu
+- [x] Métriques band (15min, -40%, 12%, 24/7)
+- [x] Routage : si authentifié, `/` redirige vers `/dashboard`
+- [x] Footer fixe (CGU, Confidentialité RGPD, Contact) sur `/` et `/login`
+- [x] Pages légales `/cgu`, `/confidentialite`, `/contact` avec design dark
+- [x] Multi-tenancy : `company_id` sur users, filtrage des requêtes drivers
+- [x] Quotas flotte : Solo=3, Croissance=15, Flotte Pro=illimité
+- [x] Barre de quota "Gestion de Flotte" avec progress bar et plan affiché
+- [x] Inscription chauffeur publique BLOQUÉE (403) — création par admin uniquement
+- [x] Register : choix "Transporteur" (admin) ou "Client" uniquement
+- [x] Endpoint `/api/auth/company-quota` pour vérification quota
+
 ## Backlog P1
 - [ ] Corriger règles sécurité Firebase (voir /app/memory/FIREBASE_RULES.md)
 
