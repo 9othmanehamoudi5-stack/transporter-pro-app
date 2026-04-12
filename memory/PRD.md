@@ -61,7 +61,11 @@ Application SaaS logistique "Transporter-Pro" pour PME de transport.
 - [x] Section "Douleur e-CMR" : H2 signature illisible, image camion, encart solution IA Gemini
 - [x] Bento Grid Fonctionnalités : IA Anti-Litige (large), Tracking (small), Éco-Score (small), e-CMR (wide)
 - [x] Grille tarifaire avec toggle Mensuel/Annuel (-20% + 2 mois offerts)
-- [x] Plans : Solo 49€/39€, Croissance 149€/119€ (badge "Le choix des leaders"), Flotte Pro 499€/399€
+- [x] Plans corrigés : Solo 49€/mois ou 470€/an, Croissance 199€/mois ou 1 900€/an (badge "Le choix des leaders"), Flotte Pro 499€/mois ou 4 790€/an
+- [x] Toggle Annuel affiche prix total/an + "Soit environ X€/mois"
+- [x] Texte "pour votre pomme" remplacé par "perdus pour votre trésorerie"
+- [x] Images haute qualité dark mode (camion nuit Unsplash, entrepôt logistique)
+- [x] Hero split 2 colonnes avec image camion + badges flottants (IA Gemini, 3 camions en route)
 - [x] CTA "Démarrer mon essai gratuit" + "Voir la démo"
 - [x] Routage : si authentifié, `/` redirige vers `/dashboard`
 - [x] Footer fixe (CGU, Confidentialité RGPD, Contact) sur `/` et `/login`
