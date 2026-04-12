@@ -159,6 +159,8 @@ async def get_current_user(request: Request) -> dict:
             "role": user["role"],
             "company_id": user.get("company_id", str(user["_id"])),
             "plan": user.get("plan", "solo"),
+            "subscription_status": user.get("subscription_status", "trial"),
+            "trial_ends_at": user.get("trial_ends_at", "").isoformat() if isinstance(user.get("trial_ends_at"), datetime) else str(user.get("trial_ends_at", "")),
             "created_at": user.get("created_at", "").isoformat() if isinstance(user.get("created_at"), datetime) else str(user.get("created_at", ""))
         }
     except jwt.ExpiredSignatureError:
@@ -334,9 +336,14 @@ async def register(data: UserCreate):
     result = await db.users.insert_one(user_doc)
     user_id = str(result.inserted_id)
 
-    # For admin, company_id = their own user id
+    # For admin, company_id = their own user id + trial period
     if data.role == "admin":
-        await db.users.update_one({"_id": result.inserted_id}, {"$set": {"company_id": user_id}})
+        trial_ends = datetime.now(timezone.utc) + timedelta(days=14)
+        await db.users.update_one({"_id": result.inserted_id}, {"$set": {
+            "company_id": user_id,
+            "trial_ends_at": trial_ends,
+            "subscription_status": "trial"
+        }})
     
     access_token = create_access_token(user_id, email, data.role)
     refresh_token = create_refresh_token(user_id)
@@ -556,25 +563,25 @@ async def delete_driver(driver_id: str, user: dict = Depends(require_role("admin
 
 SUBSCRIPTION_PLANS = {
     "solo": {
-        "name": "SOLO / DUO",
+        "name": "SOLO",
         "monthly_price": 49,
-        "yearly_price": 490,
+        "yearly_price": 39,
         "max_trucks": 3,
-        "features": ["e-CMR illimitées", "Support email"]
+        "features": ["e-CMR illimitées", "Support email", "Dashboard basique", "3 chauffeurs max"]
     },
     "croissance": {
         "name": "CROISSANCE",
-        "monthly_price": 199,
-        "yearly_price": 1990,
+        "monthly_price": 149,
+        "yearly_price": 119,
         "max_trucks": 15,
-        "features": ["e-CMR illimitées", "IA Anti-litige", "Cash-Flow Dashboard", "Support prioritaire"]
+        "features": ["e-CMR illimitées", "IA Anti-litige", "Cash-Flow Dashboard", "Tracking GPS Live", "Support prioritaire", "15 chauffeurs max"]
     },
     "flotte_pro": {
         "name": "FLOTTE PRO",
         "monthly_price": 499,
-        "yearly_price": 4990,
+        "yearly_price": 399,
         "max_trucks": -1,  # unlimited
-        "features": ["Camions illimités", "IA Anti-litige", "Cash-Flow Dashboard", "Score Éco-conduite", "Support 24/7", "API Access"]
+        "features": ["Camions illimités", "IA Anti-litige", "Cash-Flow Dashboard", "Éco-Score complet", "Support 24/7 dédié", "API Access", "White-label"]
     }
 }
 
@@ -588,14 +595,19 @@ async def get_current_subscription(user: dict = Depends(require_role("admin"))):
     """Get current subscription for admin's company"""
     subscription = await db.subscriptions.find_one({"admin_id": user["id"]}, {"_id": 0})
     if not subscription:
-        # Default to free trial
+        # Check trial from user record
+        admin_user = await db.users.find_one({"_id": ObjectId(user["id"])})
+        trial_ends = admin_user.get("trial_ends_at")
+        if not trial_ends:
+            trial_ends = datetime.now(timezone.utc) + timedelta(days=14)
+        is_expired = isinstance(trial_ends, datetime) and trial_ends < datetime.now(timezone.utc)
         return {
-            "plan": "solo",
+            "plan": user.get("plan", "solo"),
             "billing_cycle": "monthly",
-            "status": "trial",
+            "status": "expired" if is_expired else "trial",
             "current_trucks": 0,
             "max_trucks": 3,
-            "trial_ends": (datetime.now(timezone.utc) + timedelta(days=14)).isoformat()
+            "trial_ends": trial_ends.isoformat() if isinstance(trial_ends, datetime) else str(trial_ends)
         }
     
     for field in ["created_at", "expires_at"]:

@@ -1,0 +1,122 @@
+{
+  "summary": "Iteration 16 - Major landing page overhaul with new pricing grid and trial logic. All 18 requested features verified working. Landing page with OLED black design, Hero with '14 jours d'essai gratuit' badge, Pain/e-CMR section, Bento Grid features (IA Anti-Litige, Tracking, Éco-Score, e-CMR), Pricing grid with monthly/annual toggle showing correct prices (Solo 49€/39€, Croissance 149€/119€, Flotte Pro 499€/399€), 'Le choix des leaders' badge on Croissance. Backend returns subscription_status and trial_ends_at fields. Admin and driver dashboards working (regression passed).",
+
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+
+  "passed_tests": [
+    "Landing page at / loads with hero section (data-testid='hero-section') - PASS",
+    "Hero H1 contains 'Chaque minute, votre trésorerie fuit. Reprenez le contrôle.' (data-testid='hero-h1') - PASS",
+    "Hero has 'Démarrer mon essai gratuit' CTA button (data-testid='hero-cta-btn') - PASS",
+    "Hero has 'Voir la démo' secondary button (data-testid='hero-demo-btn') - PASS",
+    "Hero subtitle mentions '14 jours d'essai gratuit, 0€ aujourd'hui' (data-testid='hero-subtitle') - PASS",
+    "Nav has links: Problème, Fonctionnalités, Tarifs - PASS",
+    "Pain section exists with H2 about e-CMR signature (data-testid='pain-section', 'pain-h2') - PASS",
+    "Features section with Bento Grid layout (data-testid='features-section', 'bento-grid') - PASS",
+    "Feature cards: IA Anti-Litige, Tracking, Éco-Score, e-CMR (data-testid='feature-ia', 'feature-tracking', 'feature-eco', 'feature-ecmr') - PASS",
+    "Pricing section with toggle (data-testid='pricing-section', 'pricing-toggle') - PASS",
+    "Toggle switches between monthly and annual prices (data-testid='toggle-billing') - PASS",
+    "3 plan cards: Solo 49€, Croissance 149€, Flotte Pro 499€ (data-testid='plan-solo', 'plan-croissance', 'plan-flotte_pro') - PASS",
+    "Croissance has 'Le choix des leaders' badge (data-testid='popular-badge') - PASS",
+    "Annual toggle shows: Solo 39€, Croissance 119€, Flotte Pro 399€ with strikethrough old prices - PASS",
+    "Backend: GET /api/subscription/plans returns updated prices (solo 49, croissance 149, flotte_pro 499) - PASS",
+    "Backend: GET /api/auth/me returns subscription_status and trial_ends_at fields - PASS",
+    "Admin dashboard still works (regression) - PASS",
+    "Driver dashboard still works (regression) - PASS",
+    "Register page shows only 'Transporteur' and 'Client' options (no 'Chauffeur') - PASS",
+    "Hero CTA navigates to /register - PASS"
+  ],
+
+  "failed_tests": [],
+
+  "test_report_links": [
+    "/app/backend/tests/test_landing_pricing.py",
+    "/app/test_reports/pytest/pytest_landing_pricing.xml"
+  ],
+
+  "action_items": [],
+
+  "critical_code_review_comments": [
+    "LandingPage.jsx: Well-structured with Hero (14 jours badge, gradient H1), Pain section (e-CMR signature), Bento Grid features (4 cards), PricingSection with toggle. All data-testid attributes present.",
+    "PricingSection: Custom toggle component (not shadcn) with state management for monthly/annual. Shows strikethrough old prices when annual selected.",
+    "server.py: SUBSCRIPTION_PLANS updated with correct prices (solo 49/39, croissance 149/119, flotte_pro 499/399). get_current_user returns subscription_status and trial_ends_at fields.",
+    "Multi-tenancy and fleet quotas from iteration 15 still working correctly."
+  ],
+
+  "updated_files": [
+    "/app/backend/tests/test_landing_pricing.py"
+  ],
+
+  "success_rate": {
+    "backend": "100% (13/13 tests passed)",
+    "frontend": "100% (20/20 features verified)"
+  },
+
+  "test_credentials": {
+    "admin": "admin@transporter-pro.com / admin123",
+    "driver": "driver@test.com / driver123"
+  },
+
+  "seed_data_creation": "None - using existing seeded data",
+
+  "retest_needed": false,
+
+  "should_main_agent_self_test": true,
+
+  "context_for_next_testing_agent": "Iteration 16 completed major landing page overhaul. Key features: 1) Hero section with '14 jours d'essai gratuit — Aucune carte bancaire requise' badge, gradient H1 'Chaque minute, votre trésorerie fuit. Reprenez le contrôle.', CTA 'Démarrer mon essai gratuit' → /register. 2) Pain section with e-CMR signature H2. 3) Bento Grid features: IA Anti-Litige (large), Tracking & e-CMR Live (small), Éco-Score Chauffeur (small), Génération e-CMR & Factur-X (wide). 4) Pricing grid with monthly/annual toggle: Solo 49€/39€, Croissance 149€/119€ with 'Le choix des leaders' badge, Flotte Pro 499€/399€. Annual shows strikethrough old prices. 5) Backend: /api/subscription/plans returns updated prices, /api/auth/me returns subscription_status and trial_ends_at. Multi-tenancy and fleet quotas from iteration 15 still working.",
+
+  "mocked_apis": {
+    "has_mocked_apis": false,
+    "mocked_apis_list": []
+  },
+
+  "feature_verification": {
+    "landing_page": {
+      "hero_section": "VERIFIED - data-testid='hero-section' present",
+      "hero_h1": "VERIFIED - Contains 'Chaque minute, votre trésorerie fuit. Reprenez le contrôle.'",
+      "hero_subtitle": "VERIFIED - Contains '14 jours d'essai gratuit, 0€ aujourd'hui'",
+      "hero_cta": "VERIFIED - 'Démarrer mon essai gratuit' button navigates to /register",
+      "hero_demo": "VERIFIED - 'Voir la démo' button present",
+      "nav_links": "VERIFIED - Problème, Fonctionnalités, Tarifs links present",
+      "oled_black_design": "VERIFIED - bg-black (#000) background with neon blue accents"
+    },
+    "pain_section": {
+      "section": "VERIFIED - data-testid='pain-section' present",
+      "h2": "VERIFIED - 'Ne jouez plus la survie de votre entreprise sur une signature illisible.'"
+    },
+    "features_section": {
+      "section": "VERIFIED - data-testid='features-section' present",
+      "bento_grid": "VERIFIED - data-testid='bento-grid' present",
+      "feature_ia": "VERIFIED - IA Anti-Litige card (large, 2-col span)",
+      "feature_tracking": "VERIFIED - Tracking & e-CMR Live card (small)",
+      "feature_eco": "VERIFIED - Éco-Score Chauffeur card (small)",
+      "feature_ecmr": "VERIFIED - Génération e-CMR & Factur-X card (wide, 2-col span)"
+    },
+    "pricing_section": {
+      "section": "VERIFIED - data-testid='pricing-section' present",
+      "toggle": "VERIFIED - Monthly/Annual toggle working",
+      "plan_solo": "VERIFIED - 49€/mois (monthly), 39€/mois (annual)",
+      "plan_croissance": "VERIFIED - 149€/mois (monthly), 119€/mois (annual) with 'Le choix des leaders' badge",
+      "plan_flotte_pro": "VERIFIED - 499€/mois (monthly), 399€/mois (annual)",
+      "strikethrough": "VERIFIED - Old monthly prices shown with line-through when annual selected"
+    },
+    "backend": {
+      "subscription_plans": "VERIFIED - GET /api/subscription/plans returns correct prices",
+      "auth_me_subscription_status": "VERIFIED - subscription_status field present",
+      "auth_me_trial_ends_at": "VERIFIED - trial_ends_at field present"
+    },
+    "regression": {
+      "admin_dashboard": "VERIFIED - Login, quota bar, driver management working",
+      "driver_dashboard": "VERIFIED - Login, eco-score (85), deliveries working",
+      "register_page": "VERIFIED - Only Transporteur and Client options (no Chauffeur)"
+    }
+  }
+}
