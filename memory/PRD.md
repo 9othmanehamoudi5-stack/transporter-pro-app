@@ -57,8 +57,12 @@ Application SaaS logistique "Transporter-Pro" pour PME de transport.
 - [x] Bouton Exporter rapport
 
 ### Phase 8 - Landing Page & Architecture Multi-Tenancy (DONE - 12 Avril 2026)
-- [x] Landing Page psychologique (route /) : fond OLED #000, H1 gradient, 3 cartes Douleur/Solution, CTA bleu
-- [x] Métriques band (15min, -40%, 12%, 24/7)
+- [x] Landing Page psychologique (route /) : fond OLED #000, H1 gradient, badge "14 jours essai gratuit"
+- [x] Section "Douleur e-CMR" : H2 signature illisible, image camion, encart solution IA Gemini
+- [x] Bento Grid Fonctionnalités : IA Anti-Litige (large), Tracking (small), Éco-Score (small), e-CMR (wide)
+- [x] Grille tarifaire avec toggle Mensuel/Annuel (-20% + 2 mois offerts)
+- [x] Plans : Solo 49€/39€, Croissance 149€/119€ (badge "Le choix des leaders"), Flotte Pro 499€/399€
+- [x] CTA "Démarrer mon essai gratuit" + "Voir la démo"
 - [x] Routage : si authentifié, `/` redirige vers `/dashboard`
 - [x] Footer fixe (CGU, Confidentialité RGPD, Contact) sur `/` et `/login`
 - [x] Pages légales `/cgu`, `/confidentialite`, `/contact` avec design dark
@@ -67,6 +71,7 @@ Application SaaS logistique "Transporter-Pro" pour PME de transport.
 - [x] Barre de quota "Gestion de Flotte" avec progress bar et plan affiché
 - [x] Inscription chauffeur publique BLOQUÉE (403) — création par admin uniquement
 - [x] Register : choix "Transporteur" (admin) ou "Client" uniquement
+- [x] Trial Logic : champ `trial_ends_at` + `subscription_status` dans /auth/me
 - [x] Endpoint `/api/auth/company-quota` pour vérification quota
 
 ## Backlog P1
