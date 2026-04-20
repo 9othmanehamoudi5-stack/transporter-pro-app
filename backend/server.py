@@ -175,6 +175,35 @@ def require_role(*roles):
         return user
     return role_checker
 
+# ==================== AUDIT LOGGING ====================
+
+async def log_action(user_id: str, company_id: str, action: str, entity_type: str, entity_id: str = "", details: str = ""):
+    """Log every significant action for traceability"""
+    await db.audit_logs.insert_one({
+        "user_id": user_id,
+        "company_id": company_id,
+        "action": action,
+        "entity_type": entity_type,
+        "entity_id": entity_id,
+        "details": details,
+        "timestamp": datetime.now(timezone.utc),
+        "ip": ""
+    })
+
+@api_router.get("/audit-logs")
+async def get_audit_logs(user: dict = Depends(require_role("admin")), limit: int = 50):
+    """Get recent audit logs for this company"""
+    logs = await db.audit_logs.find(
+        {"company_id": user["company_id"]},
+        {"_id": 0}
+    ).sort("timestamp", -1).to_list(limit)
+    for log in logs:
+        if isinstance(log.get("timestamp"), datetime):
+            log["timestamp"] = log["timestamp"].isoformat()
+    return logs
+
+
+
 # ==================== BLOCKCHAIN SIMULATION ====================
 
 def create_blockchain_hash(data: dict) -> dict:
@@ -403,6 +432,7 @@ async def login(data: UserLogin, request: Request):
     })
     response.set_cookie("access_token", access_token, httponly=True, secure=True, samesite="none", max_age=3600, path="/")
     response.set_cookie("refresh_token", refresh_token, httponly=True, secure=True, samesite="none", max_age=604800, path="/")
+    await log_action(user_id, user.get("company_id", user_id), "login", "user", user_id, f"Login: {email}")
     return response
 
 @api_router.post("/auth/logout")
@@ -500,6 +530,8 @@ async def create_driver(data: DriverCreate, user: dict = Depends(require_role("a
         "status": "active"
     }
     result = await db.users.insert_one(driver_doc)
+    await log_action(user["id"], company_id, "create_driver", "driver", str(result.inserted_id), f"Chauffeur créé: {data.name} ({email})")
+
     
     return {
         "id": str(result.inserted_id),
@@ -564,22 +596,22 @@ async def delete_driver(driver_id: str, user: dict = Depends(require_role("admin
 SUBSCRIPTION_PLANS = {
     "solo": {
         "name": "SOLO",
-        "monthly_price": 49,
-        "yearly_price": 470,
+        "monthly_price": 39,
+        "yearly_price": 390,
         "max_trucks": 3,
         "features": ["e-CMR illimitées", "Support email", "Dashboard basique", "3 chauffeurs max"]
     },
     "croissance": {
         "name": "CROISSANCE",
-        "monthly_price": 199,
-        "yearly_price": 1900,
+        "monthly_price": 189,
+        "yearly_price": 1890,
         "max_trucks": 15,
         "features": ["e-CMR illimitées", "IA Anti-litige", "Cash-Flow Dashboard", "Tracking GPS Live", "Support prioritaire", "15 chauffeurs max"]
     },
     "flotte_pro": {
         "name": "FLOTTE PRO",
-        "monthly_price": 499,
-        "yearly_price": 4790,
+        "monthly_price": 489,
+        "yearly_price": 4890,
         "max_trucks": -1,  # unlimited
         "features": ["Camions illimités", "IA Anti-litige", "Cash-Flow Dashboard", "Éco-Score complet", "Support 24/7 dédié", "API Access", "White-label"]
     }
@@ -647,6 +679,7 @@ async def update_subscription(data: SubscriptionUpdate, user: dict = Depends(req
     subscription["created_at"] = subscription["created_at"].isoformat()
     subscription["expires_at"] = subscription["expires_at"].isoformat()
     
+    await log_action(user["id"], user.get("company_id", ""), "update_subscription", "subscription", data.plan, f"Plan: {data.plan}, Cycle: {data.billing_cycle}")
     return subscription
 
 # ==================== NOTIFICATIONS ====================
@@ -805,6 +838,7 @@ async def update_delivery(tracking_id: str, data: DeliveryUpdate, user: dict = D
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Livraison non trouvée")
     
+    await log_action(user["id"], user.get("company_id", ""), "update_delivery", "delivery", tracking_id, f"Statut: {update_data.get('status', 'modifié')}")
     return {"message": "Livraison mise à jour", "tracking_id": tracking_id}
 
 @api_router.post("/deliveries/{tracking_id}/assign")
@@ -927,6 +961,7 @@ async def create_damage_report(data: DamageReportCreate, user: dict = Depends(re
     report.pop("_id", None)
     report["created_at"] = report["created_at"].isoformat()
     
+    await log_action(user["id"], user.get("company_id", ""), "create_damage_report", "damage_report", report["report_id"], f"Delivery: {data.delivery_id}, IA: {'damaged' if ai_analysis.get('is_damaged') else 'intact'}")
     return report
 
 @api_router.get("/damage-reports")

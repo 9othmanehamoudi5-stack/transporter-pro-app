@@ -58,8 +58,8 @@ const LandingPage = () => {
             </h1>
 
             <p className="text-base text-zinc-400 max-w-xl mb-10 leading-relaxed" data-testid="hero-subtitle">
-              Marre des litiges injustifiés, des marchandises dégradées en silence et des e-CMR papier qui se perdent ?{' '}
-              <span className="text-zinc-200">Transporter-Pro protège vos marges</span> grâce à une IA visionnaire qui responsabilise vos chauffeurs en temps réel.{' '}
+              Marre de payer pour des colis que vous n'avez pas cassés ? Marre du gasoil qui s'évapore ?{' '}
+              <span className="text-zinc-200">Transporter-Pro est votre assistant de gestion interne</span> : Bouclier IA + Éco-Score + Tracking.{' '}
               <span className="text-[#0066FF] font-medium">14 jours d'essai gratuit, 0€ aujourd'hui.</span>
             </p>
 
@@ -125,11 +125,24 @@ const LandingPage = () => {
               <h2 className="text-2xl sm:text-3xl font-bold leading-tight mb-6" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }} data-testid="pain-h2">
                 Ne jouez plus la survie de votre entreprise sur une signature illisible.
               </h2>
-              <p className="text-zinc-400 leading-relaxed mb-6">
+              <p className="text-zinc-400 leading-relaxed mb-4">
                 Une photo floue, une case non cochée sur votre e-CMR, et c'est{' '}
                 <span className="text-red-400 font-semibold">2 000€ perdus pour votre trésorerie</span>.
-                Les litiges liés aux lettres de voiture représentent jusqu'à 8% du chiffre d'affaires des PME du transport.
               </p>
+              <ul className="space-y-3 mb-6 text-sm text-zinc-400">
+                <li className="flex items-start gap-2.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-400 mt-1.5 flex-shrink-0" />
+                  <span><strong className="text-zinc-200">Litiges injustifiés :</strong> 8% du CA des PME transport perdu en réclamations abusives sans preuve photo.</span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-400 mt-1.5 flex-shrink-0" />
+                  <span><strong className="text-zinc-200">Gasoil qui s'évapore :</strong> Sans monitoring, le gaspillage de carburant dépasse 15% de votre budget annuel.</span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-400 mt-1.5 flex-shrink-0" />
+                  <span><strong className="text-zinc-200">Amendes réglementaires :</strong> 50€ par facture non conforme (loi 2026). Ça s'accumule vite.</span>
+                </li>
+              </ul>
               <div className="bg-white/[0.02] border border-[#0066FF]/20 rounded-xl p-5">
                 <p className="text-sm text-zinc-300 flex items-start gap-3">
                   <Shield className="w-5 h-5 text-[#0066FF] flex-shrink-0 mt-0.5" />
@@ -243,9 +256,9 @@ const plans = [
     name: 'SOLO',
     tagline: 'Pour les artisans du transport.',
     trucks: "Jusqu'à 3 camions",
-    monthly: 49,
-    yearlyTotal: 470,
-    yearlyMonthly: 39,
+    monthly: 39,
+    yearlyTotal: 390,
+    yearlyMonthly: 32,
     features: ['e-CMR illimitées', 'Support email', 'Dashboard basique', '3 chauffeurs max'],
     popular: false,
   },
@@ -254,9 +267,9 @@ const plans = [
     name: 'CROISSANCE',
     tagline: 'Le standard pour les PME en expansion.',
     trucks: "Jusqu'à 15 camions",
-    monthly: 199,
-    yearlyTotal: 1900,
-    yearlyMonthly: 158,
+    monthly: 189,
+    yearlyTotal: 1890,
+    yearlyMonthly: 157,
     features: ['Tout de Solo +', 'IA Anti-litige (Gemini)', 'Cash-Flow Dashboard', 'Tracking GPS Live', 'Support prioritaire', '15 chauffeurs max'],
     popular: true,
   },
@@ -265,9 +278,9 @@ const plans = [
     name: 'FLOTTE PRO',
     tagline: 'La puissance brute pour les empires logistiques.',
     trucks: 'Camions illimités',
-    monthly: 499,
-    yearlyTotal: 4790,
-    yearlyMonthly: 399,
+    monthly: 489,
+    yearlyTotal: 4890,
+    yearlyMonthly: 407,
     features: ['Tout de Croissance +', 'Éco-Score complet', 'API Access', 'Support 24/7 dédié', 'Chauffeurs illimités', 'White-label'],
     popular: false,
   },
@@ -279,11 +292,14 @@ const PricingSection = ({ onNavigate }) => {
   return (
     <section id="pricing" className="py-24 px-6 border-t border-white/[0.06]" data-testid="pricing-section">
       <div className="max-w-5xl mx-auto">
-        <p className="text-xs uppercase tracking-[0.2em] text-[#0066FF] text-center mb-3">Tarifs transparents</p>
+        <p className="text-xs uppercase tracking-[0.2em] text-[#0066FF] text-center mb-3">Tarifs Membres Fondateurs</p>
         <h2 className="text-2xl sm:text-3xl font-bold text-center mb-4" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>
           Un plan pour chaque ambition.
         </h2>
-        <p className="text-zinc-400 text-center max-w-lg mx-auto mb-10 text-sm">Essai gratuit de 14 jours inclus sur tous les plans. Annulable en un clic.</p>
+        <p className="text-zinc-400 text-center max-w-lg mx-auto mb-2 text-sm">Essai gratuit de 14 jours inclus sur tous les plans. Annulable en un clic.</p>
+        <p className="text-center mb-10">
+          <span className="inline-flex items-center gap-1.5 text-xs text-amber-400 bg-amber-400/10 border border-amber-400/20 px-3 py-1 rounded-full" data-testid="founder-badge">Tarif privilégié avant homologation complète</span>
+        </p>
 
         {/* Toggle */}
         <div className="flex items-center justify-center gap-3 mb-12" data-testid="pricing-toggle">

@@ -46,6 +46,14 @@ export const CGUPage = () => (
 
     <h2 className="text-lg font-semibold text-white mt-8">8. Résiliation</h2>
     <p>L'utilisateur peut résilier son abonnement à tout moment depuis son espace personnel. La résiliation prend effet à la fin de la période de facturation en cours.</p>
+
+    <h2 className="text-lg font-semibold text-white mt-8">9. Disclaimer — Statut réglementaire</h2>
+    <div className="bg-amber-400/5 border border-amber-400/20 rounded-xl p-4 mt-2">
+      <p className="text-amber-200/80"><strong className="text-amber-300">Important :</strong> Transporter-Pro est un outil d'aide à la gestion et à la preuve interne. Il ne remplace pas la lettre de voiture officielle (e-CMR) tant que l'homologation n'est pas finalisée. Les rapports générés par l'IA constituent des éléments de preuve complémentaires et ne se substituent pas aux procédures légales en vigueur.</p>
+    </div>
+
+    <h2 className="text-lg font-semibold text-white mt-8">10. Audit et traçabilité</h2>
+    <p>Chaque action effectuée sur la plateforme (signature, validation IA, changement de statut de livraison, création de compte) est automatiquement enregistrée avec horodatage et identifiant utilisateur. Ces journaux d'audit sont conservés pendant 5 ans et peuvent être exportés sur demande pour répondre aux exigences réglementaires.</p>
   </LegalLayout>
 );
 

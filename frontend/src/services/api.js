@@ -253,4 +253,10 @@ export const trackingApi = {
   track: (trackingId) => api.get(`/track/${trackingId}`)
 };
 
+// ==================== AUDIT LOGS ====================
+export const auditApi = {
+  getLogs: (limit = 50) => api.get('/audit-logs', { params: { limit } })
+};
+
+
 export default api;
