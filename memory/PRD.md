@@ -78,6 +78,18 @@ Application SaaS logistique "Transporter-Pro" pour PME de transport.
 - [x] Trial Logic : champ `trial_ends_at` + `subscription_status` dans /auth/me
 - [x] Endpoint `/api/auth/company-quota` pour vérification quota
 
+### Phase 9 - Méga-Build Phase 1 (DONE - 20 Avril 2026)
+- [x] Prix Membres Fondateurs : Solo 39€, Croissance 189€, Flotte Pro 489€
+- [x] Badge "Tarif privilégié avant homologation complète" (ambre)
+- [x] Copywriting PAS : Litiges injustifiés (8% CA), Gasoil (15% budget), Amendes 50€/facture loi 2026
+- [x] PWA : manifest.json + service-worker.js (installable, cache-first statique, network-first API)
+- [x] Audit Logs : `log_action()` sur login, create_driver, update_delivery, damage_report, subscription
+- [x] Endpoint `GET /api/audit-logs` (admin, filtré par company_id)
+- [x] SEO : meta description, og:title, twitter:card, keywords transport
+- [x] Apple PWA : apple-mobile-web-app-capable, apple-touch-icon
+- [x] CGU §9 : Disclaimer e-CMR homologation (outil d'aide, pas lettre officielle)
+- [x] CGU §10 : Audit et traçabilité (conservation 5 ans)
+
 ## Backlog P1
 - [ ] Corriger règles sécurité Firebase (voir /app/memory/FIREBASE_RULES.md)
 
