@@ -90,6 +90,16 @@ Application SaaS logistique "Transporter-Pro" pour PME de transport.
 - [x] CGU §9 : Disclaimer e-CMR homologation (outil d'aide, pas lettre officielle)
 - [x] CGU §10 : Audit et traçabilité (conservation 5 ans)
 
+### Phase 10 - Calculateur ROI & Éléments de Réassurance (DONE - 21 Avril 2026)
+- [x] Calculateur ROI interactif : 3 sliders (camions, litiges, coût moyen)
+- [x] Pertes en rouge (litiges + carburant gaspillé) vs Économies en vert (80% IA + Éco-Score)
+- [x] Phrase dynamique "Votre abonnement est rentabilisé dès le premier jour"
+- [x] CTA "Arrêter de perdre de l'argent" → scroll vers tarifs
+- [x] Bandeau urgence : "Plus que 47 places disponibles à ce tarif"
+- [x] Démo Vision IA : visuel simulé scan Gemini avec cadre détection + badge résultat
+- [x] Badges de confiance : eFTI, GDPR, eIDAS
+- [x] Nav enrichie avec lien "Calculateur ROI"
+
 ## Backlog P1
 - [ ] Corriger règles sécurité Firebase (voir /app/memory/FIREBASE_RULES.md)
 
