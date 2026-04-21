@@ -95,10 +95,10 @@ Application SaaS logistique "Transporter-Pro" pour PME de transport.
 - [x] Pertes en rouge (litiges + carburant gaspillé) vs Économies en vert (80% IA + Éco-Score)
 - [x] Phrase dynamique "Votre abonnement est rentabilisé dès le premier jour"
 - [x] CTA "Arrêter de perdre de l'argent" → scroll vers tarifs
-- [x] Bandeau urgence : "Plus que 47 places disponibles à ce tarif"
+- [x] Bandeau : "Tarif Membres Fondateurs garanti jusqu'à l'homologation e-CMR"
 - [x] Démo Vision IA : visuel simulé scan Gemini avec cadre détection + badge résultat
 - [x] Badges de confiance : eFTI, GDPR, eIDAS
-- [x] Nav enrichie avec lien "Calculateur ROI"
+- [x] Chatbot Crisp : composant `CrispChat.jsx` (chargement async, identification user, env var `REACT_APP_CRISP_WEBSITE_ID`)
 
 ## Backlog P1
 - [ ] Corriger règles sécurité Firebase (voir /app/memory/FIREBASE_RULES.md)
