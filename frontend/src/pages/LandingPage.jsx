@@ -352,6 +352,10 @@ const plans = [
     yearlyMonthly: 32,
     features: ['e-CMR illimitées', 'Support email', 'Dashboard basique', '3 chauffeurs max'],
     popular: false,
+    links: {
+      monthly: 'https://buy.stripe.com/test_00wbJ29ckgDSc0v70C7IY02',
+      yearly: 'https://buy.stripe.com/test_8x2dRa60887m5C7acO7IY03'
+    }
   },
   {
     id: 'croissance',
@@ -363,6 +367,10 @@ const plans = [
     yearlyMonthly: 157,
     features: ['Tout de Solo +', 'IA Anti-litige (Gemini)', 'Cash-Flow Dashboard', 'Tracking GPS Live', 'Support prioritaire', '15 chauffeurs max'],
     popular: true,
+    links: {
+      monthly: 'https://buy.stripe.com/test_eVq9AUfAI9bq11R4Su7IY04',
+      yearly: 'https://buy.stripe.com/test_3cIeVe4W4cnCd4z2Km7IY05'
+    }
   },
   {
     id: 'flotte_pro',
@@ -374,11 +382,23 @@ const plans = [
     yearlyMonthly: 407,
     features: ['Tout de Croissance +', 'Éco-Score complet', 'API Access', 'Support 24/7 dédié', 'Chauffeurs illimités', 'White-label'],
     popular: false,
+    links: {
+      monthly: 'https://buy.stripe.com/test_3cI8wQ4W4drG9SnckW7IY01',
+      yearly: 'https://buy.stripe.com/test_cNi5kE2NWgDSd4zbgS7IY0O'
+    }
   },
 ];
 
 const PricingSection = ({ onNavigate }) => {
   const [annual, setAnnual] = useState(false);
+  const { user } = useAuth();
+
+  const handlePlanClick = (plan) => {
+    const link = annual ? plan.links.yearly : plan.links.monthly;
+    const email = user?.email || '';
+    const url = email ? `${link}?prefilled_email=${encodeURIComponent(email)}` : link;
+    window.open(url, '_blank');
+  };
 
   return (
     <section id="pricing" className="py-24 px-6 border-t border-white/[0.06]" data-testid="pricing-section">
@@ -442,7 +462,7 @@ const PricingSection = ({ onNavigate }) => {
               <p className="text-sm text-zinc-400 mb-5 mt-3">{plan.tagline}</p>
 
               <button
-                onClick={() => onNavigate('/register')}
+                onClick={() => handlePlanClick(plan)}
                 className={`w-full py-3 rounded-xl text-sm font-semibold transition-all ${
                   plan.popular
                     ? 'bg-[#0066FF] hover:bg-[#0052CC] text-white hover:shadow-lg hover:shadow-blue-500/20'

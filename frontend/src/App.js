@@ -8,6 +8,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import DriverDashboard from "./pages/DriverDashboard";
 import { ClientPortal, TrackingSearch } from "./pages/ClientPortal";
 import LandingPage from "./pages/LandingPage";
+import PaymentSuccessPage from "./pages/PaymentSuccessPage";
 import { CGUPage, ConfidentialitePage, ContactPage } from "./pages/LegalPages";
 import TransporterBot from "./components/TransporterBot";
 import { Toaster } from "./components/ui/sonner";
@@ -182,6 +183,7 @@ function App() {
               <Route path="/cgu" element={<CGUPage />} />
               <Route path="/confidentialite" element={<ConfidentialitePage />} />
               <Route path="/contact" element={<ContactPage />} />
+              <Route path="/payment-success" element={<PaymentSuccessPage />} />
 
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>

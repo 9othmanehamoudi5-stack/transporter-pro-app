@@ -34,6 +34,8 @@ db = client[os.environ['DB_NAME']]
 JWT_SECRET = os.environ.get("JWT_SECRET", secrets.token_hex(32))
 JWT_ALGORITHM = "HS256"
 EMERGENT_LLM_KEY = os.environ.get("EMERGENT_LLM_KEY")
+STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY")
+STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET")
 
 app = FastAPI(title="Transporter-Pro API")
 api_router = APIRouter(prefix="/api")
@@ -740,6 +742,132 @@ async def update_subscription(data: SubscriptionUpdate, user: dict = Depends(req
     
     await log_action(user["id"], user.get("company_id", ""), "update_subscription", "subscription", data.plan, f"Plan: {data.plan}, Cycle: {data.billing_cycle}")
     return subscription
+
+
+# ==================== STRIPE PAYMENT LINKS ====================
+
+STRIPE_PAYMENT_LINKS = {
+    "solo": {
+        "monthly": "https://buy.stripe.com/test_00wbJ29ckgDSc0v70C7IY02",
+        "yearly": "https://buy.stripe.com/test_8x2dRa60887m5C7acO7IY03"
+    },
+    "croissance": {
+        "monthly": "https://buy.stripe.com/test_eVq9AUfAI9bq11R4Su7IY04",
+        "yearly": "https://buy.stripe.com/test_3cIeVe4W4cnCd4z2Km7IY05"
+    },
+    "flotte_pro": {
+        "monthly": "https://buy.stripe.com/test_3cI8wQ4W4drG9SnckW7IY01",
+        "yearly": "https://buy.stripe.com/test_cNi5kE2NWgDSd4zbgS7IY0O"
+    }
+}
+
+@api_router.get("/stripe/payment-links")
+async def get_payment_links():
+    """Get Stripe payment links for all plans"""
+    return STRIPE_PAYMENT_LINKS
+
+
+@api_router.post("/stripe/create-checkout")
+async def create_stripe_checkout(plan: str, billing: str = "monthly", user: dict = Depends(require_role("admin"))):
+    """Generate a Stripe payment link with prefilled email"""
+    links = STRIPE_PAYMENT_LINKS.get(plan)
+    if not links:
+        raise HTTPException(status_code=400, detail="Plan invalide")
+    base_url = links.get(billing, links["monthly"])
+    checkout_url = f"{base_url}?prefilled_email={user['email']}"
+    return {"url": checkout_url}
+
+
+# ==================== STRIPE WEBHOOK ====================
+
+@app.post("/api/webhook/stripe")
+async def stripe_webhook(request: Request):
+    """Handle Stripe webhook events (checkout.session.completed)"""
+    import stripe
+    stripe.api_key = STRIPE_SECRET_KEY
+
+    payload = await request.body()
+    sig_header = request.headers.get("stripe-signature", "")
+
+    # Verify webhook signature if secret is configured
+    if STRIPE_WEBHOOK_SECRET:
+        try:
+            event = stripe.Webhook.construct_event(payload, sig_header, STRIPE_WEBHOOK_SECRET)
+        except stripe.error.SignatureVerificationError:
+            raise HTTPException(status_code=400, detail="Invalid signature")
+        except Exception as e:
+            logger.error(f"Stripe webhook error: {e}")
+            raise HTTPException(status_code=400, detail="Webhook error")
+    else:
+        import json
+        event = json.loads(payload)
+
+    if event.get("type") == "checkout.session.completed":
+        session = event["data"]["object"]
+        customer_email = session.get("customer_email") or session.get("customer_details", {}).get("email", "")
+
+        if customer_email:
+            # Find admin user by email
+            admin = await db.users.find_one({"email": customer_email.lower(), "role": "admin"})
+            if admin:
+                admin_id = str(admin["_id"])
+                company_id = admin.get("company_id", admin_id)
+
+                # Determine plan from metadata or amount
+                amount = session.get("amount_total", 0) / 100
+                plan_type = "solo"
+                billing_cycle = "monthly"
+                if amount >= 4000:
+                    plan_type = "flotte_pro"
+                    billing_cycle = "yearly"
+                elif amount >= 1500:
+                    plan_type = "croissance"
+                    billing_cycle = "yearly"
+                elif amount >= 400:
+                    plan_type = "flotte_pro"
+                    billing_cycle = "monthly"
+                elif amount >= 150:
+                    plan_type = "croissance"
+                    billing_cycle = "monthly"
+                elif amount >= 300:
+                    plan_type = "solo"
+                    billing_cycle = "yearly"
+
+                # Update user plan
+                await db.users.update_one(
+                    {"_id": admin["_id"]},
+                    {"$set": {
+                        "plan": plan_type,
+                        "subscription_status": "active",
+                        "stripe_customer_id": session.get("customer", ""),
+                        "stripe_subscription_id": session.get("subscription", "")
+                    }}
+                )
+
+                # Update subscription record
+                plan_info = SUBSCRIPTION_PLANS.get(plan_type, {})
+                await db.subscriptions.update_one(
+                    {"admin_id": admin_id},
+                    {"$set": {
+                        "admin_id": admin_id,
+                        "company_id": company_id,
+                        "plan": plan_type,
+                        "plan_name": plan_info.get("name", plan_type),
+                        "billing_cycle": billing_cycle,
+                        "status": "active",
+                        "subscription_active": True,
+                        "stripe_session_id": session.get("id", ""),
+                        "created_at": datetime.now(timezone.utc),
+                        "expires_at": datetime.now(timezone.utc) + timedelta(days=365 if billing_cycle == "yearly" else 30)
+                    }},
+                    upsert=True
+                )
+
+                await log_action(admin_id, company_id, "stripe_payment", "subscription", plan_type, f"Stripe checkout completed: {plan_type}/{billing_cycle}")
+
+                logger.info(f"Stripe: Activated {plan_type}/{billing_cycle} for {customer_email}")
+
+    return {"received": True}
 
 # ==================== NOTIFICATIONS ====================
 
