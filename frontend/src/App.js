@@ -9,6 +9,7 @@ import DriverDashboard from "./pages/DriverDashboard";
 import { ClientPortal, TrackingSearch } from "./pages/ClientPortal";
 import LandingPage from "./pages/LandingPage";
 import { CGUPage, ConfidentialitePage, ContactPage } from "./pages/LegalPages";
+import CrispChat from "./components/CrispChat";
 import { Toaster } from "./components/ui/sonner";
 
 // Protected Route Component
@@ -140,6 +141,7 @@ function App() {
         <SubscriptionProvider>
         <div className="App min-h-screen bg-[#0A0A0B]">
           <Toaster richColors position="top-right" />
+          <CrispChat />
           <BrowserRouter>
             <Routes>
               {/* Public routes */}

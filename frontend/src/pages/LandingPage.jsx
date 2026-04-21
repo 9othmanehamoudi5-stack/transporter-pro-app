@@ -20,7 +20,7 @@ const LandingPage = () => {
     <div className="min-h-screen bg-black text-white selection:bg-blue-500/30">
       {/* ─── URGENCY BANNER ─── */}
       <div className="bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-amber-500/10 border-b border-amber-500/10 text-center py-2.5 text-xs text-amber-300 fixed top-0 w-full z-[60]" data-testid="urgency-banner">
-        Offre Membres Fondateurs : Plus que <span className="font-bold text-amber-200">47 places</span> disponibles à ce tarif
+        Offre Membres Fondateurs : <span className="font-bold text-amber-200">Tarif garanti jusqu'à l'homologation e-CMR</span>
       </div>
 
       {/* ─── NAV ─── */}
