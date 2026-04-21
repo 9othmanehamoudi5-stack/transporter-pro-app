@@ -98,7 +98,10 @@ Application SaaS logistique "Transporter-Pro" pour PME de transport.
 - [x] Bandeau : "Tarif Membres Fondateurs garanti jusqu'à l'homologation e-CMR"
 - [x] Démo Vision IA : visuel simulé scan Gemini avec cadre détection + badge résultat
 - [x] Badges de confiance : eFTI, GDPR, eIDAS
-- [x] Chatbot Crisp : composant `CrispChat.jsx` (chargement async, identification user, env var `REACT_APP_CRISP_WEBSITE_ID`)
+- [x] Chatbot Crisp remplacé par Transporter-Bot (IA Gemini) — chat interne, connaissance tarifs/loi 2026/éco-score
+- [x] Endpoint `/api/chat` (Gemini 3 Flash, system prompt complet, public)
+- [x] Toggle pricing "-17%" annuel, badge "Tarif garanti à vie pour les Membres Fondateurs"
+- [x] Firebase Security Rules P1 mis à jour (FIREBASE_RULES.md) — cloisonnement companyId
 
 ## Backlog P1
 - [ ] Corriger règles sécurité Firebase (voir /app/memory/FIREBASE_RULES.md)

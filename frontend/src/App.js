@@ -9,7 +9,6 @@ import DriverDashboard from "./pages/DriverDashboard";
 import { ClientPortal, TrackingSearch } from "./pages/ClientPortal";
 import LandingPage from "./pages/LandingPage";
 import { CGUPage, ConfidentialitePage, ContactPage } from "./pages/LegalPages";
-import CrispChat from "./components/CrispChat";
 import TransporterBot from "./components/TransporterBot";
 import { Toaster } from "./components/ui/sonner";
 
