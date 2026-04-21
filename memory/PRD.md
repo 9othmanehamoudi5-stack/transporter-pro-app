@@ -103,6 +103,14 @@ Application SaaS logistique "Transporter-Pro" pour PME de transport.
 - [x] Toggle pricing "-17%" annuel, badge "Tarif garanti à vie pour les Membres Fondateurs"
 - [x] Firebase Security Rules P1 mis à jour (FIREBASE_RULES.md) — cloisonnement companyId
 
+### Phase 11 - Intégration Stripe (DONE - 21 Avril 2026)
+- [x] Stripe Payment Links intégrés aux 6 boutons (3 plans x mensuel/annuel)
+- [x] `?prefilled_email=` ajouté pour identifier l'utilisateur
+- [x] Webhook `POST /api/webhook/stripe` : traite `checkout.session.completed`, met à jour plan + subscription_status
+- [x] Page `/payment-success` avec toast "Période d'essai de 30 jours activée" + redirect auto vers dashboard
+- [x] Endpoint `GET /api/stripe/payment-links` pour accès programmatique
+- [x] Clés Stripe test dans `.env` (backend + frontend)
+
 ## Backlog P1
 - [ ] Corriger règles sécurité Firebase (voir /app/memory/FIREBASE_RULES.md)
 
