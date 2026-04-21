@@ -92,6 +92,10 @@ class OfflineSyncData(BaseModel):
     damage_reports: List[dict] = []
     signatures: List[dict] = []
 
+class ChatMessage(BaseModel):
+    message: str
+    history: List[dict] = []
+
 class DriverCreate(BaseModel):
     email: EmailStr
     password: str
@@ -202,6 +206,61 @@ async def get_audit_logs(user: dict = Depends(require_role("admin")), limit: int
             log["timestamp"] = log["timestamp"].isoformat()
     return logs
 
+
+
+
+# ==================== TRANSPORTER-BOT (Gemini Chat) ====================
+
+SYSTEM_PROMPT = """Tu es Transporter-Bot, l'assistant IA de Transporter-Pro — un SaaS de gestion de flotte pour transporteurs routiers français.
+
+Tu réponds de manière concise, professionnelle et en français. Tu connais parfaitement :
+
+PRODUIT :
+- Transporter-Pro : plateforme SaaS pour transporteurs PME
+- IA Anti-Litige : analyse photo des colis via Gemini Vision (sévérité, confiance, preuve horodatée)
+- Éco-Score Chauffeur : scoring de conduite, podium, -15% carburant
+- Tracking GPS Live : positions temps réel sur carte
+- Génération e-CMR / Factur-X : lettres de voiture numériques
+
+TARIFS (Membres Fondateurs) :
+- SOLO : 39€/mois (3 camions max, e-CMR, support email)
+- CROISSANCE : 189€/mois (15 camions, IA Anti-Litige, Cash-Flow, GPS Live)
+- FLOTTE PRO : 489€/mois (illimité, Éco-Score, API, support 24/7)
+- Annuel : -17% (Solo 32€, Croissance 157€, Flotte Pro 406€/mois)
+- Essai gratuit de 14 jours sur tous les plans
+
+RÉGLEMENTATION :
+- Loi transport 2026 : obligation e-CMR numérique, amendes 50€/facture non conforme
+- Transporter-Pro est un outil d'aide à la gestion interne (pas lettre de voiture officielle en attente d'homologation)
+- Conforme RGPD, eFTI, eIDAS
+
+Si on te pose une question hors de ton domaine, réponds poliment que tu es spécialisé en gestion de flotte transport et redirige vers contact@transporter-pro.com."""
+
+@api_router.post("/chat")
+async def chat_with_bot(data: ChatMessage):
+    """Transporter-Bot — AI support powered by Gemini"""
+    try:
+        from emergentintegrations.llm.chat import LlmChat, UserMessage
+        import uuid as uuid_mod
+
+        session_id = uuid_mod.uuid4().hex
+
+        chat = LlmChat(
+            api_key=EMERGENT_LLM_KEY,
+            session_id=session_id,
+            system_message=SYSTEM_PROMPT
+        ).with_model("gemini", "gemini-3-flash-preview")
+
+        # Add conversation history (last 10 messages max)
+        for msg in data.history[-10:]:
+            chat.add_message(UserMessage(message=f"[{msg.get('role','user').upper()}]: {msg['content']}"))
+
+        response = await chat.send_message(UserMessage(text=data.message))
+
+        return {"reply": response}
+    except Exception as e:
+        logger.error(f"Chat error: {e}")
+        return {"reply": "Désolé, je rencontre un problème technique. Contactez-nous à support@transporter-pro.com."}
 
 
 # ==================== BLOCKCHAIN SIMULATION ====================

@@ -1,0 +1,135 @@
+{
+  "summary": "Iteration 21 - Verified TransporterBot replacement of Crisp, pricing updates, and banner changes. All tests passed. Backend /api/chat endpoint working with Gemini AI. Frontend chatbot UI functional (toggle, window, input, send, close). Pricing shows correct values (39/189/489€ monthly, 390/1890/4890€ annual with ~32/157/407€/mois). Founder badge and banner text correct. Admin and Driver dashboards working.",
+
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "TransporterBot toggle button",
+        "issue": "Button may be partially covered by Emergent badge in bottom-right corner - requires JavaScript click to bypass overlay",
+        "selector": "[data-testid='chatbot-toggle']",
+        "priority": "LOW"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+
+  "passed_tests": [
+    "Landing page loads at / - PASS",
+    "Urgency banner shows 'Tarif garanti jusqu'à l'homologation e-CMR' (data-testid='urgency-banner') - PASS",
+    "Chatbot toggle button visible (data-testid='chatbot-toggle') - PASS",
+    "No Crisp widget present (CrispChat replaced by TransporterBot) - PASS",
+    "Clicking toggle opens chatbot window (data-testid='chatbot-window') - PASS",
+    "Chatbot welcome message mentions Transporter-Bot - PASS",
+    "Chatbot input field exists (data-testid='chatbot-input') - PASS",
+    "Chatbot send button exists (data-testid='chatbot-send') - PASS",
+    "Chatbot close button works (data-testid='chatbot-close') - PASS",
+    "Backend POST /api/chat returns AI response about tarifs (39€/189€/489€, -17% annual) - PASS",
+    "Backend POST /api/chat returns AI response about loi 2026 (50€ amendes) - PASS",
+    "Backend POST /api/chat returns AI response about éco-score (-15% carburant) - PASS",
+    "Pricing toggle label shows 'Économisez 17%' - PASS",
+    "Founder badge shows 'Tarif garanti à vie pour les Membres Fondateurs' (data-testid='founder-badge') - PASS",
+    "Monthly prices: Solo 39€, Croissance 189€, Flotte Pro 489€ - PASS",
+    "Annual prices: Solo 390€/an (~32€/mois), Croissance 1 890€/an (~157€/mois), Flotte Pro 4 890€/an (~407€/mois) - PASS",
+    "FIREBASE_RULES.md exists with companyId cloisonnement rules - PASS",
+    "Admin login (admin@transporter-pro.com / admin123) - PASS",
+    "Admin dashboard shows Vue d'ensemble, Cash-Flow, Chauffeurs, Litiges, Éco-scores, Abonnement - PASS",
+    "Driver login (driver@test.com / driver123) - PASS",
+    "Driver dashboard shows Éco-score 85, Livraisons en cours, Terminées aujourd'hui - PASS"
+  ],
+
+  "failed_tests": [],
+
+  "test_report_links": [
+    "/.screenshots/landing_chatbot_test.png",
+    "/.screenshots/chatbot_open.png",
+    "/.screenshots/chatbot_response.png",
+    "/.screenshots/pricing_monthly.png",
+    "/.screenshots/pricing_annual.png",
+    "/.screenshots/admin_dashboard.png",
+    "/.screenshots/driver_dashboard.png"
+  ],
+
+  "action_items": [],
+
+  "critical_code_review_comments": [
+    "TransporterBot.jsx: Well-implemented with proper data-testid attributes, loading indicator (bouncing dots), and error handling",
+    "Backend /api/chat: Uses LlmChat with Emergent LLM Key and comprehensive SYSTEM_PROMPT covering tarifs, loi 2026, éco-score",
+    "App.js: CrispChat still imported but TransporterBot is rendered instead (line 145)",
+    "LandingPage.jsx: Pricing correctly shows -17% annual discount with 'Économisez 17%' label",
+    "FIREBASE_RULES.md: Contains both production rules (companyId cloisonnement) and simplified auth-only rules"
+  ],
+
+  "updated_files": [],
+
+  "success_rate": {
+    "backend": "100% (3/3 chat API tests passed)",
+    "frontend": "100% (21/21 tests passed)"
+  },
+
+  "test_credentials": {
+    "admin": "admin@transporter-pro.com / admin123",
+    "driver": "driver@test.com / driver123"
+  },
+
+  "seed_data_creation": "None - using existing seeded data",
+
+  "retest_needed": false,
+
+  "should_main_agent_self_test": true,
+
+  "context_for_next_testing_agent": "Iteration 21 verified: 1) TransporterBot.jsx replaces CrispChat as the chat widget - internal Gemini-powered AI that knows about tarifs (39/189/489€), loi 2026 (50€ amendes), éco-score (-15% carburant). Backend POST /api/chat uses LlmChat with session_id and system_message. 2) Pricing texts updated: 'Économisez 17%' toggle label, 'Tarif garanti à vie pour les Membres Fondateurs' badge. 3) Banner: 'Tarif garanti jusqu'à l'homologation e-CMR'. 4) FIREBASE_RULES.md updated with companyId-based rules. Note: The chatbot toggle button may be partially covered by the Emergent badge in the bottom-right corner - use JavaScript click to bypass. Console shows Firestore permission errors but app functions correctly.",
+
+  "mocked_apis": {
+    "has_mocked_apis": false,
+    "mocked_apis_list": [],
+    "note": "Gemini AI chat is real (Emergent LLM Key)"
+  },
+
+  "feature_verification": {
+    "transporter_bot": {
+      "component_exists": "VERIFIED - /frontend/src/components/TransporterBot.jsx",
+      "imported_in_app": "VERIFIED - App.js line 13",
+      "rendered_in_app": "VERIFIED - App.js line 145",
+      "backend_endpoint": "VERIFIED - POST /api/chat with Gemini AI",
+      "welcome_message": "VERIFIED - Mentions Transporter-Bot, tarifs, loi 2026, éco-score",
+      "data_testids": "VERIFIED - chatbot-toggle, chatbot-window, chatbot-input, chatbot-send, chatbot-close, chatbot-messages"
+    },
+    "crisp_chat_removed": {
+      "component_exists": "VERIFIED - CrispChat.jsx still exists but returns null when CRISP_ID is empty",
+      "not_rendered": "VERIFIED - TransporterBot is rendered instead in App.js",
+      "no_widget_visible": "VERIFIED - No Crisp widget on page"
+    },
+    "urgency_banner": {
+      "text": "VERIFIED - 'Tarif garanti jusqu'à l'homologation e-CMR'",
+      "data_testid": "urgency-banner"
+    },
+    "pricing": {
+      "toggle_label": "VERIFIED - 'Économisez 17%'",
+      "founder_badge": "VERIFIED - 'Tarif garanti à vie pour les Membres Fondateurs'",
+      "monthly": {
+        "solo": "39€",
+        "croissance": "189€",
+        "flotte_pro": "489€"
+      },
+      "annual": {
+        "solo": "390€/an (~32€/mois)",
+        "croissance": "1 890€/an (~157€/mois)",
+        "flotte_pro": "4 890€/an (~407€/mois)"
+      }
+    },
+    "firebase_rules": {
+      "file_exists": "VERIFIED - /app/memory/FIREBASE_RULES.md",
+      "companyId_rules": "VERIFIED - Contains production rules with companyId cloisonnement"
+    },
+    "regression": {
+      "admin_dashboard": "VERIFIED - All tabs working (Vue d'ensemble, Cash-Flow, Chauffeurs, Litiges, Éco-scores, Abonnement)",
+      "driver_dashboard": "VERIFIED - Éco-score 85, deliveries visible"
+    }
+  }
+}

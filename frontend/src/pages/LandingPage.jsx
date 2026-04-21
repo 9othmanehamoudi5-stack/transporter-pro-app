@@ -389,7 +389,7 @@ const PricingSection = ({ onNavigate }) => {
         </h2>
         <p className="text-zinc-400 text-center max-w-lg mx-auto mb-2 text-sm">Essai gratuit de 14 jours inclus sur tous les plans. Annulable en un clic.</p>
         <p className="text-center mb-10">
-          <span className="inline-flex items-center gap-1.5 text-xs text-amber-400 bg-amber-400/10 border border-amber-400/20 px-3 py-1 rounded-full" data-testid="founder-badge">Tarif privilégié avant homologation complète</span>
+          <span className="inline-flex items-center gap-1.5 text-xs text-amber-400 bg-amber-400/10 border border-amber-400/20 px-3 py-1 rounded-full" data-testid="founder-badge">Tarif garanti à vie pour les Membres Fondateurs</span>
         </p>
 
         {/* Toggle */}
@@ -399,7 +399,7 @@ const PricingSection = ({ onNavigate }) => {
             <div className={`absolute top-0.5 w-6 h-6 rounded-full bg-white shadow-md transition-transform ${annual ? 'translate-x-7' : 'translate-x-0.5'}`} />
           </button>
           <span className={`text-sm transition-colors ${annual ? 'text-white font-medium' : 'text-zinc-500'}`}>
-            Annuel <span className="text-[#0066FF] text-xs font-semibold ml-1">2 mois offerts</span>
+            Annuel <span className="text-[#0066FF] text-xs font-semibold ml-1">Économisez 17%</span>
           </span>
         </div>
 
