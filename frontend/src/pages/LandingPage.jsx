@@ -18,8 +18,13 @@ const LandingPage = () => {
 
   return (
     <div className="min-h-screen bg-black text-white selection:bg-blue-500/30">
+      {/* ─── URGENCY BANNER ─── */}
+      <div className="bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-amber-500/10 border-b border-amber-500/10 text-center py-2.5 text-xs text-amber-300 fixed top-0 w-full z-[60]" data-testid="urgency-banner">
+        Offre Membres Fondateurs : Plus que <span className="font-bold text-amber-200">47 places</span> disponibles à ce tarif
+      </div>
+
       {/* ─── NAV ─── */}
-      <nav className="fixed top-0 w-full z-50 border-b border-white/[0.06] bg-black/70 backdrop-blur-2xl">
+      <nav className="fixed top-[34px] w-full z-50 border-b border-white/[0.06] bg-black/70 backdrop-blur-2xl">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 bg-[#0066FF] rounded-lg flex items-center justify-center">
@@ -30,6 +35,7 @@ const LandingPage = () => {
           <div className="hidden md:flex items-center gap-8 text-sm text-zinc-400">
             <a href="#pain" className="hover:text-white transition-colors">Problème</a>
             <a href="#features" className="hover:text-white transition-colors">Fonctionnalités</a>
+            <a href="#roi" className="hover:text-white transition-colors">Calculateur ROI</a>
             <a href="#pricing" className="hover:text-white transition-colors">Tarifs</a>
           </div>
           <div className="flex items-center gap-3">
@@ -40,7 +46,7 @@ const LandingPage = () => {
       </nav>
 
       {/* ─── HERO ─── */}
-      <section className="relative pt-28 pb-20 px-6 overflow-hidden" data-testid="hero-section">
+      <section className="relative pt-[7.5rem] pb-20 px-6 overflow-hidden" data-testid="hero-section">
         {/* Glows */}
         <div className="absolute top-16 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-[#0066FF]/[0.06] rounded-full blur-[150px] pointer-events-none" />
         <div className="absolute top-40 right-0 w-[300px] h-[300px] bg-blue-600/[0.03] rounded-full blur-[100px] pointer-events-none" />
@@ -228,6 +234,91 @@ const LandingPage = () => {
         </div>
       </section>
 
+      {/* ─── ROI CALCULATOR ─── */}
+      <ROICalculator onNavigate={navigate} />
+
+      {/* ─── AI DEMO + TRUST BADGES ─── */}
+      <section className="py-20 px-6 border-t border-white/[0.06]" data-testid="trust-section">
+        <div className="max-w-5xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-8 items-center mb-16">
+            {/* AI Demo Visual */}
+            <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5 relative overflow-hidden" data-testid="ai-demo">
+              <p className="text-xs uppercase tracking-[0.2em] text-[#0066FF] mb-3">Démo IA Gemini Vision</p>
+              <div className="relative rounded-xl overflow-hidden bg-[#0A0A0B] border border-white/[0.04]">
+                <img src={IMG_WAREHOUSE} alt="Scan colis" className="w-full h-48 object-cover opacity-60" loading="lazy" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                {/* Scan overlay */}
+                <div className="absolute inset-x-0 top-0 h-full flex items-center justify-center">
+                  <div className="w-32 h-32 border-2 border-[#0066FF]/60 rounded-lg relative">
+                    <div className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-[#0066FF] rounded-tl-sm" />
+                    <div className="absolute top-0 right-0 w-3 h-3 border-t-2 border-r-2 border-[#0066FF] rounded-tr-sm" />
+                    <div className="absolute bottom-0 left-0 w-3 h-3 border-b-2 border-l-2 border-[#0066FF] rounded-bl-sm" />
+                    <div className="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-[#0066FF] rounded-br-sm" />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <Camera className="w-6 h-6 text-[#0066FF] opacity-60" />
+                    </div>
+                  </div>
+                </div>
+                {/* Result badge */}
+                <div className="absolute bottom-3 left-3 right-3 bg-[#0A0A0B]/90 backdrop-blur-sm border border-white/[0.08] rounded-lg p-3">
+                  <div className="flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-2">
+                      <div className="w-5 h-5 rounded-full bg-green-500/10 flex items-center justify-center"><Check className="w-3 h-3 text-green-400" /></div>
+                      <span className="text-green-400 font-medium">Aucun dommage détecté</span>
+                    </div>
+                    <span className="text-[#0066FF] font-mono font-bold">94%</span>
+                  </div>
+                  <div className="mt-2 grid grid-cols-3 gap-2 text-[10px] text-zinc-500">
+                    <span>Sévérité: <span className="text-green-400">Aucune</span></span>
+                    <span>Scan: <span className="text-zinc-300">1.2s</span></span>
+                    <span>Preuve: <span className="text-[#0066FF]">Horodatée</span></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Trust info */}
+            <div>
+              <h3 className="text-xl font-bold mb-4" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>Chaque photo est une preuve.</h3>
+              <p className="text-sm text-zinc-400 leading-relaxed mb-6">
+                Au chargement, votre chauffeur prend une photo. En moins de 2 secondes, Gemini Vision analyse l'état du colis, détecte les chocs et génère un rapport horodaté. Si un client conteste, vous avez la preuve irréfutable.
+              </p>
+              <div className="space-y-3">
+                {[
+                  { label: 'Détection des dommages par IA', detail: 'Sévérité + zone impactée' },
+                  { label: 'Horodatage infalsifiable', detail: 'Date, heure, géolocalisation' },
+                  { label: 'Rapport PDF exportable', detail: 'Valeur probante pour assureurs' }
+                ].map((item, i) => (
+                  <div key={i} className="flex items-start gap-3 text-sm">
+                    <div className="w-5 h-5 rounded-full bg-[#0066FF]/10 flex items-center justify-center flex-shrink-0 mt-0.5"><Check className="w-3 h-3 text-[#0066FF]" /></div>
+                    <div><span className="text-white font-medium">{item.label}</span><span className="text-zinc-500"> — {item.detail}</span></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Trust Badges */}
+          <div className="flex flex-wrap items-center justify-center gap-8 pt-8 border-t border-white/[0.06]" data-testid="trust-badges">
+            {[
+              { name: 'eFTI', desc: 'Electronic Freight Transport Information' },
+              { name: 'GDPR', desc: 'Règlement Général sur la Protection des Données' },
+              { name: 'eIDAS', desc: 'Identification électronique et services de confiance' }
+            ].map((badge, i) => (
+              <div key={i} className="flex items-center gap-3 px-5 py-3 bg-white/[0.02] border border-white/[0.06] rounded-xl">
+                <div className="w-8 h-8 rounded-lg bg-[#0066FF]/10 flex items-center justify-center">
+                  <Shield className="w-4 h-4 text-[#0066FF]" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-white">{badge.name}</p>
+                  <p className="text-[10px] text-zinc-500">{badge.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ─── PRICING ─── */}
       <PricingSection onNavigate={navigate} />
 
@@ -379,3 +470,157 @@ const PricingSection = ({ onNavigate }) => {
 };
 
 export default LandingPage;
+
+/* ─────────────────────── ROI CALCULATOR ─────────────────────── */
+
+const ROICalculator = ({ onNavigate }) => {
+  const [trucks, setTrucks] = useState(5);
+  const [litiges, setLitiges] = useState(3);
+  const [costPerLitige, setCostPerLitige] = useState(350);
+
+  const pertesLitiges = litiges * costPerLitige;
+  const pertesCarburant = trucks * 50;
+  const totalPertes = pertesLitiges + pertesCarburant;
+  const economiesLitiges = Math.round(pertesLitiges * 0.8);
+  const economiesCarburant = pertesCarburant;
+  const totalEconomies = economiesLitiges + economiesCarburant;
+
+  return (
+    <section id="roi" className="py-24 px-6 border-t border-white/[0.06] relative overflow-hidden" data-testid="roi-section">
+      {/* Ambient glow */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-[#0066FF]/[0.04] rounded-full blur-[150px] pointer-events-none" />
+
+      <div className="max-w-4xl mx-auto relative">
+        <p className="text-xs uppercase tracking-[0.2em] text-red-400 text-center mb-3">Calculateur de rentabilité</p>
+        <h2 className="text-2xl sm:text-3xl font-bold text-center mb-4" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>
+          Combien perdez-vous chaque mois ?
+        </h2>
+        <p className="text-zinc-400 text-center max-w-lg mx-auto mb-12 text-sm">Ajustez les curseurs pour découvrir vos pertes réelles — et ce que Transporter-Pro vous fait économiser.</p>
+
+        <div className="grid md:grid-cols-2 gap-8">
+          {/* Sliders */}
+          <div className="space-y-8" data-testid="roi-inputs">
+            <SliderInput
+              label="Nombre de camions"
+              value={trucks}
+              onChange={setTrucks}
+              min={1} max={50} step={1}
+              unit="camions"
+              testId="slider-trucks"
+            />
+            <SliderInput
+              label="Litiges / dommages par mois"
+              value={litiges}
+              onChange={setLitiges}
+              min={0} max={20} step={1}
+              unit="litiges"
+              testId="slider-litiges"
+            />
+            <SliderInput
+              label="Coût moyen d'un litige"
+              value={costPerLitige}
+              onChange={setCostPerLitige}
+              min={100} max={2000} step={50}
+              unit="€"
+              testId="slider-cost"
+            />
+          </div>
+
+          {/* Results */}
+          <div className="space-y-5" data-testid="roi-results">
+            {/* Losses */}
+            <div className="bg-red-500/[0.04] border border-red-500/10 rounded-2xl p-5">
+              <p className="text-xs uppercase tracking-wider text-red-400/70 mb-3">Vos pertes mensuelles</p>
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-zinc-400">Litiges ({litiges} x {costPerLitige}€)</span>
+                  <span className="text-red-400 font-mono font-semibold">{pertesLitiges.toLocaleString('fr-FR')} €</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-zinc-400">Carburant gaspillé ({trucks} camions)</span>
+                  <span className="text-red-400 font-mono font-semibold">{pertesCarburant.toLocaleString('fr-FR')} €</span>
+                </div>
+                <div className="border-t border-red-500/10 pt-2 mt-2 flex justify-between">
+                  <span className="text-red-300 font-semibold">Total perdu</span>
+                  <span className="text-2xl font-bold font-mono text-red-400" data-testid="total-losses">-{totalPertes.toLocaleString('fr-FR')} €</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Savings */}
+            <div className="bg-green-500/[0.04] border border-green-500/10 rounded-2xl p-5">
+              <p className="text-xs uppercase tracking-wider text-green-400/70 mb-3">Économies avec Transporter-Pro</p>
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-zinc-400">Litiges évités (80% via IA)</span>
+                  <span className="text-green-400 font-mono font-semibold">+{economiesLitiges.toLocaleString('fr-FR')} €</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-zinc-400">Économies carburant (Éco-Score)</span>
+                  <span className="text-green-400 font-mono font-semibold">+{economiesCarburant.toLocaleString('fr-FR')} €</span>
+                </div>
+                <div className="border-t border-green-500/10 pt-2 mt-2 flex justify-between">
+                  <span className="text-green-300 font-semibold">Total économisé</span>
+                  <span className="text-2xl font-bold font-mono text-green-400" data-testid="total-savings">+{totalEconomies.toLocaleString('fr-FR')} €</span>
+                </div>
+              </div>
+            </div>
+
+            {/* ROI Ratio */}
+            <div className="bg-white/[0.02] border border-[#0066FF]/20 rounded-2xl p-5 text-center">
+              <p className="text-sm text-zinc-400 mb-2">
+                Vous perdez actuellement <span className="text-red-400 font-bold">{totalPertes.toLocaleString('fr-FR')} €</span> / mois.
+              </p>
+              <p className="text-sm text-zinc-400 mb-1">
+                Transporter-Pro vous en sauve <span className="text-green-400 font-bold">{totalEconomies.toLocaleString('fr-FR')} €</span>.
+              </p>
+              <p className="text-[#0066FF] font-semibold text-sm mt-3" data-testid="roi-conclusion">
+                Votre abonnement est rentabilisé dès le premier jour.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* CTA */}
+        <div className="text-center mt-10">
+          <button
+            onClick={() => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })}
+            className="group inline-flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white font-semibold px-8 py-4 rounded-xl transition-all hover:shadow-xl hover:shadow-red-500/20"
+            data-testid="roi-cta-btn"
+          >
+            Arrêter de perdre de l'argent
+            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+          </button>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+const SliderInput = ({ label, value, onChange, min, max, step, unit, testId }) => {
+  const pct = ((value - min) / (max - min)) * 100;
+  return (
+    <div>
+      <div className="flex justify-between items-baseline mb-3">
+        <label className="text-sm text-zinc-300 font-medium">{label}</label>
+        <span className="text-lg font-bold font-mono text-white" data-testid={`${testId}-value`}>{value} <span className="text-xs text-zinc-500 font-normal">{unit}</span></span>
+      </div>
+      <input
+        type="range"
+        min={min} max={max} step={step}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="w-full h-1.5 rounded-full appearance-none cursor-pointer"
+        style={{
+          background: `linear-gradient(to right, #0066FF ${pct}%, #27272A ${pct}%)`
+        }}
+        data-testid={testId}
+      />
+      <div className="flex justify-between mt-1.5 text-[10px] text-zinc-600">
+        <span>{min}</span>
+        <span>{max}</span>
+      </div>
+    </div>
+  );
+};
+
