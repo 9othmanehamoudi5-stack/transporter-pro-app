@@ -229,7 +229,7 @@ TARIFS (Membres Fondateurs) :
 - CROISSANCE : 189€/mois (15 camions, IA Anti-Litige, Cash-Flow, GPS Live)
 - FLOTTE PRO : 489€/mois (illimité, Éco-Score, API, support 24/7)
 - Annuel : -17% (Solo 32€, Croissance 157€, Flotte Pro 406€/mois)
-- Essai gratuit de 14 jours sur tous les plans
+- Essai gratuit de 30 jours sur tous les plans
 
 RÉGLEMENTATION :
 - Loi transport 2026 : obligation e-CMR numérique, amendes 50€/facture non conforme
