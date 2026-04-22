@@ -55,7 +55,7 @@ const LandingPage = () => {
           <div>
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/[0.08] bg-white/[0.03] text-xs text-zinc-400 mb-8 backdrop-blur-sm">
               <span className="w-1.5 h-1.5 rounded-full bg-[#0066FF] animate-pulse" />
-              14 jours d'essai gratuit — Aucune carte bancaire requise
+              30 jours d'essai gratuit — Aucune carte bancaire requise
             </div>
 
             <h1 className="text-4xl sm:text-5xl lg:text-[3.4rem] font-bold leading-[1.08] tracking-tight mb-7" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }} data-testid="hero-h1">
@@ -109,7 +109,7 @@ const LandingPage = () => {
       <section className="border-y border-white/[0.06]">
         <div className="max-w-5xl mx-auto px-6 py-10 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
           {[
-            { value: '14j', label: 'essai gratuit' },
+            { value: '30j', label: 'essai gratuit' },
             { value: '-40%', label: 'de litiges' },
             { value: '-15%', label: 'de carburant' },
             { value: '24/7', label: 'preuve numérique' },
@@ -326,7 +326,7 @@ const LandingPage = () => {
       <section className="py-24 px-6 border-t border-white/[0.06]">
         <div className="max-w-2xl mx-auto text-center">
           <h2 className="text-2xl sm:text-3xl font-bold mb-4" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>Prêt à protéger vos marges ?</h2>
-          <p className="text-zinc-400 mb-8">Rejoignez les transporteurs qui ont repris le contrôle. Essai gratuit de 14 jours inclus.</p>
+          <p className="text-zinc-400 mb-8">Rejoignez les transporteurs qui ont repris le contrôle. Essai gratuit de 30 jours inclus.</p>
           <button onClick={() => navigate('/register')} className="group inline-flex items-center gap-2 bg-[#0066FF] hover:bg-[#0052CC] text-white font-semibold px-8 py-4 rounded-xl transition-all hover:shadow-xl hover:shadow-blue-500/25" data-testid="final-cta-btn">
             Démarrer mon essai gratuit
             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -407,7 +407,7 @@ const PricingSection = ({ onNavigate }) => {
         <h2 className="text-2xl sm:text-3xl font-bold text-center mb-4" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>
           Un plan pour chaque ambition.
         </h2>
-        <p className="text-zinc-400 text-center max-w-lg mx-auto mb-2 text-sm">Essai gratuit de 14 jours inclus sur tous les plans. Annulable en un clic.</p>
+        <p className="text-zinc-400 text-center max-w-lg mx-auto mb-2 text-sm">Essai gratuit de 30 jours inclus sur tous les plans. Annulable en un clic.</p>
         <p className="text-center mb-10">
           <span className="inline-flex items-center gap-1.5 text-xs text-amber-400 bg-amber-400/10 border border-amber-400/20 px-3 py-1 rounded-full" data-testid="founder-badge">Tarif garanti à vie pour les Membres Fondateurs</span>
         </p>
