@@ -14,8 +14,8 @@ const PLANS = [
     id: 'solo',
     name: 'SOLO',
     description: 'Parfait pour démarrer',
-    monthlyPrice: 29,
-    yearlyPrice: 290,
+    monthlyPrice: 19,
+    yearlyPrice: 190,
     features: [
       'Jusqu\'à 3 camions',
       'Livraisons illimitées',

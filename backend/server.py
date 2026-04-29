@@ -289,6 +289,40 @@ async def chat_with_bot(data: ChatMessage, request: Request):
         return {"reply": "Désolé, je rencontre un problème technique. Contactez-nous à support@transporter-pro.com."}
 
 
+
+@api_router.get("/verify-siret/{siret}")
+async def verify_siret(siret: str):
+    """Verify SIRET via INSEE Sirene API (public endpoint)"""
+    import httpx
+    clean_siret = siret.replace(" ", "").replace("-", "")
+    
+    if len(clean_siret) != 14 or not clean_siret.isdigit():
+        return {"valid": False, "error": "Le SIRET doit contenir 14 chiffres"}
+    
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            # Use the open data API (no auth needed)
+            resp = await client.get(f"https://entreprise.data.gouv.fr/api/sirene/v1/siret/{clean_siret}")
+            if resp.status_code == 200:
+                data = resp.json()
+                etablissement = data.get("etablissement", {})
+                nom = etablissement.get("nom_raison_sociale", "") or etablissement.get("l1_normalisee", "")
+                adresse = f"{etablissement.get('l4_normalisee', '')} {etablissement.get('l6_normalisee', '')}".strip()
+                return {
+                    "valid": True,
+                    "company_name": nom,
+                    "address": adresse,
+                    "siret": clean_siret
+                }
+            elif resp.status_code == 404:
+                return {"valid": False, "error": "SIRET introuvable dans la base INSEE"}
+    except Exception as e:
+        logger.warning(f"SIRET API error: {e}")
+    
+    # Fallback: accept SIRET format without online validation
+    return {"valid": True, "company_name": "", "address": "", "siret": clean_siret, "fallback": True}
+
+
 # ==================== ONBOARDING KYB ====================
 
 @api_router.get("/onboarding/status")
@@ -496,7 +530,7 @@ async def register(data: UserCreate):
 
     # For admin, company_id = their own user id + trial period
     if data.role == "admin":
-        trial_ends = datetime.now(timezone.utc) + timedelta(days=14)
+        trial_ends = datetime.now(timezone.utc) + timedelta(days=30)
         await db.users.update_one({"_id": result.inserted_id}, {"$set": {
             "company_id": user_id,
             "trial_ends_at": trial_ends,
@@ -511,6 +545,9 @@ async def register(data: UserCreate):
         "email": email,
         "name": data.name,
         "role": data.role,
+        "onboarding_complete": False,
+        "company_id": user_id if data.role == "admin" else "",
+        "plan": "solo",
         "access_token": access_token,
         "refresh_token": refresh_token
     })
@@ -556,6 +593,9 @@ async def login(data: UserLogin, request: Request):
         "email": email,
         "name": user["name"],
         "role": user["role"],
+        "company_id": user.get("company_id", user_id),
+        "plan": user.get("plan", "solo"),
+        "onboarding_complete": user.get("onboarding_complete", False),
         "access_token": access_token,
         "refresh_token": refresh_token
     })
@@ -725,8 +765,8 @@ async def delete_driver(driver_id: str, user: dict = Depends(require_role("admin
 SUBSCRIPTION_PLANS = {
     "solo": {
         "name": "SOLO",
-        "monthly_price": 29,
-        "yearly_price": 290,
+        "monthly_price": 19,
+        "yearly_price": 190,
         "max_trucks": 3,
         "features": ["e-CMR illimitées", "Support email", "Dashboard basique", "3 chauffeurs max"]
     },
@@ -760,7 +800,7 @@ async def get_current_subscription(user: dict = Depends(require_role("admin"))):
         admin_user = await db.users.find_one({"_id": ObjectId(user["id"])})
         trial_ends = admin_user.get("trial_ends_at")
         if not trial_ends:
-            trial_ends = datetime.now(timezone.utc) + timedelta(days=14)
+            trial_ends = datetime.now(timezone.utc) + timedelta(days=30)
         is_expired = isinstance(trial_ends, datetime) and trial_ends < datetime.now(timezone.utc)
         return {
             "plan": user.get("plan", "solo"),

@@ -55,7 +55,7 @@ const LandingPage = () => {
           <div>
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/[0.08] bg-white/[0.03] text-xs text-zinc-400 mb-8 backdrop-blur-sm">
               <span className="w-1.5 h-1.5 rounded-full bg-[#0066FF] animate-pulse" />
-              30 jours d'essai gratuit — Aucune carte bancaire requise
+              30 jours d'essai gratuit — CB requise, débit 0€
             </div>
 
             <h1 className="text-4xl sm:text-5xl lg:text-[3.4rem] font-bold leading-[1.08] tracking-tight mb-7" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }} data-testid="hero-h1">
@@ -347,9 +347,9 @@ const plans = [
     name: 'SOLO',
     tagline: 'Pour les artisans du transport.',
     trucks: "Jusqu'à 3 camions",
-    monthly: 29,
-    yearlyTotal: 290,
-    yearlyMonthly: 24,
+    monthly: 19,
+    yearlyTotal: 190,
+    yearlyMonthly: 16,
     features: ['e-CMR illimitées', 'Support email', 'Dashboard basique', '3 chauffeurs max'],
     popular: false,
     links: {

@@ -122,6 +122,15 @@ Application SaaS logistique "Transporter-Pro" pour PME de transport.
 - [x] "30 jours d'essai gratuit" partout (ZERO occurrence de "14 jours" restante)
 - [x] Flotte Pro : affiche "illimité" quand max_drivers=-1
 
+### Phase 13 - Batch 1 : Tunnel Inscription + SIRET + Stripe (DONE - 29 Avril 2026)
+- [x] Prix Solo mis à jour : 19€/mois (190€/an)
+- [x] Tunnel d'inscription multi-étapes : Step 1 (compte) → Step 2 (KYB: SIRET/Entreprise/TVA/Adresse) → Step 3 (Redirect Stripe)
+- [x] API Sirene : endpoint `GET /api/verify-siret/{siret}` — auto-remplissage nom + adresse si trouvé
+- [x] Redirection Stripe obligatoire après validation SIRET (CB requise, débit 0€)
+- [x] Badge "CB requise, débit 0€" (suppression "Aucune carte bancaire")
+- [x] Login + Register retournent `onboarding_complete`, `company_id`, `plan`
+- [x] Trial period fixée à 30 jours (plus 14)
+
 ## Backlog P1
 - [ ] Corriger règles sécurité Firebase (voir /app/memory/FIREBASE_RULES.md)
 
