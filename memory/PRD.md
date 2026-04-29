@@ -131,6 +131,16 @@ Application SaaS logistique "Transporter-Pro" pour PME de transport.
 - [x] Login + Register retournent `onboarding_complete`, `company_id`, `plan`
 - [x] Trial period fixée à 30 jours (plus 14)
 
+### Phase 14 - Batch 2 : Scanner Code-Barres + Corrections UI (DONE - 29 Avril 2026)
+- [x] Scanner code-barres `html5-qrcode` : lecture EAN, Code 128, QR Code
+- [x] Composant `BarcodeScanner.jsx` avec cadre de détection animé
+- [x] Intégré dans DriverDashboard ("Scanner un colis") + AdminDashboard ("Scan Code-barre")
+- [x] Code scanné auto-injecté avec notification toast
+- [x] Fix chevauchement Footer/Login : footer passé de `fixed` à `relative`
+- [x] Pages Auth en `flex-col` pour layout propre
+- [x] Footer redesigné (#0f172a) : 3 colonnes (Brand, Légal, Offres avec prix)
+- [x] Mention "En attente d'homologation e-CMR" dans le footer
+
 ## Backlog P1
 - [ ] Corriger règles sécurité Firebase (voir /app/memory/FIREBASE_RULES.md)
 
