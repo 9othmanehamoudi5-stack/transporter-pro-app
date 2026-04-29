@@ -66,7 +66,7 @@ const LandingPage = () => {
             <p className="text-base text-zinc-400 max-w-xl mb-10 leading-relaxed" data-testid="hero-subtitle">
               Marre de payer pour des colis que vous n'avez pas cassés ? Marre du gasoil qui s'évapore ?{' '}
               <span className="text-zinc-200">Transporter-Pro est votre assistant de gestion interne</span> : Bouclier IA + Éco-Score + Tracking.{' '}
-              <span className="text-[#0066FF] font-medium">14 jours d'essai gratuit, 0€ aujourd'hui.</span>
+              <span className="text-[#0066FF] font-medium">30 jours d'essai gratuit, 0€ aujourd'hui.</span>
             </p>
 
             <div className="flex flex-col sm:flex-row items-start gap-4">
@@ -347,9 +347,9 @@ const plans = [
     name: 'SOLO',
     tagline: 'Pour les artisans du transport.',
     trucks: "Jusqu'à 3 camions",
-    monthly: 39,
-    yearlyTotal: 390,
-    yearlyMonthly: 32,
+    monthly: 29,
+    yearlyTotal: 290,
+    yearlyMonthly: 24,
     features: ['e-CMR illimitées', 'Support email', 'Dashboard basique', '3 chauffeurs max'],
     popular: false,
     links: {
@@ -470,7 +470,7 @@ const PricingSection = ({ onNavigate }) => {
                 }`}
                 data-testid={`plan-cta-${plan.id}`}
               >
-                Démarrer l'essai gratuit — 14 jours
+                Démarrer l'essai gratuit — 30 jours
               </button>
 
               <ul className="mt-6 space-y-2.5">

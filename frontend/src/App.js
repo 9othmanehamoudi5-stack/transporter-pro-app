@@ -10,6 +10,7 @@ import { ClientPortal, TrackingSearch } from "./pages/ClientPortal";
 import LandingPage from "./pages/LandingPage";
 import PaymentSuccessPage from "./pages/PaymentSuccessPage";
 import { CGUPage, ConfidentialitePage, ContactPage } from "./pages/LegalPages";
+import OnboardingForm from "./pages/OnboardingForm";
 import TransporterBot from "./components/TransporterBot";
 import { Toaster } from "./components/ui/sonner";
 
@@ -58,6 +59,9 @@ const DashboardRouter = () => {
 
   switch (user.role) {
     case "admin":
+      if (!user.onboarding_complete) {
+        return <OnboardingForm onComplete={() => window.location.reload()} />;
+      }
       return <AdminDashboard />;
     case "driver":
       return <Navigate to="/driver" replace />;

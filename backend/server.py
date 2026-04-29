@@ -98,6 +98,14 @@ class ChatMessage(BaseModel):
     message: str
     history: List[dict] = []
 
+
+class CompanyOnboarding(BaseModel):
+    company_name: str
+    siret: str
+    tva_intra: str = ""
+    address: str
+
+
 class DriverCreate(BaseModel):
     email: EmailStr
     password: str
@@ -167,6 +175,7 @@ async def get_current_user(request: Request) -> dict:
             "plan": user.get("plan", "solo"),
             "subscription_status": user.get("subscription_status", "trial"),
             "trial_ends_at": user.get("trial_ends_at", "").isoformat() if isinstance(user.get("trial_ends_at"), datetime) else str(user.get("trial_ends_at", "")),
+            "onboarding_complete": user.get("onboarding_complete", False),
             "created_at": user.get("created_at", "").isoformat() if isinstance(user.get("created_at"), datetime) else str(user.get("created_at", ""))
         }
     except jwt.ExpiredSignatureError:
@@ -228,8 +237,8 @@ TARIFS (Membres Fondateurs) :
 - SOLO : 39€/mois (3 camions max, e-CMR, support email)
 - CROISSANCE : 189€/mois (15 camions, IA Anti-Litige, Cash-Flow, GPS Live)
 - FLOTTE PRO : 489€/mois (illimité, Éco-Score, API, support 24/7)
-- Annuel : -17% (Solo 32€, Croissance 157€, Flotte Pro 406€/mois)
-- Essai gratuit de 14 jours sur tous les plans
+- Annuel : -17% (Solo 24€, Croissance 157€, Flotte Pro 406€/mois)
+- Essai gratuit de 30 jours sur tous les plans
 
 RÉGLEMENTATION :
 - Loi transport 2026 : obligation e-CMR numérique, amendes 50€/facture non conforme
@@ -239,8 +248,23 @@ RÉGLEMENTATION :
 Si on te pose une question hors de ton domaine, réponds poliment que tu es spécialisé en gestion de flotte transport et redirige vers contact@transporter-pro.com."""
 
 @api_router.post("/chat")
-async def chat_with_bot(data: ChatMessage):
-    """Transporter-Bot — AI support powered by Gemini"""
+async def chat_with_bot(data: ChatMessage, request: Request):
+    """Transporter-Bot — AI support powered by Gemini (5 questions/day limit for trial)"""
+    # Rate limit: 5 questions/day per IP for non-authenticated users
+    client_ip = request.client.host if request.client else "unknown"
+    today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    rate_key = f"chat_{client_ip}_{today_str}"
+    
+    chat_count = await db.rate_limits.find_one({"key": rate_key})
+    if chat_count and chat_count.get("count", 0) >= 20:
+        return {"reply": "Vous avez atteint la limite quotidienne de questions. Créez un compte ou contactez-nous à support@transporter-pro.com."}
+    
+    await db.rate_limits.update_one(
+        {"key": rate_key},
+        {"$inc": {"count": 1}, "$set": {"date": today_str}},
+        upsert=True
+    )
+
     try:
         from emergentintegrations.llm.chat import LlmChat, UserMessage
         import uuid as uuid_mod
@@ -263,6 +287,50 @@ async def chat_with_bot(data: ChatMessage):
     except Exception as e:
         logger.error(f"Chat error: {e}")
         return {"reply": "Désolé, je rencontre un problème technique. Contactez-nous à support@transporter-pro.com."}
+
+
+# ==================== ONBOARDING KYB ====================
+
+@api_router.get("/onboarding/status")
+async def get_onboarding_status(user: dict = Depends(require_role("admin"))):
+    """Check if company onboarding is complete"""
+    company = await db.companies.find_one({"admin_id": user["id"]}, {"_id": 0})
+    return {
+        "onboarding_complete": company is not None and company.get("onboarding_complete", False),
+        "company": company
+    }
+
+
+@api_router.post("/onboarding/complete")
+async def complete_onboarding(data: CompanyOnboarding, user: dict = Depends(require_role("admin"))):
+    """Complete company onboarding with KYB info"""
+    company_doc = {
+        "admin_id": user["id"],
+        "company_id": user["company_id"],
+        "company_name": data.company_name,
+        "siret": data.siret,
+        "tva_intra": data.tva_intra,
+        "address": data.address,
+        "onboarding_complete": True,
+        "created_at": datetime.now(timezone.utc)
+    }
+    
+    await db.companies.update_one(
+        {"admin_id": user["id"]},
+        {"$set": company_doc},
+        upsert=True
+    )
+    
+    # Update user record
+    await db.users.update_one(
+        {"_id": ObjectId(user["id"])},
+        {"$set": {"onboarding_complete": True, "company_name": data.company_name}}
+    )
+    
+    await log_action(user["id"], user["company_id"], "onboarding_complete", "company", user["company_id"], f"Entreprise: {data.company_name}, SIRET: {data.siret}")
+    
+    return {"message": "Onboarding complété", "company": {k: v for k, v in company_doc.items() if k != "created_at"}}
+
 
 
 # ==================== BLOCKCHAIN SIMULATION ====================
@@ -657,8 +725,8 @@ async def delete_driver(driver_id: str, user: dict = Depends(require_role("admin
 SUBSCRIPTION_PLANS = {
     "solo": {
         "name": "SOLO",
-        "monthly_price": 39,
-        "yearly_price": 390,
+        "monthly_price": 29,
+        "yearly_price": 290,
         "max_trucks": 3,
         "features": ["e-CMR illimitées", "Support email", "Dashboard basique", "3 chauffeurs max"]
     },
@@ -935,6 +1003,8 @@ async def get_deliveries(user: dict = Depends(get_current_user), status: Optiona
         query["driver_id"] = user["id"]
     elif user["role"] == "client":
         query["client_id"] = user["id"]
+    elif user["role"] == "admin":
+        query["company_id"] = user["company_id"]
     
     if status:
         query["status"] = status
@@ -1156,6 +1226,8 @@ async def get_damage_reports(user: dict = Depends(get_current_user)):
     query = {}
     if user["role"] == "driver":
         query["driver_id"] = user["id"]
+    elif user["role"] == "admin":
+        query["company_id"] = user["company_id"]
     
     reports = await db.damage_reports.find(query, {"_id": 0}).sort("created_at", -1).to_list(100)
     
@@ -1386,8 +1458,10 @@ async def recalculate_eco_scores(user: dict = Depends(require_role("admin"))):
 
 @api_router.get("/dashboard/cash-flow")
 async def get_cash_flow(user: dict = Depends(require_role("admin"))):
+    cid = user["company_id"]
     # Money blocked in trucks (delivered but unpaid)
     pipeline_blocked = [
+        {"$match": {"company_id": cid}},
         {"$lookup": {
             "from": "invoices",
             "localField": "tracking_id",
@@ -1408,13 +1482,13 @@ async def get_cash_flow(user: dict = Depends(require_role("admin"))):
     blocked_result = await db.deliveries.aggregate(pipeline_blocked).to_list(1)
     blocked = blocked_result[0] if blocked_result else {"total_blocked": 0, "count": 0}
     
-    # Pending invoices
-    pending_invoices = await db.invoices.count_documents({"status": "pending"})
+    # Pending invoices for this company
+    pending_invoices = await db.invoices.count_documents({"company_id": cid, "status": "pending"})
     
     # Total revenue this month
     start_of_month = datetime.now(timezone.utc).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     paid_this_month = await db.invoices.aggregate([
-        {"$match": {"status": "paid", "paid_at": {"$gte": start_of_month}}},
+        {"$match": {"company_id": cid, "status": "paid", "paid_at": {"$gte": start_of_month}}},
         {"$group": {"_id": None, "total": {"$sum": "$amount"}}}
     ]).to_list(1)
     
@@ -1430,18 +1504,22 @@ async def get_dashboard_stats(user: dict = Depends(get_current_user)):
     today = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
     
     if user["role"] == "admin":
+        cid = user["company_id"]
         stats = {
-            "total_deliveries": await db.deliveries.count_documents({}),
-            "pending_deliveries": await db.deliveries.count_documents({"status": "pending"}),
-            "in_transit": await db.deliveries.count_documents({"status": "in_transit"}),
-            "delivered_today": await db.deliveries.count_documents({"status": "delivered", "delivered_at": {"$gte": today}}),
-            "active_drivers": await db.users.count_documents({"role": "driver"}),
-            "active_litiges": await db.damage_reports.count_documents({"ai_analysis.is_damaged": True}),
+            "total_deliveries": await db.deliveries.count_documents({"company_id": cid}),
+            "pending_deliveries": await db.deliveries.count_documents({"company_id": cid, "status": "pending"}),
+            "in_transit": await db.deliveries.count_documents({"company_id": cid, "status": "in_transit"}),
+            "delivered_today": await db.deliveries.count_documents({"company_id": cid, "status": "delivered", "delivered_at": {"$gte": today}}),
+            "active_drivers": await db.users.count_documents({"role": "driver", "company_id": cid}),
+            "active_litiges": await db.damage_reports.count_documents({"company_id": cid, "ai_analysis.is_damaged": True}),
             "avg_eco_score": 0
         }
         
-        # Get average eco score
+        # Get average eco score for this company's drivers
+        company_drivers_cursor = db.users.find({"role": "driver", "company_id": cid}, {"_id": 1})
+        driver_ids = [str(d["_id"]) async for d in company_drivers_cursor]
         avg_score = await db.eco_scores.aggregate([
+            {"$match": {"driver_id": {"$in": driver_ids}} if driver_ids else {}},
             {"$group": {"_id": None, "avg": {"$avg": "$score"}}}
         ]).to_list(1)
         if avg_score:

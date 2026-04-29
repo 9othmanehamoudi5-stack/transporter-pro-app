@@ -12,10 +12,10 @@ import { toast } from 'sonner';
 const PLANS = [
   {
     id: 'solo',
-    name: 'SOLO / DUO',
+    name: 'SOLO',
     description: 'Parfait pour démarrer',
-    monthlyPrice: 49,
-    yearlyPrice: 490,
+    monthlyPrice: 29,
+    yearlyPrice: 290,
     features: [
       'Jusqu\'à 3 camions',
       'Livraisons illimitées',
@@ -35,8 +35,8 @@ const PLANS = [
     id: 'croissance',
     name: 'CROISSANCE',
     description: 'Pour les PME en expansion',
-    monthlyPrice: 199,
-    yearlyPrice: 1990,
+    monthlyPrice: 189,
+    yearlyPrice: 1890,
     features: [
       'Jusqu\'à 15 camions',
       'e-CMR PDF illimitées',
@@ -58,8 +58,8 @@ const PLANS = [
     id: 'flotte_pro',
     name: 'FLOTTE PRO',
     description: 'Solution entreprise complète',
-    monthlyPrice: 499,
-    yearlyPrice: 4990,
+    monthlyPrice: 489,
+    yearlyPrice: 4890,
     features: [
       'Camions illimités',
       'Toutes fonctionnalités',

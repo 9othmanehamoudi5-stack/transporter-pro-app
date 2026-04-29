@@ -224,11 +224,11 @@ export const AdminDashboard = () => {
     { id: 'overview', label: 'Vue d\'ensemble', icon: TrendingUp },
     { id: 'deliveries', label: 'Livraisons', icon: Package },
     { id: 'livemap', label: 'Carte Live', icon: Map },
-    { id: 'cashflow', label: 'Cash-Flow', icon: DollarSign },
+    ...(user?.role === 'admin' ? [{ id: 'cashflow', label: 'Cash-Flow', icon: DollarSign }] : []),
     { id: 'drivers', label: 'Chauffeurs', icon: Users },
     { id: 'litiges', label: 'Litiges', icon: AlertTriangle },
     { id: 'eco', label: 'Éco-scores', icon: Leaf },
-    { id: 'subscription', label: 'Abonnement', icon: CreditCard },
+    ...(user?.role === 'admin' ? [{ id: 'subscription', label: 'Abonnement', icon: CreditCard }] : []),
   ];
 
   return (
