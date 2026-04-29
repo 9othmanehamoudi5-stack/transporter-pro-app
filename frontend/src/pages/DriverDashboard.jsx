@@ -7,9 +7,10 @@ import { Button } from '../components/ui/button';
 import { 
   Truck, Package, Camera, CheckCircle, MapPin, LogOut, 
   Wifi, WifiOff, AlertTriangle, ChevronRight, Clock,
-  Navigation, Leaf, Shield, RefreshCw, X, Upload
+  Navigation, Leaf, Shield, RefreshCw, X, Upload, ScanLine
 } from 'lucide-react';
 import { Toaster, toast } from 'sonner';
+import BarcodeScanner from '../components/BarcodeScanner';
 import SignatureCanvas from './SignatureCanvas';
 
 const statusLabels = {
@@ -29,6 +30,7 @@ export const DriverDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [selectedDelivery, setSelectedDelivery] = useState(null);
   const [showCamera, setShowCamera] = useState(false);
+  const [showScanner, setShowScanner] = useState(false);
   const [showSignature, setShowSignature] = useState(false);
   const [ecoScore, setEcoScore] = useState(null);
 
@@ -255,6 +257,29 @@ export const DriverDashboard = () => {
           <p className="text-xs text-zinc-400">Éco-score</p>
         </div>
       </div>
+
+      {/* Scanner Button */}
+      <div className="px-4 py-2">
+        <button
+          onClick={() => setShowScanner(true)}
+          className="w-full flex items-center justify-center gap-2 py-3 bg-[#121214] border border-[#27272A] rounded-xl text-sm text-zinc-300 hover:border-[#0066FF]/30 transition-colors"
+          data-testid="driver-scan-btn"
+        >
+          <ScanLine className="w-4 h-4 text-[#0066FF]" />
+          Scanner un colis
+        </button>
+      </div>
+
+      {/* Scanner Modal */}
+      {showScanner && (
+        <BarcodeScanner
+          onScan={(code) => {
+            setShowScanner(false);
+            toast.success(`Code scanné : ${code}`);
+          }}
+          onClose={() => setShowScanner(false)}
+        />
+      )}
 
       {/* Main Content */}
       <div className="px-4 space-y-4">

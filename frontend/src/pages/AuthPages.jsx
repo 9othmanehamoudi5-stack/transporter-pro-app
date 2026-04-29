@@ -32,7 +32,7 @@ export const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 relative overflow-hidden">
+    <div className="min-h-screen flex flex-col px-4 relative overflow-hidden">
       {/* Background */}
       <div 
         className="absolute inset-0 bg-cover bg-center opacity-20"
@@ -40,7 +40,8 @@ export const LoginPage = () => {
       />
       <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0B] via-[#0A0A0B]/90 to-[#0A0A0B]/70" />
 
-      <div className="w-full max-w-md relative z-10">
+      <div className="flex-1 flex items-center justify-center relative z-10">
+        <div className="w-full max-w-md">
         {/* Logo */}
         <div className="flex items-center justify-center gap-3 mb-8">
           <div className="w-12 h-12 bg-[#0066FF] rounded-xl flex items-center justify-center">
@@ -122,7 +123,8 @@ export const LoginPage = () => {
           <p>Demo: admin@transporter-pro.com / admin123</p>
         </div>
       </div>
-      <div className="fixed bottom-0 left-0 right-0 z-10">
+      </div>
+      <div className="relative z-10">
         <Footer />
       </div>
     </div>
@@ -214,7 +216,7 @@ export const RegisterPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 relative overflow-hidden">
+    <div className="min-h-screen flex flex-col px-4 relative overflow-hidden">
       {/* Background */}
       <div 
         className="absolute inset-0 bg-cover bg-center opacity-20"
@@ -222,7 +224,8 @@ export const RegisterPage = () => {
       />
       <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0B] via-[#0A0A0B]/90 to-[#0A0A0B]/70" />
 
-      <div className="w-full max-w-md relative z-10">
+      <div className="flex-1 flex items-center justify-center relative z-10">
+        <div className="w-full max-w-md">
         {/* Logo */}
         <div className="flex items-center justify-center gap-3 mb-8">
           <div className="w-12 h-12 bg-[#0066FF] rounded-xl flex items-center justify-center">
@@ -367,7 +370,8 @@ export const RegisterPage = () => {
           )}
         </div>
       </div>
-      <div className="fixed bottom-0 left-0 right-0 z-10">
+      </div>
+      <div className="relative z-10">
         <Footer />
       </div>
     </div>

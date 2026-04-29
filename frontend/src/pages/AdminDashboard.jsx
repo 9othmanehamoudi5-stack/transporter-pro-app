@@ -4,6 +4,7 @@ import { useSubscription } from '../contexts/SubscriptionContext';
 import { dashboardApi, deliveriesApi, invoicesApi, driversApi, damageReportsApi, ecoScoresApi, adminDriversApi, notificationsApi } from '../services/api';
 import { firestoreDrivers } from '../services/firebase';
 import { generateInvoicePDF, generateAllInvoicesPDF } from '../services/pdfGenerator';
+import BarcodeScanner from '../components/BarcodeScanner';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
@@ -68,6 +69,7 @@ export const AdminDashboard = () => {
   const [showAssignDriver, setShowAssignDriver] = useState(null);
   const [showNewDriver, setShowNewDriver] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showScanner, setShowScanner] = useState(false);
   const [firestoreDriversList, setFirestoreDriversList] = useState([]);
   const [driverQuota, setDriverQuota] = useState({ driver_count: 0, max_drivers: 3, can_add: true, plan: 'solo' });
 
@@ -234,6 +236,20 @@ export const AdminDashboard = () => {
   return (
     <div className="min-h-screen bg-[#0A0A0B] flex">
       <Toaster richColors position="top-right" />
+
+      {/* Barcode Scanner Modal */}
+      {showScanner && (
+        <BarcodeScanner
+          onScan={(code) => {
+            setShowScanner(false);
+            toast.success(`Code scanné : ${code}`);
+            setShowNewDelivery(true);
+            // Auto-fill will be handled by the new delivery form
+            window.__scannedBarcode = code;
+          }}
+          onClose={() => setShowScanner(false)}
+        />
+      )}
       
       {/* Mobile overlay */}
       {sidebarOpen && (
@@ -461,7 +477,7 @@ export const AdminDashboard = () => {
                   feature="scanBarcode"
                   hasFeature={hasFeature}
                   getMessage={getRestrictionMessage}
-                  onClick={() => toast.info('Scan barcode bientôt disponible')}
+                  onClick={() => setShowScanner(true)}
                 />
                 <GatedButton
                   label="Portail Client"
