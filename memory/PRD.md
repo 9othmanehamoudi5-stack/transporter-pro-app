@@ -111,6 +111,17 @@ Application SaaS logistique "Transporter-Pro" pour PME de transport.
 - [x] Endpoint `GET /api/stripe/payment-links` pour accès programmatique
 - [x] Clés Stripe test dans `.env` (backend + frontend)
 
+### Phase 12 - Sécurisation B2B & Onboarding (DONE - 29 Avril 2026)
+- [x] Isolation multi-tenancy stricte : `/deliveries`, `/damage-reports`, `/dashboard/stats`, `/dashboard/cash-flow` filtrés par `company_id`
+- [x] Rôles admin/staff : Cash-Flow et Abonnement masqués dans sidebar pour non-admins
+- [x] Cash-flow renvoie 403 pour les drivers
+- [x] Onboarding KYB : formulaire obligatoire (Nom entreprise, SIRET, TVA Intra, Adresse) pour nouveaux admins
+- [x] Collection `companies` liée à l'admin
+- [x] Rate-limit chatbot : 20 questions/jour par IP
+- [x] Prix mis à jour : Solo 29€, Croissance 189€, Flotte Pro 489€
+- [x] "30 jours d'essai gratuit" partout (ZERO occurrence de "14 jours" restante)
+- [x] Flotte Pro : affiche "illimité" quand max_drivers=-1
+
 ## Backlog P1
 - [ ] Corriger règles sécurité Firebase (voir /app/memory/FIREBASE_RULES.md)
 
