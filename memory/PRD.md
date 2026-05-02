@@ -141,6 +141,16 @@ Application SaaS logistique "Transporter-Pro" pour PME de transport.
 - [x] Footer redesigné (#0f172a) : 3 colonnes (Brand, Légal, Offres avec prix)
 - [x] Mention "En attente d'homologation e-CMR" dans le footer
 
+### Phase 15 - Register Bloquant + Scanner Final + ThemeContext + i18n (DONE - 2 Mai 2026)
+- [x] Register refondé : SIRET obligatoire (API Sirene bloquant), Stripe redirect forcé, pas de Footer, alerte "Email déjà utilisé" avec lien /login
+- [x] BarcodeScanner amélioré : bordure verte au succès, arrêt caméra, bouton "CONFIRMER SCAN" + "Scanner un autre code"
+- [x] Landing : header z-index 1000, hero pt-140px (stop chevauchement), nav z-999
+- [x] Footer simplifié : suppression colonne "Offres", garder Mentions Légales / Tarifs / Contact
+- [x] Footer supprimé de /login et /register
+- [x] ThemeContext : mode Clair/Sombre avec toggle Sun/Moon dans la sidebar admin, persisté en localStorage
+- [x] CSS light mode : overrides pour bg, text, borders
+- [x] i18n : fichiers FR/PL/ES (nav, hero, pricing, auth, dashboard, driver, common), provider I18nContext
+
 ## Backlog P1
 - [ ] Corriger règles sécurité Firebase (voir /app/memory/FIREBASE_RULES.md)
 
