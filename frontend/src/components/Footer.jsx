@@ -5,7 +5,7 @@ import { Truck } from 'lucide-react';
 const Footer = () => (
   <footer className="border-t border-white/[0.06] bg-[#0f172a] py-12 px-6" data-testid="footer">
     <div className="max-w-5xl mx-auto">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+      <div className="flex flex-col md:flex-row items-start justify-between gap-8 mb-8">
         {/* Brand */}
         <div>
           <div className="flex items-center gap-2 mb-3">
@@ -20,24 +20,10 @@ const Footer = () => (
         </div>
 
         {/* Links */}
-        <div>
-          <p className="text-xs uppercase tracking-wider text-zinc-400 font-semibold mb-3">Légal</p>
-          <div className="flex flex-col gap-2 text-sm text-zinc-500">
-            <Link to="/cgu" className="hover:text-white transition-colors" data-testid="footer-cgu">Mentions Légales / CGU</Link>
-            <Link to="/confidentialite" className="hover:text-white transition-colors" data-testid="footer-rgpd">Confidentialité (RGPD)</Link>
-            <Link to="/contact" className="hover:text-white transition-colors" data-testid="footer-contact">Contact</Link>
-          </div>
-        </div>
-
-        {/* Tarifs */}
-        <div>
-          <p className="text-xs uppercase tracking-wider text-zinc-400 font-semibold mb-3">Offres</p>
-          <div className="flex flex-col gap-2 text-sm text-zinc-500">
-            <a href="#pricing" className="hover:text-white transition-colors" data-testid="footer-tarifs">Tarifs</a>
-            <span className="text-zinc-600">Solo : 19€/mois</span>
-            <span className="text-zinc-600">Croissance : 189€/mois</span>
-            <span className="text-zinc-600">Flotte Pro : 489€/mois</span>
-          </div>
+        <div className="flex items-center gap-6 text-sm text-zinc-500">
+          <Link to="/cgu" className="hover:text-white transition-colors" data-testid="footer-cgu">Mentions Légales</Link>
+          <a href="#pricing" className="hover:text-white transition-colors" data-testid="footer-tarifs">Tarifs</a>
+          <Link to="/contact" className="hover:text-white transition-colors" data-testid="footer-contact">Contact</Link>
         </div>
       </div>
 

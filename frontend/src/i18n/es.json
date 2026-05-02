@@ -1,0 +1,9 @@
+{
+  "nav": { "login": "Iniciar sesión", "trial": "Prueba gratuita", "problem": "Problema", "features": "Funciones", "pricing": "Precios" },
+  "hero": { "title": "Cada minuto, tu tesorería se escapa. Recupera el control.", "subtitle": "¿Cansado de pagar por paquetes que no dañaste?", "cta": "Iniciar mi prueba gratuita", "demo": "Ver la demo" },
+  "pricing": { "title": "Un plan para cada ambición.", "monthly": "Mensual", "annual": "Anual", "save": "Ahorra 17%", "trial": "30 días de prueba gratuita", "cta": "Iniciar prueba gratuita — 30 días" },
+  "auth": { "login": "Iniciar sesión", "register": "Crear cuenta", "email": "Email", "password": "Contraseña", "name": "Nombre completo", "submit": "Iniciar sesión", "noAccount": "¿No tienes cuenta?", "hasAccount": "¿Ya tienes cuenta?" },
+  "dashboard": { "overview": "Resumen", "deliveries": "Entregas", "drivers": "Conductores", "disputes": "Disputas", "subscription": "Suscripción", "cashflow": "Flujo de caja", "ecoScores": "Eco-puntuación" },
+  "driver": { "scan": "Escanear paquete", "takePhoto": "Tomar foto", "gallery": "Elegir de galería", "confirm": "Confirmar foto" },
+  "common": { "save": "Guardar", "cancel": "Cancelar", "delete": "Eliminar", "loading": "Cargando...", "error": "Error", "success": "Éxito" }
+}

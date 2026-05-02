@@ -5,6 +5,7 @@ import { dashboardApi, deliveriesApi, invoicesApi, driversApi, damageReportsApi,
 import { firestoreDrivers } from '../services/firebase';
 import { generateInvoicePDF, generateAllInvoicesPDF } from '../services/pdfGenerator';
 import BarcodeScanner from '../components/BarcodeScanner';
+import ThemeToggle from '../components/ThemeToggle';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
@@ -320,15 +321,18 @@ export const AdminDashboard = () => {
               <p className="text-xs text-zinc-500 truncate">{user?.email}</p>
             </div>
           </div>
-          <Button 
-            onClick={logout} 
-            variant="outline" 
-            className="w-full border border-[#27272A] text-zinc-400 hover:text-white hover:bg-[#1A1A1E]"
-            data-testid="logout-btn"
-          >
-            <LogOut className="w-4 h-4 mr-2" />
-            Déconnexion
-          </Button>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <Button 
+              onClick={logout} 
+              variant="outline" 
+              className="flex-1 border border-[#27272A] text-zinc-400 hover:text-white hover:bg-[#1A1A1E]"
+              data-testid="logout-btn"
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Déconnexion
+            </Button>
+          </div>
         </div>
       </aside>
 

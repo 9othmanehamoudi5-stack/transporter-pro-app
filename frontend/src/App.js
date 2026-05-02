@@ -12,6 +12,8 @@ import PaymentSuccessPage from "./pages/PaymentSuccessPage";
 import { CGUPage, ConfidentialitePage, ContactPage } from "./pages/LegalPages";
 import OnboardingForm from "./pages/OnboardingForm";
 import TransporterBot from "./components/TransporterBot";
+import { ThemeProvider } from "./contexts/ThemeContext";
+import { I18nProvider } from "./i18n/index";
 import { Toaster } from "./components/ui/sonner";
 
 // Protected Route Component
@@ -142,6 +144,8 @@ const AuthGate = ({ children }) => {
 function App() {
   return (
     <AuthProvider>
+      <ThemeProvider>
+      <I18nProvider>
       <AuthGate>
         <SubscriptionProvider>
         <div className="App min-h-screen bg-[#0A0A0B]">
@@ -195,6 +199,8 @@ function App() {
         </div>
       </SubscriptionProvider>
       </AuthGate>
+      </I18nProvider>
+      </ThemeProvider>
     </AuthProvider>
   );
 }

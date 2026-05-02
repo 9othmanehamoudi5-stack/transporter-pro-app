@@ -19,12 +19,12 @@ const LandingPage = () => {
   return (
     <div className="min-h-screen bg-black text-white selection:bg-blue-500/30">
       {/* ─── URGENCY BANNER ─── */}
-      <div className="bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-amber-500/10 border-b border-amber-500/10 text-center py-2.5 text-xs text-amber-300 fixed top-0 w-full z-[60]" data-testid="urgency-banner">
+      <div className="bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-amber-500/10 border-b border-amber-500/10 text-center py-2.5 text-xs text-amber-300 fixed top-0 w-full z-[1000]" data-testid="urgency-banner">
         Offre Membres Fondateurs : <span className="font-bold text-amber-200">Tarif garanti jusqu'à l'homologation e-CMR</span>
       </div>
 
       {/* ─── NAV ─── */}
-      <nav className="fixed top-[34px] w-full z-50 border-b border-white/[0.06] bg-black/70 backdrop-blur-2xl">
+      <nav className="fixed top-[34px] w-full z-[999] border-b border-white/[0.06] bg-black/70 backdrop-blur-2xl">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 bg-[#0066FF] rounded-lg flex items-center justify-center">
@@ -46,7 +46,7 @@ const LandingPage = () => {
       </nav>
 
       {/* ─── HERO ─── */}
-      <section className="relative pt-[7.5rem] pb-20 px-6 overflow-hidden" data-testid="hero-section">
+      <section className="relative pt-[140px] pb-20 px-6 overflow-hidden" data-testid="hero-section">
         {/* Glows */}
         <div className="absolute top-16 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-[#0066FF]/[0.06] rounded-full blur-[150px] pointer-events-none" />
         <div className="absolute top-40 right-0 w-[300px] h-[300px] bg-blue-600/[0.03] rounded-full blur-[100px] pointer-events-none" />

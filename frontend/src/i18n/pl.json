@@ -1,0 +1,9 @@
+{
+  "nav": { "login": "Logowanie", "trial": "Bezpłatny okres próbny", "problem": "Problem", "features": "Funkcje", "pricing": "Cennik" },
+  "hero": { "title": "Co minutę Twoja gotówka ucieka. Odzyskaj kontrolę.", "subtitle": "Masz dość płacenia za paczki, których nie uszkodziłeś?", "cta": "Rozpocznij bezpłatny okres próbny", "demo": "Zobacz demo" },
+  "pricing": { "title": "Plan dla każdej ambicji.", "monthly": "Miesięcznie", "annual": "Rocznie", "save": "Oszczędź 17%", "trial": "30 dni bezpłatnie", "cta": "Rozpocznij okres próbny — 30 dni" },
+  "auth": { "login": "Logowanie", "register": "Utwórz konto", "email": "Email", "password": "Hasło", "name": "Imię i nazwisko", "submit": "Zaloguj się", "noAccount": "Nie masz konta?", "hasAccount": "Masz już konto?" },
+  "dashboard": { "overview": "Przegląd", "deliveries": "Dostawy", "drivers": "Kierowcy", "disputes": "Spory", "subscription": "Subskrypcja", "cashflow": "Przepływy", "ecoScores": "Eko-wyniki" },
+  "driver": { "scan": "Skanuj paczkę", "takePhoto": "Zrób zdjęcie", "gallery": "Wybierz z galerii", "confirm": "Potwierdź zdjęcie" },
+  "common": { "save": "Zapisz", "cancel": "Anuluj", "delete": "Usuń", "loading": "Ładowanie...", "error": "Błąd", "success": "Sukces" }
+}

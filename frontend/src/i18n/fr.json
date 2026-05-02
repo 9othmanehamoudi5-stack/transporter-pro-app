@@ -1,0 +1,9 @@
+{
+  "nav": { "login": "Connexion", "trial": "Essai gratuit", "problem": "Problème", "features": "Fonctionnalités", "pricing": "Tarifs" },
+  "hero": { "title": "Chaque minute, votre trésorerie fuit. Reprenez le contrôle.", "subtitle": "Marre de payer pour des colis que vous n'avez pas cassés ?", "cta": "Démarrer mon essai gratuit", "demo": "Voir la démo" },
+  "pricing": { "title": "Un plan pour chaque ambition.", "monthly": "Mensuel", "annual": "Annuel", "save": "Économisez 17%", "trial": "30 jours d'essai gratuit", "cta": "Démarrer l'essai gratuit — 30 jours" },
+  "auth": { "login": "Connexion", "register": "Créer un compte", "email": "Email", "password": "Mot de passe", "name": "Nom complet", "submit": "Se connecter", "noAccount": "Pas encore de compte ?", "hasAccount": "Déjà un compte ?" },
+  "dashboard": { "overview": "Vue d'ensemble", "deliveries": "Livraisons", "drivers": "Chauffeurs", "disputes": "Litiges", "subscription": "Abonnement", "cashflow": "Cash-Flow", "ecoScores": "Éco-scores" },
+  "driver": { "scan": "Scanner un colis", "takePhoto": "Prendre une photo", "gallery": "Choisir depuis la galerie", "confirm": "Confirmer la photo" },
+  "common": { "save": "Enregistrer", "cancel": "Annuler", "delete": "Supprimer", "loading": "Chargement...", "error": "Erreur", "success": "Succès" }
+}
