@@ -151,6 +151,17 @@ Application SaaS logistique "Transporter-Pro" pour PME de transport.
 - [x] CSS light mode : overrides pour bg, text, borders
 - [x] i18n : fichiers FR/PL/ES (nav, hero, pricing, auth, dashboard, driver, common), provider I18nContext
 
+### Phase 16 - Reconstruction CRUD + Sécurité (DONE - 2 Mai 2026)
+- [x] NewDeliveryForm : sélecteur chauffeur filtré par company_id (dropdown)
+- [x] Backend create_delivery : `company_id` + `driver_id` dans chaque livraison + audit log
+- [x] Compteur chauffeurs dynamique `drivers.length` (pas stale driverQuota)
+- [x] Bouton delete driver : `onTouchEnd` pour mobile touch events
+- [x] Livraisons filtrées par company_id → nouvelles livraisons visibles immédiatement
+- [x] Damage reports filtrés par company_id
+- [x] Stats/cash-flow filtrés par company_id
+- [x] Footer supprimé de /login et /register
+- [x] ThemeToggle dans sidebar admin
+
 ## Backlog P1
 - [ ] Corriger règles sécurité Firebase (voir /app/memory/FIREBASE_RULES.md)
 
