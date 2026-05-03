@@ -64,6 +64,7 @@ const DashboardRouter = () => {
       if (!user.onboarding_complete) {
         return <OnboardingForm onComplete={() => window.location.reload()} />;
       }
+      // Check trial/subscription — admin can access but will see upgrade prompt
       return <AdminDashboard />;
     case "driver":
       return <Navigate to="/driver" replace />;

@@ -741,22 +741,22 @@ export const AdminDashboard = () => {
                   </h3>
                   <p className="text-sm text-zinc-400 mt-1">
                     {driverQuota.max_drivers === -1 
-                      ? `${driverQuota.driver_count} chauffeurs (illimité)` 
-                      : `${driverQuota.driver_count} / ${driverQuota.max_drivers} chauffeurs`}
+                      ? `${drivers.length} chauffeurs (illimité)` 
+                      : `${drivers.length} / ${driverQuota.max_drivers} chauffeurs`}
                     <span className="ml-2 text-xs uppercase tracking-wider text-zinc-500">Plan {driverQuota.plan}</span>
                   </p>
                   {/* Progress bar */}
                   {driverQuota.max_drivers !== -1 && (
                     <div className="w-48 h-1.5 bg-[#27272A] rounded-full mt-2">
                       <div
-                        className={`h-full rounded-full transition-all ${driverQuota.can_add ? 'bg-[#0066FF]' : 'bg-red-500'}`}
-                        style={{ width: `${Math.min(100, (driverQuota.driver_count / driverQuota.max_drivers) * 100)}%` }}
+                        className={`h-full rounded-full transition-all ${drivers.length < driverQuota.max_drivers ? 'bg-[#0066FF]' : 'bg-red-500'}`}
+                        style={{ width: `${Math.min(100, (drivers.length / driverQuota.max_drivers) * 100)}%` }}
                       />
                     </div>
                   )}
                 </div>
                 <div className="flex items-center gap-3">
-                  {!driverQuota.can_add && (
+                  {(driverQuota.max_drivers !== -1 && drivers.length >= driverQuota.max_drivers) && (
                     <Button
                       onClick={() => setActiveTab('subscription')}
                       className="bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20"
@@ -769,7 +769,7 @@ export const AdminDashboard = () => {
                   <Button
                     onClick={() => setShowNewDriver(true)}
                     className="bg-[#0066FF] hover:bg-[#0052CC]"
-                    disabled={!driverQuota.can_add}
+                    disabled={driverQuota.max_drivers !== -1 && drivers.length >= driverQuota.max_drivers}
                     data-testid="add-driver-btn"
                   >
                     <UserPlus className="w-4 h-4 mr-2" />
@@ -824,7 +824,9 @@ export const AdminDashboard = () => {
                         size="icon" 
                         variant="ghost" 
                         onClick={() => handleDeleteDriver(driver.id)}
-                        className="text-zinc-400 hover:text-red-400"
+                        onTouchEnd={(e) => { e.preventDefault(); handleDeleteDriver(driver.id); }}
+                        className="text-zinc-400 hover:text-red-400 touch-manipulation"
+                        data-testid={`delete-driver-${driver.id}`}
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
@@ -938,7 +940,7 @@ export const AdminDashboard = () => {
           <DialogHeader>
             <DialogTitle>Nouvelle livraison</DialogTitle>
           </DialogHeader>
-          <NewDeliveryForm onSubmit={handleNewDelivery} onCancel={() => setShowNewDelivery(false)} />
+          <NewDeliveryForm drivers={drivers} onSubmit={handleNewDelivery} onCancel={() => setShowNewDelivery(false)} />
         </DialogContent>
       </Dialog>
 
@@ -1544,13 +1546,14 @@ const DamageReportCard = ({ report, onRetrySuccess }) => {
 };
 
 
-const NewDeliveryForm = ({ onSubmit, onCancel }) => {
+const NewDeliveryForm = ({ drivers, onSubmit, onCancel }) => {
   const [formData, setFormData] = useState({
     recipient_name: '',
     recipient_address: '',
     recipient_phone: '',
     package_description: '',
-    weight_kg: 1
+    weight_kg: 1,
+    driver_id: ''
   });
 
   const handleSubmit = (e) => {
@@ -1561,12 +1564,27 @@ const NewDeliveryForm = ({ onSubmit, onCancel }) => {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
+        <Label>Chauffeur assigné</Label>
+        <select
+          value={formData.driver_id}
+          onChange={(e) => setFormData({ ...formData, driver_id: e.target.value })}
+          className="w-full h-12 bg-[#0A0A0B] border border-[#27272A] rounded-lg px-3 text-white text-sm"
+          data-testid="delivery-driver-select"
+        >
+          <option value="">— Non assigné —</option>
+          {(drivers || []).map(d => (
+            <option key={d.id} value={d.id}>{d.name} {d.vehicle_plate ? `(${d.vehicle_plate})` : ''}</option>
+          ))}
+        </select>
+      </div>
+      <div className="space-y-2">
         <Label>Nom du destinataire</Label>
         <Input
           value={formData.recipient_name}
           onChange={(e) => setFormData({ ...formData, recipient_name: e.target.value })}
           required
           className="bg-[#0A0A0B] border-[#27272A]"
+          data-testid="delivery-recipient-name"
         />
       </div>
       <div className="space-y-2">
@@ -1576,6 +1594,7 @@ const NewDeliveryForm = ({ onSubmit, onCancel }) => {
           onChange={(e) => setFormData({ ...formData, recipient_address: e.target.value })}
           required
           className="bg-[#0A0A0B] border-[#27272A]"
+          data-testid="delivery-address"
         />
       </div>
       <div className="space-y-2">
@@ -1587,32 +1606,32 @@ const NewDeliveryForm = ({ onSubmit, onCancel }) => {
           className="bg-[#0A0A0B] border-[#27272A]"
         />
       </div>
-      <div className="space-y-2">
-        <Label>Description du colis</Label>
-        <Input
-          value={formData.package_description}
-          onChange={(e) => setFormData({ ...formData, package_description: e.target.value })}
-          required
-          className="bg-[#0A0A0B] border-[#27272A]"
-        />
-      </div>
-      <div className="space-y-2">
-        <Label>Poids (kg)</Label>
-        <Input
-          type="number"
-          step="0.1"
-          min="0.1"
-          value={formData.weight_kg}
-          onChange={(e) => setFormData({ ...formData, weight_kg: parseFloat(e.target.value) })}
-          required
-          className="bg-[#0A0A0B] border-[#27272A]"
-        />
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-2">
+          <Label>Description colis</Label>
+          <Input
+            value={formData.package_description}
+            onChange={(e) => setFormData({ ...formData, package_description: e.target.value })}
+            required
+            className="bg-[#0A0A0B] border-[#27272A]"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label>Poids (kg)</Label>
+          <Input
+            type="number" step="0.1" min="0.1"
+            value={formData.weight_kg}
+            onChange={(e) => setFormData({ ...formData, weight_kg: parseFloat(e.target.value) })}
+            required
+            className="bg-[#0A0A0B] border-[#27272A]"
+          />
+        </div>
       </div>
       <div className="flex gap-3">
         <Button type="button" variant="outline" onClick={onCancel} className="flex-1 border-[#27272A]">
           Annuler
         </Button>
-        <Button type="submit" className="flex-1 bg-[#0066FF] hover:bg-[#0052CC]">
+        <Button type="submit" className="flex-1 bg-[#0066FF] hover:bg-[#0052CC]" data-testid="delivery-submit-btn">
           Créer
         </Button>
       </div>

@@ -66,6 +66,7 @@ class DeliveryCreate(BaseModel):
     package_description: str
     weight_kg: float = 1.0
     client_id: Optional[str] = None
+    driver_id: Optional[str] = None
 
 class DeliveryUpdate(BaseModel):
     status: Optional[Literal["pending", "assigned", "in_transit", "delivered", "failed"]] = None
@@ -1021,7 +1022,8 @@ async def create_delivery(data: DeliveryCreate, user: dict = Depends(require_rol
         "weight_kg": data.weight_kg,
         "status": "pending",
         "client_id": data.client_id or user["id"],
-        "driver_id": None,
+        "driver_id": data.driver_id or None,
+        "company_id": user.get("company_id", user["id"]),
         "signature_data": None,
         "delivery_notes": None,
         "created_at": datetime.now(timezone.utc),
@@ -1029,11 +1031,19 @@ async def create_delivery(data: DeliveryCreate, user: dict = Depends(require_rol
         "delivered_at": None,
         "blockchain_proof": None,
         "gps_location": None,
-        "co2_kg": data.weight_kg * 0.1  # Simplified CO2 calculation
+        "co2_kg": data.weight_kg * 0.1
     }
     result = await db.deliveries.insert_one(delivery)
     delivery["id"] = str(result.inserted_id)
     delivery.pop("_id", None)
+    
+    await log_action(user["id"], user.get("company_id", ""), "create_delivery", "delivery", delivery["tracking_id"], f"Livraison: {data.recipient_name}")
+    
+    # Convert datetime for JSON
+    for field in ["created_at", "updated_at", "delivered_at"]:
+        if isinstance(delivery.get(field), datetime):
+            delivery[field] = delivery[field].isoformat()
+    
     return delivery
 
 @api_router.get("/deliveries")
