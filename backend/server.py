@@ -1021,7 +1021,7 @@ async def create_delivery(data: DeliveryCreate, user: dict = Depends(require_rol
         "recipient_phone": data.recipient_phone,
         "package_description": data.package_description,
         "weight_kg": data.weight_kg,
-        "status": "pending",
+        "status": "assigned" if data.driver_id else "pending",
         "client_id": data.client_id or user["id"],
         "driver_id": data.driver_id or None,
         "company_id": user.get("company_id", user["id"]),

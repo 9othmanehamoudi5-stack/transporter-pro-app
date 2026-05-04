@@ -4,10 +4,11 @@ import { Button } from '../components/ui/button';
 
 const BarcodeScanner = ({ onScan, onClose }) => {
   const scannerRef = useRef(null);
+  const scannerInstanceRef = useRef(null);
+  const latestCodeRef = useRef(null);
   const [error, setError] = useState(null);
   const [scanning, setScanning] = useState(false);
-  const [scannedCode, setScannedCode] = useState(null);
-  const scannerInstanceRef = useRef(null);
+  const [detectedCode, setDetectedCode] = useState(null);
 
   useEffect(() => {
     let mounted = true;
@@ -26,14 +27,13 @@ const BarcodeScanner = ({ onScan, onClose }) => {
             fps: 10,
             qrbox: { width: 280, height: 160 },
             aspectRatio: 1.5,
-            formatsToSupport: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+            formatsToSupport: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
           },
           (decodedText) => {
-            if (mounted && !scannedCode) {
-              setScannedCode(decodedText);
-              scanner.stop().catch(() => {});
-              setScanning(false);
-            }
+            if (!mounted) return;
+            // Continuous detection: keep updating latest code without stopping the stream
+            latestCodeRef.current = decodedText;
+            setDetectedCode(decodedText);
           },
           () => {}
         );
@@ -44,7 +44,7 @@ const BarcodeScanner = ({ onScan, onClose }) => {
       }
     };
 
-    if (!scannedCode) startScanner();
+    startScanner();
 
     return () => {
       mounted = false;
@@ -52,14 +52,29 @@ const BarcodeScanner = ({ onScan, onClose }) => {
         scannerInstanceRef.current.stop().catch(() => {});
       }
     };
-  }, [scannedCode]);
+  }, []);
 
-  const handleConfirm = () => {
-    if (scannedCode) onScan(scannedCode);
+  const stopCameraStream = async () => {
+    if (scannerInstanceRef.current) {
+      try {
+        await scannerInstanceRef.current.stop();
+      } catch (e) {
+        // ignore
+      }
+    }
   };
 
-  const handleRescan = () => {
-    setScannedCode(null);
+  const handleConfirm = async () => {
+    const code = latestCodeRef.current || detectedCode;
+    if (!code) return;
+    await stopCameraStream();
+    onScan(code);
+    onClose();
+  };
+
+  const handleClose = async () => {
+    await stopCameraStream();
+    onClose();
   };
 
   return (
@@ -70,7 +85,11 @@ const BarcodeScanner = ({ onScan, onClose }) => {
           <ScanLine className="w-5 h-5 text-[#0066FF]" />
           <span className="font-semibold text-white">Scanner un code-barres</span>
         </div>
-        <button onClick={onClose} className="w-9 h-9 bg-white/[0.05] rounded-full flex items-center justify-center hover:bg-white/[0.1]" data-testid="scanner-close">
+        <button
+          onClick={handleClose}
+          className="w-9 h-9 bg-white/[0.05] rounded-full flex items-center justify-center hover:bg-white/[0.1]"
+          data-testid="scanner-close"
+        >
           <X className="w-4 h-4 text-zinc-400" />
         </button>
       </div>
@@ -82,29 +101,58 @@ const BarcodeScanner = ({ onScan, onClose }) => {
             <Camera className="w-12 h-12 text-zinc-600 mx-auto mb-4" />
             <p className="text-zinc-300 font-medium mb-2">Caméra non disponible</p>
             <p className="text-sm text-zinc-500 mb-4">{error}</p>
-            <Button onClick={onClose} variant="outline" className="border-[#27272A]">Fermer</Button>
-          </div>
-        ) : scannedCode ? (
-          <div className="text-center px-6">
-            <div className="w-20 h-20 mx-auto mb-5 rounded-full bg-green-500/10 border-2 border-green-500 flex items-center justify-center">
-              <Check className="w-10 h-10 text-green-400" />
-            </div>
-            <p className="text-lg font-bold text-white mb-1">Code détecté</p>
-            <div className="bg-green-500/10 border border-green-500/30 rounded-xl px-5 py-3 mt-3 mb-2 inline-block" data-testid="scanned-result">
-              <p className="text-green-400 font-mono text-lg font-bold">{scannedCode}</p>
-            </div>
+            <Button onClick={handleClose} variant="outline" className="border-[#27272A]">
+              Fermer
+            </Button>
           </div>
         ) : (
           <div className="w-full h-full relative">
             <div id="barcode-reader" ref={scannerRef} className="w-full h-full" />
             {scanning && (
               <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-                <div className="w-72 h-40 border-2 border-[#0066FF]/50 rounded-xl relative">
-                  <div className="absolute top-0 left-0 w-6 h-6 border-t-2 border-l-2 border-[#0066FF] rounded-tl" />
-                  <div className="absolute top-0 right-0 w-6 h-6 border-t-2 border-r-2 border-[#0066FF] rounded-tr" />
-                  <div className="absolute bottom-0 left-0 w-6 h-6 border-b-2 border-l-2 border-[#0066FF] rounded-bl" />
-                  <div className="absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 border-[#0066FF] rounded-br" />
-                  <div className="absolute inset-x-4 top-1/2 h-0.5 bg-[#0066FF]/60 animate-pulse" />
+                <div
+                  className={`w-72 h-40 border-2 rounded-xl relative transition-colors duration-300 ${
+                    detectedCode ? 'border-green-500' : 'border-[#0066FF]/50'
+                  }`}
+                >
+                  <div
+                    className={`absolute top-0 left-0 w-6 h-6 border-t-2 border-l-2 rounded-tl ${
+                      detectedCode ? 'border-green-500' : 'border-[#0066FF]'
+                    }`}
+                  />
+                  <div
+                    className={`absolute top-0 right-0 w-6 h-6 border-t-2 border-r-2 rounded-tr ${
+                      detectedCode ? 'border-green-500' : 'border-[#0066FF]'
+                    }`}
+                  />
+                  <div
+                    className={`absolute bottom-0 left-0 w-6 h-6 border-b-2 border-l-2 rounded-bl ${
+                      detectedCode ? 'border-green-500' : 'border-[#0066FF]'
+                    }`}
+                  />
+                  <div
+                    className={`absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 rounded-br ${
+                      detectedCode ? 'border-green-500' : 'border-[#0066FF]'
+                    }`}
+                  />
+                  <div
+                    className={`absolute inset-x-4 top-1/2 h-0.5 animate-pulse ${
+                      detectedCode ? 'bg-green-500/70' : 'bg-[#0066FF]/60'
+                    }`}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Live detected code badge */}
+            {detectedCode && (
+              <div className="absolute top-4 inset-x-0 flex justify-center pointer-events-none">
+                <div
+                  className="bg-green-500/15 border border-green-500/40 rounded-full px-4 py-1.5 backdrop-blur-md flex items-center gap-2"
+                  data-testid="scanned-result"
+                >
+                  <Check className="w-4 h-4 text-green-400" />
+                  <span className="text-green-300 font-mono text-sm font-semibold">{detectedCode}</span>
                 </div>
               </div>
             )}
@@ -112,24 +160,24 @@ const BarcodeScanner = ({ onScan, onClose }) => {
         )}
       </div>
 
-      {/* Footer actions */}
+      {/* Footer actions — primary "CONFIRMER LE SCAN" button always visible under camera */}
       <div className="p-4 border-t border-white/[0.06] bg-[#0A0A0B] safe-area-inset-bottom">
-        {scannedCode ? (
-          <div className="space-y-3 max-w-sm mx-auto">
-            <Button onClick={handleConfirm} className="w-full h-14 text-base bg-green-600 hover:bg-green-700 rounded-xl font-semibold" data-testid="confirm-scan-btn">
-              <Check className="w-5 h-5 mr-2" />
-              CONFIRMER SCAN
-            </Button>
-            <Button onClick={handleRescan} variant="outline" className="w-full h-11 border-[#27272A] rounded-xl text-zinc-400" data-testid="rescan-btn">
-              Scanner un autre code
-            </Button>
-          </div>
-        ) : (
-          <div className="text-center">
-            <p className="text-xs text-zinc-500">Placez le code-barres ou QR code dans le cadre</p>
-            <p className="text-[10px] text-zinc-600 mt-1">EAN, Code 128, QR Code supportés</p>
-          </div>
-        )}
+        <div className="space-y-2 max-w-sm mx-auto">
+          <Button
+            onClick={handleConfirm}
+            disabled={!detectedCode || !!error}
+            className="w-full h-14 text-base bg-[#0066FF] hover:bg-[#0052CC] disabled:bg-[#0066FF]/30 disabled:text-white/60 rounded-xl font-semibold"
+            data-testid="confirm-scan-btn"
+          >
+            <Check className="w-5 h-5 mr-2" />
+            CONFIRMER LE SCAN
+          </Button>
+          <p className="text-center text-[11px] text-zinc-500">
+            {detectedCode
+              ? 'Code détecté — appuyez sur Confirmer pour valider'
+              : 'Placez le code-barres ou QR code dans le cadre'}
+          </p>
+        </div>
       </div>
     </div>
   );

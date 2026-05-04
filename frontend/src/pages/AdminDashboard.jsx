@@ -510,13 +510,15 @@ export const AdminDashboard = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {deliveries.slice(0, 5).map((d) => (
+                      {deliveries.slice(0, 5).map((d) => {
+                        const effectiveStatus = d.driver_id && d.status === 'pending' ? 'assigned' : d.status;
+                        return (
                         <tr key={d.tracking_id} className="hover:bg-[#1A1A1E]/50">
                           <td className="px-4 py-3 font-mono text-sm">{d.tracking_id}</td>
                           <td className="px-4 py-3">{d.recipient_name}</td>
                           <td className="px-4 py-3">
-                            <span className={`px-2 py-1 rounded-full text-xs ${statusColors[d.status]}`}>
-                              {statusLabels[d.status]}
+                            <span className={`px-2 py-1 rounded-full text-xs ${statusColors[effectiveStatus]}`} data-testid={`status-badge-${d.tracking_id}`}>
+                              {statusLabels[effectiveStatus]}
                             </span>
                           </td>
                           <td className="px-4 py-3 text-zinc-400">{d.driver_name || (d.driver_id ? drivers.find(dr => dr.id === d.driver_id)?.name : null) || '-'}</td>
@@ -528,7 +530,8 @@ export const AdminDashboard = () => {
                             )}
                           </td>
                         </tr>
-                      ))}
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -552,14 +555,16 @@ export const AdminDashboard = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {deliveries.map((d) => (
+                    {deliveries.map((d) => {
+                      const effectiveStatus = d.driver_id && d.status === 'pending' ? 'assigned' : d.status;
+                      return (
                       <tr key={d.tracking_id} className="hover:bg-[#1A1A1E]/50">
                         <td className="px-4 py-3 font-mono text-sm">{d.tracking_id}</td>
                         <td className="px-4 py-3">{d.recipient_name}</td>
                         <td className="px-4 py-3 text-sm text-zinc-400 max-w-xs truncate">{d.recipient_address}</td>
                         <td className="px-4 py-3">
-                          <span className={`px-2 py-1 rounded-full text-xs ${statusColors[d.status]}`}>
-                            {statusLabels[d.status]}
+                          <span className={`px-2 py-1 rounded-full text-xs ${statusColors[effectiveStatus]}`} data-testid={`deliveries-status-${d.tracking_id}`}>
+                            {statusLabels[effectiveStatus]}
                           </span>
                         </td>
                         <td className="px-4 py-3 text-zinc-400">{d.driver_name || (d.driver_id ? drivers.find(dr => dr.id === d.driver_id)?.name : null) || '-'}</td>
@@ -583,7 +588,8 @@ export const AdminDashboard = () => {
                           </div>
                         </td>
                       </tr>
-                    ))}
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

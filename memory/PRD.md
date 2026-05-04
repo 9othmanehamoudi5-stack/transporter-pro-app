@@ -162,6 +162,15 @@ Application SaaS logistique "Transporter-Pro" pour PME de transport.
 - [x] Footer supprimé de /login et /register
 - [x] ThemeToggle dans sidebar admin
 
+### Phase 17 - Status Badge & Scanner UX (DONE - 4 Mai 2026)
+- [x] Backend `create_delivery` : status initial = "assigned" automatiquement si `driver_id` est fourni à la création (au lieu de rester "pending")
+- [x] Frontend AdminDashboard : badge de statut défensif — si `driver_id` présent et status="pending", affiche "Assigné" (bleu) au lieu de "En attente" (jaune)
+- [x] Migration : 4 livraisons legacy (`driver_id` set + status pending) backfilled vers status="assigned"
+- [x] BarcodeScanner refactor : caméra reste active en continu, capture en temps réel le dernier code détecté
+- [x] BarcodeScanner : bouton primary bleu "CONFIRMER LE SCAN" toujours visible sous le cadre caméra (désactivé tant qu'aucun code détecté)
+- [x] BarcodeScanner : sur clic Confirmer → arrête le flux vidéo + onScan(code) + ferme la popup
+- [x] BarcodeScanner : badge live (chip) en haut de la caméra qui affiche le dernier code détecté + cadre vert quand détection réussie
+
 ## Backlog P1
 - [ ] Corriger règles sécurité Firebase (voir /app/memory/FIREBASE_RULES.md)
 
