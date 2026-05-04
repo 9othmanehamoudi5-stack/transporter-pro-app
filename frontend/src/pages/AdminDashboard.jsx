@@ -511,7 +511,8 @@ export const AdminDashboard = () => {
                     </thead>
                     <tbody>
                       {deliveries.slice(0, 5).map((d) => {
-                        const effectiveStatus = d.driver_id && d.status === 'pending' ? 'assigned' : d.status;
+                        const hasDriver = !!(d.driver_id || d.driver_name);
+                        const effectiveStatus = hasDriver && d.status === 'pending' ? 'assigned' : d.status;
                         return (
                         <tr key={d.tracking_id} className="hover:bg-[#1A1A1E]/50">
                           <td className="px-4 py-3 font-mono text-sm">{d.tracking_id}</td>
@@ -556,7 +557,8 @@ export const AdminDashboard = () => {
                   </thead>
                   <tbody>
                     {deliveries.map((d) => {
-                      const effectiveStatus = d.driver_id && d.status === 'pending' ? 'assigned' : d.status;
+                      const hasDriver = !!(d.driver_id || d.driver_name);
+                      const effectiveStatus = hasDriver && d.status === 'pending' ? 'assigned' : d.status;
                       return (
                       <tr key={d.tracking_id} className="hover:bg-[#1A1A1E]/50">
                         <td className="px-4 py-3 font-mono text-sm">{d.tracking_id}</td>

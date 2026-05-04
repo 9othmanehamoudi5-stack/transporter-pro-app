@@ -293,35 +293,49 @@ async def chat_with_bot(data: ChatMessage, request: Request):
 
 @api_router.get("/verify-siret/{siret}")
 async def verify_siret(siret: str):
-    """Verify SIRET via INSEE Sirene API (public endpoint)"""
+    """Verify SIRET via official French government public API (recherche-entreprises).
+    STRICT: returns valid=False if SIRET not found. No permissive fallback."""
     import httpx
     clean_siret = siret.replace(" ", "").replace("-", "")
-    
+
     if len(clean_siret) != 14 or not clean_siret.isdigit():
         return {"valid": False, "error": "Le SIRET doit contenir 14 chiffres"}
-    
+
     try:
         async with httpx.AsyncClient(timeout=10) as client:
-            # Use the open data API (no auth needed)
-            resp = await client.get(f"https://entreprise.data.gouv.fr/api/sirene/v1/siret/{clean_siret}")
+            resp = await client.get(
+                f"https://recherche-entreprises.api.gouv.fr/search?q={clean_siret}&per_page=1"
+            )
             if resp.status_code == 200:
                 data = resp.json()
-                etablissement = data.get("etablissement", {})
-                nom = etablissement.get("nom_raison_sociale", "") or etablissement.get("l1_normalisee", "")
-                adresse = f"{etablissement.get('l4_normalisee', '')} {etablissement.get('l6_normalisee', '')}".strip()
+                if data.get("total_results", 0) == 0 or not data.get("results"):
+                    return {"valid": False, "error": "SIRET introuvable dans la base INSEE Sirene"}
+
+                entry = data["results"][0]
+                matching = entry.get("matching_etablissements", [])
+                etab = matching[0] if matching else {}
+
+                # Ensure the SIRET we found actually matches (defense-in-depth)
+                if etab.get("siret") != clean_siret:
+                    return {"valid": False, "error": "SIRET introuvable dans la base INSEE Sirene"}
+
+                # Reject closed establishments
+                if etab.get("etat_administratif") == "F":
+                    return {"valid": False, "error": "Établissement fermé (cessation d'activité)"}
+
+                nom = entry.get("nom_complet") or entry.get("nom_raison_sociale") or ""
+                adresse = etab.get("adresse", "") or ""
                 return {
                     "valid": True,
                     "company_name": nom,
                     "address": adresse,
-                    "siret": clean_siret
+                    "siret": clean_siret,
                 }
-            elif resp.status_code == 404:
-                return {"valid": False, "error": "SIRET introuvable dans la base INSEE"}
+
+            return {"valid": False, "error": "Service INSEE indisponible — réessayez"}
     except Exception as e:
         logger.warning(f"SIRET API error: {e}")
-    
-    # Fallback: accept SIRET format without online validation
-    return {"valid": True, "company_name": "", "address": "", "siret": clean_siret, "fallback": True}
+        return {"valid": False, "error": "Impossible de contacter l'API Sirene — réessayez"}
 
 
 # ==================== ONBOARDING KYB ====================
@@ -338,7 +352,15 @@ async def get_onboarding_status(user: dict = Depends(require_role("admin"))):
 
 @api_router.post("/onboarding/complete")
 async def complete_onboarding(data: CompanyOnboarding, user: dict = Depends(require_role("admin"))):
-    """Complete company onboarding with KYB info"""
+    """Complete company onboarding with KYB info — SIRET is re-validated server-side"""
+    # STRICT server-side SIRET re-validation (cannot be spoofed by frontend)
+    verification = await verify_siret(data.siret)
+    if not verification.get("valid"):
+        raise HTTPException(
+            status_code=400,
+            detail=verification.get("error") or "SIRET invalide — vérification INSEE échouée",
+        )
+
     company_doc = {
         "admin_id": user["id"],
         "company_id": user["company_id"],
@@ -529,13 +551,15 @@ async def register(data: UserCreate):
     result = await db.users.insert_one(user_doc)
     user_id = str(result.inserted_id)
 
-    # For admin, company_id = their own user id + trial period
+    # For admin, company_id = their own user id
+    # SECURITY: subscription_status starts as "incomplete" — user MUST complete Stripe checkout
+    # before accessing the dashboard. The Stripe webhook flips this to "active" on successful payment.
     if data.role == "admin":
         trial_ends = datetime.now(timezone.utc) + timedelta(days=30)
         await db.users.update_one({"_id": result.inserted_id}, {"$set": {
             "company_id": user_id,
             "trial_ends_at": trial_ends,
-            "subscription_status": "trial"
+            "subscription_status": "incomplete"
         }})
     
     access_token = create_access_token(user_id, email, data.role)
@@ -549,6 +573,7 @@ async def register(data: UserCreate):
         "onboarding_complete": False,
         "company_id": user_id if data.role == "admin" else "",
         "plan": "solo",
+        "subscription_status": "incomplete" if data.role == "admin" else "n/a",
         "access_token": access_token,
         "refresh_token": refresh_token
     })

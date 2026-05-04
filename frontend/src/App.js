@@ -64,7 +64,41 @@ const DashboardRouter = () => {
       if (!user.onboarding_complete) {
         return <OnboardingForm onComplete={() => window.location.reload()} />;
       }
-      // Check trial/subscription — admin can access but will see upgrade prompt
+      // STRICT subscription gate: admin can't access dashboard without active Stripe subscription
+      // subscription_status must be 'active' or 'trialing' (set by Stripe webhook after successful checkout)
+      if (user.subscription_status !== "active" && user.subscription_status !== "trialing") {
+        return (
+          <div className="min-h-screen bg-[#0A0A0B] flex items-center justify-center p-6">
+            <div className="max-w-md w-full bg-[#121214] border border-[#27272A] rounded-2xl p-8 text-center" data-testid="subscription-required-gate">
+              <div className="w-14 h-14 bg-amber-500/10 border border-amber-500/30 rounded-2xl flex items-center justify-center mx-auto mb-5">
+                <svg className="w-7 h-7 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m0 0v2m0-2h2m-2 0h-2m9-7a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              </div>
+              <h2 className="text-2xl font-bold text-white mb-2">Paiement requis</h2>
+              <p className="text-sm text-zinc-400 mb-6">
+                Vous devez finaliser votre souscription Stripe avant d'accéder au tableau de bord.
+                L'essai de 30 jours est activé immédiatement après enregistrement de votre carte (débit 0€).
+              </p>
+              <a
+                href={`https://buy.stripe.com/test_eVq9AUfAI9bq11R4Su7IY04?prefilled_email=${encodeURIComponent(user.email || "")}`}
+                className="block w-full h-12 leading-[48px] bg-[#0066FF] hover:bg-[#0052CC] text-white font-semibold rounded-xl transition-colors"
+                data-testid="subscription-gate-stripe-btn"
+              >
+                Activer mon essai →
+              </a>
+              <button
+                onClick={() => {
+                  localStorage.clear();
+                  window.location.href = "/login";
+                }}
+                className="mt-3 text-xs text-zinc-500 hover:text-zinc-300"
+                data-testid="subscription-gate-logout"
+              >
+                Se déconnecter
+              </button>
+            </div>
+          </div>
+        );
+      }
       return <AdminDashboard />;
     case "driver":
       return <Navigate to="/driver" replace />;
