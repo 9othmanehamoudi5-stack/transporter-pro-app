@@ -752,14 +752,15 @@ async def get_admin_drivers(user: dict = Depends(require_role("admin"))):
 
 @api_router.delete("/admin/drivers/{driver_id}")
 async def delete_driver(driver_id: str, user: dict = Depends(require_role("admin"))):
-    """Deactivate a driver"""
-    result = await db.users.update_one(
-        {"_id": ObjectId(driver_id), "role": "driver"},
-        {"$set": {"status": "inactive"}}
+    """Delete a driver permanently"""
+    company_id = user["company_id"]
+    result = await db.users.delete_one(
+        {"_id": ObjectId(driver_id), "role": "driver", "company_id": company_id}
     )
-    if result.matched_count == 0:
+    if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Chauffeur non trouvé")
-    return {"message": "Chauffeur désactivé"}
+    await log_action(user["id"], company_id, "delete_driver", "driver", driver_id, "Chauffeur supprimé")
+    return {"message": "Chauffeur supprimé"}
 
 # ==================== SUBSCRIPTION MANAGEMENT ====================
 
@@ -1060,6 +1061,19 @@ async def get_deliveries(user: dict = Depends(get_current_user), status: Optiona
         query["status"] = status
     
     deliveries = await db.deliveries.find(query, {"_id": 0}).sort("created_at", -1).to_list(100)
+    
+    # Enrich with driver names
+    driver_cache = {}
+    for d in deliveries:
+        did = d.get("driver_id")
+        if did and did not in driver_cache:
+            from bson import ObjectId as BsonObjectId
+            try:
+                driver = await db.users.find_one({"_id": BsonObjectId(did)}, {"_id": 0, "name": 1})
+                driver_cache[did] = driver["name"] if driver else None
+            except Exception:
+                driver_cache[did] = None
+        d["driver_name"] = driver_cache.get(did)
     
     # Ensure all datetime fields are strings
     for d in deliveries:

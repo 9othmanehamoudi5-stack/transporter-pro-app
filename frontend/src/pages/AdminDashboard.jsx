@@ -194,12 +194,12 @@ export const AdminDashboard = () => {
   };
 
   const handleDeleteDriver = async (driverId) => {
-    if (!window.confirm('Êtes-vous sûr de vouloir désactiver ce chauffeur ?')) return;
+    if (!window.confirm('Supprimer ce chauffeur ? Cette action est irréversible.')) return;
     try {
       await adminDriversApi.delete(driverId);
-      // Mise à jour immédiate de l'état local
       setDrivers(prev => prev.filter(d => d.id !== driverId));
-      toast.success('Chauffeur désactivé');
+      toast.success('Chauffeur supprimé');
+      fetchData();
     } catch (error) {
       toast.error(`Erreur suppression : ${error.response?.data?.detail || error.message}`);
     }
@@ -506,6 +506,7 @@ export const AdminDashboard = () => {
                         <th className="px-4 py-3 text-left">Destinataire</th>
                         <th className="px-4 py-3 text-left">Statut</th>
                         <th className="px-4 py-3 text-left">Chauffeur</th>
+                        <th className="px-4 py-3 text-left">Action</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -518,7 +519,14 @@ export const AdminDashboard = () => {
                               {statusLabels[d.status]}
                             </span>
                           </td>
-                          <td className="px-4 py-3 text-zinc-400">{d.driver_id || '-'}</td>
+                          <td className="px-4 py-3 text-zinc-400">{d.driver_name || (d.driver_id ? drivers.find(dr => dr.id === d.driver_id)?.name : null) || '-'}</td>
+                          <td className="px-4 py-3">
+                            {!d.driver_id ? (
+                              <button onClick={() => setShowAssignDriver(d.tracking_id)} className="text-xs text-[#0066FF] hover:underline font-medium" data-testid={`assign-btn-${d.tracking_id}`}>Assigner</button>
+                            ) : (
+                              <span className="text-xs text-zinc-500">Assigné</span>
+                            )}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -554,7 +562,7 @@ export const AdminDashboard = () => {
                             {statusLabels[d.status]}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-zinc-400">{d.driver_id || '-'}</td>
+                        <td className="px-4 py-3 text-zinc-400">{d.driver_name || (d.driver_id ? drivers.find(dr => dr.id === d.driver_id)?.name : null) || '-'}</td>
                         <td className="px-4 py-3">
                           <div className="flex gap-2">
                             {!d.driver_id && d.status === 'pending' && (
