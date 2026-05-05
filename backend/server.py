@@ -622,6 +622,8 @@ async def login(data: UserLogin, request: Request):
         "company_id": user.get("company_id", user_id),
         "plan": user.get("plan", "solo"),
         "onboarding_complete": user.get("onboarding_complete", False),
+        "subscription_status": user.get("subscription_status", "incomplete" if user["role"] == "admin" else "n/a"),
+        "trial_ends_at": user.get("trial_ends_at", "").isoformat() if isinstance(user.get("trial_ends_at"), datetime) else str(user.get("trial_ends_at", "")),
         "access_token": access_token,
         "refresh_token": refresh_token
     })

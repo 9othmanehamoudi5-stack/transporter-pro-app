@@ -171,17 +171,25 @@ Application SaaS logistique "Transporter-Pro" pour PME de transport.
 - [x] BarcodeScanner : sur clic Confirmer → arrête le flux vidéo + onScan(code) + ferme la popup
 - [x] BarcodeScanner : badge live (chip) en haut de la caméra qui affiche le dernier code détecté + cadre vert quand détection réussie
 
-### Phase 18 - SÉCURITÉ CRITIQUE : Anti-bypass SIRET + Gate Stripe (DONE - 4 Mai 2026)
+### Phase 18 - SÉCURITÉ CRITIQUE : Anti-bypass SIRET + Gate Stripe (DONE - 4-5 Mai 2026)
 - [x] Backend `verify-siret` : migré vers API officielle `recherche-entreprises.api.gouv.fr` (INSEE Sirene public). **SUPPRESSION du fallback permissif** qui acceptait n'importe quel SIRET si l'API externe échouait. Retour strict `valid:false` sur tout SIRET introuvable, malformé ou sur erreur réseau
 - [x] Backend `verify-siret` : rejet supplémentaire des établissements fermés (`etat_administratif == "F"`)
 - [x] Backend `/api/onboarding/complete` : **re-validation server-side OBLIGATOIRE** du SIRET avant persistance → un frontend compromis ne peut plus bypasser (HTTPException 400 si SIRET invalide)
 - [x] Backend register admin : `subscription_status = "incomplete"` par défaut (plus de `"trial"` auto). Flip en `"active"` uniquement via webhook Stripe `checkout.session.completed`
+- [x] Backend `/api/auth/login` : réponse inclut désormais `subscription_status` et `trial_ends_at` (fix regression détectée par testing agent — admin payé voyait le gate sur fresh login)
 - [x] Frontend `App.js DashboardRouter` : **Gate de paiement strict** — admin avec `subscription_status` != ("active" | "trialing") → écran "Paiement requis" + bouton Stripe + logout. Impossible d'accéder au dashboard avant paiement
-- [x] Frontend register response inclut `subscription_status: "incomplete"` pour cohérence gate
+- [x] Frontend `OnboardingForm.jsx` refondu : ajout bouton "Vérifier" SIRET (appel API Sirene bloquant), message succès/erreur visible, Submit disabled tant que `siretValid !== true`. Après submit réussi → `window.location.href` vers Stripe (plus de `window.location.reload()`)
 - [x] BarcodeScanner : bouton renommé **"VALIDER LE SCAN"** avec `position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%)` (conforme spec utilisateur)
 - [x] BarcodeScanner : `facingMode: { exact: 'environment' }` prioritaire avec fallback mobile si non supporté (desktop)
 - [x] BarcodeScanner : `console.error` explicite si `navigator.mediaDevices` est undefined (diagnostic HTTPS manquant)
-- [x] Vérifications curl : SIRET fake `11111111111111` rejeté | SIRET réel `44306184100047` (GOOGLE FRANCE) accepté | register retourne `subscription_status:"incomplete"` | onboarding avec fake SIRET → 400
+- [x] **Vérifications E2E** (testing_agent iteration 27 — 9/9 backend pass + frontend OK) :
+   - SIRET fake `11111111111111` / `12345678901234` rejetés (valid:false + HTTP 400)
+   - SIRET réel `44306184100047` (GOOGLE FRANCE) accepté
+   - Fresh register admin → `subscription_status:"incomplete"` → dashboard BLOQUÉ
+   - Onboarding avec SIRET réel → toujours BLOQUÉ en pré-Stripe (status reste "incomplete" jusqu'au webhook)
+   - Admin payé (admin@transporter-pro.com) → `subscription_status:"active"` → dashboard accessible
+   - Badges "Assigné" bleus corrects pour livraisons avec chauffeur
+   - BarcodeScanner : data-testid `validate-scan-btn` présent + position absolute bottom:20px
 
 ## Backlog P1
 - [ ] Corriger règles sécurité Firebase (voir /app/memory/FIREBASE_RULES.md)

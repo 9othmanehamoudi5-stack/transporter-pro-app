@@ -62,7 +62,7 @@ const DashboardRouter = () => {
   switch (user.role) {
     case "admin":
       if (!user.onboarding_complete) {
-        return <OnboardingForm onComplete={() => window.location.reload()} />;
+        return <OnboardingForm />;
       }
       // STRICT subscription gate: admin can't access dashboard without active Stripe subscription
       // subscription_status must be 'active' or 'trialing' (set by Stripe webhook after successful checkout)
