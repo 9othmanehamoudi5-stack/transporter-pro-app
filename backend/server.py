@@ -917,6 +917,74 @@ async def create_stripe_checkout(plan: str, billing: str = "monthly", user: dict
 
 # ==================== STRIPE WEBHOOK ====================
 
+def _detect_plan_from_amount(amount: float) -> tuple:
+    """Map a Stripe amount (in main currency unit, e.g. EUR) → (plan_type, billing_cycle).
+    Trial sessions can have amount=0 — we default to 'solo'/'monthly' in that case."""
+    if amount >= 4000:
+        return "flotte_pro", "yearly"
+    if amount >= 1500:
+        return "croissance", "yearly"
+    if amount >= 400:
+        return "flotte_pro", "monthly"
+    if amount >= 150:
+        return "croissance", "monthly"
+    if amount >= 300:
+        return "solo", "yearly"
+    return "solo", "monthly"
+
+
+async def _activate_admin_subscription(admin: dict, session: dict, source: str = "webhook") -> dict:
+    """Shared activation logic used by both the Stripe webhook and the /verify-payment fallback.
+    Flips the admin to subscription_status='active', stamps Stripe IDs, upserts subscription record + audit log.
+    """
+    admin_id = str(admin["_id"])
+    company_id = admin.get("company_id", admin_id)
+
+    amount = (session.get("amount_total") or 0) / 100
+    plan_type, billing_cycle = _detect_plan_from_amount(amount)
+
+    await db.users.update_one(
+        {"_id": admin["_id"]},
+        {"$set": {
+            "plan": plan_type,
+            "subscription_status": "active",
+            "stripe_customer_id": session.get("customer", "") or admin.get("stripe_customer_id", ""),
+            "stripe_subscription_id": session.get("subscription", "") or admin.get("stripe_subscription_id", ""),
+        }},
+    )
+
+    plan_info = SUBSCRIPTION_PLANS.get(plan_type, {})
+    await db.subscriptions.update_one(
+        {"admin_id": admin_id},
+        {"$set": {
+            "admin_id": admin_id,
+            "company_id": company_id,
+            "plan": plan_type,
+            "plan_name": plan_info.get("name", plan_type),
+            "billing_cycle": billing_cycle,
+            "status": "active",
+            "subscription_active": True,
+            "stripe_session_id": session.get("id", ""),
+            "stripe_customer_id": session.get("customer", ""),
+            "activation_source": source,
+            "created_at": datetime.now(timezone.utc),
+            "expires_at": datetime.now(timezone.utc) + timedelta(days=365 if billing_cycle == "yearly" else 30),
+        }},
+        upsert=True,
+    )
+
+    await log_action(
+        admin_id,
+        company_id,
+        "stripe_payment",
+        "subscription",
+        plan_type,
+        f"Activation {source}: {plan_type}/{billing_cycle} — session {session.get('id', 'n/a')}",
+    )
+    logger.info(f"Stripe[{source}]: activated {plan_type}/{billing_cycle} for {admin.get('email')}")
+    return {"plan": plan_type, "billing_cycle": billing_cycle}
+
+
 @app.post("/api/webhook/stripe")
 async def stripe_webhook(request: Request):
     """Handle Stripe webhook events (checkout.session.completed)"""
@@ -941,70 +1009,109 @@ async def stripe_webhook(request: Request):
 
     if event.get("type") == "checkout.session.completed":
         session = event["data"]["object"]
-        customer_email = session.get("customer_email") or session.get("customer_details", {}).get("email", "")
+        # Match priority: client_reference_id (our user.id) > customer_email
+        client_ref = session.get("client_reference_id") or ""
+        customer_email = (
+            session.get("customer_email")
+            or session.get("customer_details", {}).get("email", "")
+            or ""
+        )
 
-        if customer_email:
-            # Find admin user by email
+        admin = None
+        if client_ref:
+            try:
+                admin = await db.users.find_one({"_id": ObjectId(client_ref), "role": "admin"})
+            except Exception:
+                admin = None
+        if not admin and customer_email:
             admin = await db.users.find_one({"email": customer_email.lower(), "role": "admin"})
-            if admin:
-                admin_id = str(admin["_id"])
-                company_id = admin.get("company_id", admin_id)
 
-                # Determine plan from metadata or amount
-                amount = session.get("amount_total", 0) / 100
-                plan_type = "solo"
-                billing_cycle = "monthly"
-                if amount >= 4000:
-                    plan_type = "flotte_pro"
-                    billing_cycle = "yearly"
-                elif amount >= 1500:
-                    plan_type = "croissance"
-                    billing_cycle = "yearly"
-                elif amount >= 400:
-                    plan_type = "flotte_pro"
-                    billing_cycle = "monthly"
-                elif amount >= 150:
-                    plan_type = "croissance"
-                    billing_cycle = "monthly"
-                elif amount >= 300:
-                    plan_type = "solo"
-                    billing_cycle = "yearly"
-
-                # Update user plan
-                await db.users.update_one(
-                    {"_id": admin["_id"]},
-                    {"$set": {
-                        "plan": plan_type,
-                        "subscription_status": "active",
-                        "stripe_customer_id": session.get("customer", ""),
-                        "stripe_subscription_id": session.get("subscription", "")
-                    }}
-                )
-
-                # Update subscription record
-                plan_info = SUBSCRIPTION_PLANS.get(plan_type, {})
-                await db.subscriptions.update_one(
-                    {"admin_id": admin_id},
-                    {"$set": {
-                        "admin_id": admin_id,
-                        "company_id": company_id,
-                        "plan": plan_type,
-                        "plan_name": plan_info.get("name", plan_type),
-                        "billing_cycle": billing_cycle,
-                        "status": "active",
-                        "subscription_active": True,
-                        "stripe_session_id": session.get("id", ""),
-                        "created_at": datetime.now(timezone.utc),
-                        "expires_at": datetime.now(timezone.utc) + timedelta(days=365 if billing_cycle == "yearly" else 30)
-                    }},
-                    upsert=True
-                )
-
-                await log_action(admin_id, company_id, "stripe_payment", "subscription", plan_type, f"Stripe checkout completed: {plan_type}/{billing_cycle}")
-
-                logger.info(f"Stripe: Activated {plan_type}/{billing_cycle} for {customer_email}")
+        if admin:
+            await _activate_admin_subscription(admin, session, source="webhook")
+        else:
+            logger.warning(
+                f"Stripe webhook: no admin matched (client_ref={client_ref}, email={customer_email})"
+            )
 
     return {"received": True}
+
+
+# ==================== STRIPE VERIFICATION FALLBACK ====================
+
+@api_router.post("/stripe/verify-payment")
+async def stripe_verify_payment(user: dict = Depends(require_role("admin"))):
+    """Fallback when the webhook didn't fire (or isn't configured).
+    Asks Stripe directly whether the current admin has a paid checkout session,
+    and if so, activates their subscription. Idempotent.
+    """
+    import stripe
+    stripe.api_key = STRIPE_SECRET_KEY
+
+    if not STRIPE_SECRET_KEY:
+        raise HTTPException(status_code=500, detail="Stripe non configuré")
+
+    admin = await db.users.find_one({"_id": ObjectId(user["id"]), "role": "admin"})
+    if not admin:
+        raise HTTPException(status_code=404, detail="Admin introuvable")
+
+    # Already active? short-circuit
+    if admin.get("subscription_status") in ("active", "trialing"):
+        return {"activated": False, "already_active": True, "subscription_status": admin.get("subscription_status")}
+
+    matched_session = None
+    try:
+        # 1) Try matching by client_reference_id (our user id)
+        sessions = stripe.checkout.Session.list(limit=20)
+        for s in sessions.data:
+            if (
+                s.get("client_reference_id") == user["id"]
+                and s.get("payment_status") in ("paid", "no_payment_required")
+                and s.get("status") == "complete"
+            ):
+                matched_session = s
+                break
+
+        # 2) Fallback: by email
+        if not matched_session:
+            email = admin.get("email", "").lower()
+            for s in sessions.data:
+                s_email = (s.get("customer_email") or "").lower()
+                if not s_email:
+                    details = s.get("customer_details") or {}
+                    s_email = (details.get("email") or "").lower()
+                if (
+                    s_email == email
+                    and s.get("payment_status") in ("paid", "no_payment_required")
+                    and s.get("status") == "complete"
+                ):
+                    matched_session = s
+                    break
+    except stripe.error.AuthenticationError as e:
+        logger.error(f"Stripe verify-payment AUTH error: {e}")
+        raise HTTPException(
+            status_code=503,
+            detail="Service Stripe momentanément indisponible. Notre équipe a été notifiée — réessayez dans quelques minutes ou contactez le support.",
+        )
+    except Exception as e:
+        logger.error(f"Stripe verify-payment error: {e}")
+        raise HTTPException(status_code=502, detail=f"Erreur Stripe: {e}")
+
+    if not matched_session:
+        return {
+            "activated": False,
+            "already_active": False,
+            "message": "Aucun paiement Stripe trouvé pour ce compte. Si vous venez de payer, attendez 1 minute et réessayez.",
+        }
+
+    result = await _activate_admin_subscription(admin, matched_session, source="verify_payment_fallback")
+    return {
+        "activated": True,
+        "already_active": False,
+        "plan": result["plan"],
+        "billing_cycle": result["billing_cycle"],
+        "subscription_status": "active",
+    }
+
 
 # ==================== NOTIFICATIONS ====================
 

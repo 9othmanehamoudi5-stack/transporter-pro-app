@@ -68,7 +68,11 @@ const OnboardingForm = () => {
       toast.success('Entreprise enregistrée — redirection vers Stripe…');
       // Redirect EXCLUSIVELY to Stripe — user never sees dashboard before payment
       const email = user?.email || '';
-      window.location.href = `${STRIPE_CHECKOUT_URL}?prefilled_email=${encodeURIComponent(email)}`;
+      const userId = user?.id || '';
+      const params = new URLSearchParams();
+      if (email) params.set('prefilled_email', email);
+      if (userId) params.set('client_reference_id', userId);
+      window.location.href = `${STRIPE_CHECKOUT_URL}?${params.toString()}`;
     } catch (error) {
       const msg = error.response?.data?.detail || "Erreur lors de l'enregistrement";
       toast.error(msg);

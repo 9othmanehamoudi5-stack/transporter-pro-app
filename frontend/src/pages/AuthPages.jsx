@@ -140,7 +140,9 @@ export const RegisterPage = () => {
       } else {
         setStep(3);
         const stripeLink = 'https://buy.stripe.com/test_3cIeVebks9bqggLacO7IY07';
-        window.location.href = `${stripeLink}?prefilled_email=${encodeURIComponent(email)}`;
+        const params = new URLSearchParams({ prefilled_email: email });
+        if (result.user?.id) params.set('client_reference_id', result.user.id);
+        window.location.href = `${stripeLink}?${params.toString()}`;
       }
     } else {
       if (result.error?.toLowerCase().includes('already') || result.error?.toLowerCase().includes('déjà')) {
@@ -173,7 +175,10 @@ export const RegisterPage = () => {
       });
       setStep(3);
       const stripeLink = 'https://buy.stripe.com/test_3cIeVebks9bqggLacO7IY07';
-      window.location.href = `${stripeLink}?prefilled_email=${encodeURIComponent(email)}`;
+      const userId = localStorage.getItem('tp_user_id') || '';
+      const params = new URLSearchParams({ prefilled_email: email });
+      if (userId) params.set('client_reference_id', userId);
+      window.location.href = `${stripeLink}?${params.toString()}`;
     } catch {
       setError('Erreur serveur. Réessayez.');
     }

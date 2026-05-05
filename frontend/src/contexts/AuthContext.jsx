@@ -79,7 +79,7 @@ export const AuthProvider = ({ children }) => {
       // Save tokens to localStorage for mobile persistence
       tokenStore.save(data.access_token, data.refresh_token);
       setUser(data);
-      return { success: true };
+      return { success: true, user: data };
     } catch (e) {
       const detail = e.response?.data?.detail;
       const msg = typeof detail === 'string' ? detail
@@ -97,8 +97,10 @@ export const AuthProvider = ({ children }) => {
         { withCredentials: true }
       );
       tokenStore.save(data.access_token, data.refresh_token);
+      // Persist user id for downstream Stripe redirect (Step 2 onboarding)
+      try { localStorage.setItem('tp_user_id', data.id || ''); } catch {}
       setUser(data);
-      return { success: true };
+      return { success: true, user: data };
     } catch (e) {
       const detail = e.response?.data?.detail;
       const msg = typeof detail === 'string' ? detail
