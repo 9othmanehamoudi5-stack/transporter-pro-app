@@ -1,0 +1,99 @@
+{
+  "summary": "Iteration 27 — Bypass fix verification. Backend: 9/9 pass (SIRET validation blocking, register returns subscription_status='incomplete', onboarding rejects fake SIRET server-side). Frontend E2E confirms: no dashboard bypass possible for fresh registered admin (gate 'Paiement requis' displayed with Stripe CTA). HOWEVER one CRITICAL regression found: /api/auth/login response is missing subscription_status, so an existing PAID admin logging in fresh is incorrectly blocked by the gate screen until page reload (reload triggers /auth/me which does include subscription_status).",
+
+  "backend_issues": {
+    "critical": [
+      {
+        "endpoint": "/api/auth/login",
+        "issue": "Response payload missing 'subscription_status' field. For existing paid admin (admin@transporter-pro.com, DB subscription_status='active'), login returns user without this field. Frontend AuthContext.login does setUser(data) directly, so user.subscription_status=undefined -> DashboardRouter shows 'Paiement requis' gate -> legitimate PAID admin blocked. Reloading page fixes it (checkAuth uses /auth/me which includes the field). Fix: add subscription_status (and trial_ends_at) to login response shape, same as /auth/me and /auth/register.",
+        "priority": "CRITICAL"
+      }
+    ],
+    "minor": []
+  },
+
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {
+        "flow": "Post-registration onboarding",
+        "issue": "RegisterPage.jsx step 2 (SIRET verify button + canSubmitStep2 disabled gate + window.location.href to Stripe after handleStep2) is EFFECTIVELY DEAD CODE. After handleStep1 succeeds, user becomes authenticated and PublicRoute at /register redirects them to /dashboard, which renders OnboardingForm.jsx (not RegisterPage step 2). OnboardingForm.jsx has NO SIRET verify button, submit is ALWAYS enabled, and on success it just window.location.reload()s (no Stripe redirect). Security is still enforced because backend /api/onboarding/complete re-validates the SIRET (returns 400 for fake) and the subscription gate in DashboardRouter blocks dashboard until Stripe webhook sets status='active'/'trialing'. But the user's explicit spec (Submit button disabled when siretValid !== true, window.location.href to Stripe after handleStep2) is not actually in the user-visible flow. Main agent should either (a) fix PublicRoute to allow /register step 2 for admins with onboarding_complete=false+subscription_status='incomplete', OR (b) port the SIRET verify-then-disable-submit logic and Stripe redirect into OnboardingForm.jsx.",
+        "affected_selectors": ["register-kyb-submit", "register-siret-input", "verify-siret-btn", "onboarding-siret", "onboarding-submit"]
+      }
+    ],
+    "design_issues": []
+  },
+
+  "passed_tests": [
+    "Backend: fake SIRET 11111111111111 returns valid:false (PASS)",
+    "Backend: fake SIRET 12345678901234 returns valid:false (PASS)",
+    "Backend: real SIRET 44306184100047 returns valid:true with company_name+address (PASS)",
+    "Backend: POST /api/auth/register role=admin returns subscription_status='incomplete' (PASS)",
+    "Backend: GET /api/auth/me for new admin returns subscription_status='incomplete' (PASS)",
+    "Backend: POST /api/onboarding/complete with fake SIRET returns 400 (PASS)",
+    "Backend: POST /api/onboarding/complete with valid SIRET returns 200 (PASS)",
+    "Backend: After onboarding, subscription_status remains 'incomplete' (Stripe webhook is sole activator) (PASS)",
+    "Backend: Existing admin@transporter-pro.com has subscription_status='active' on /auth/me (PASS)",
+    "Frontend: Fresh admin reaches OnboardingForm after step 1 register (PASS)",
+    "Frontend: OnboardingForm submit with fake SIRET rejected by backend, stays on form (PASS)",
+    "Frontend: OnboardingForm submit with valid SIRET 44306184100047 -> redirects to /dashboard which shows subscription-required-gate with Stripe button and prefilled_email (PASS)",
+    "Frontend: Direct navigation to /dashboard for admin with subscription_status='incomplete' shows gate, NOT dashboard (PASS)",
+    "Frontend: Admin dashboard deliveries — rows with driver_name='billal' all show blue 'Assigné' badge (PASS) — verified visually in screenshot",
+    "Frontend: effectiveStatus logic in AdminDashboard.jsx works for both overview and deliveries tabs (PASS)",
+    "Code review: BarcodeScanner.jsx has data-testid='validate-scan-btn', position:absolute bottom:20px, facingMode:'environment', console.error when navigator.mediaDevices undefined (PASS)"
+  ],
+
+  "failed_tests": [
+    "Frontend: Login admin@transporter-pro.com (paid, active) fresh -> incorrectly shows Paiement requis gate. Reload fixes it. Root cause: /api/auth/login response missing subscription_status field."
+  ],
+
+  "test_report_links": [
+    "/app/backend/tests/test_iteration27.py",
+    "/app/test_reports/pytest/pytest_iteration27.xml"
+  ],
+
+  "action_items": [
+    "CRITICAL: Add 'subscription_status' and 'trial_ends_at' fields to POST /api/auth/login response (same shape as /auth/me). Without this, existing paid admins get blocked by the Paiement requis gate on fresh login.",
+    "IMPORTANT: Decide architecture for admin onboarding flow. Current state: RegisterPage step 2 (with SIRET verify + disabled submit gate + Stripe window.location.href) is dead code because PublicRoute redirects away. The real flow uses OnboardingForm.jsx which has neither SIRET verify nor Stripe redirect. Either: (a) allow /register route for authenticated incomplete admins, or (b) port SIRET verify logic + Stripe redirect into OnboardingForm.jsx so user's 4-point spec is actually visible in UI.",
+    "Note: Backend security IS enforced end-to-end (SIRET server-side revalidation + subscription gate), so NO real bypass exists. User's perception issue would be resolved by adding login response fix + UX clarity in onboarding."
+  ],
+
+  "critical_code_review_comments": [
+    "/app/frontend/src/contexts/AuthContext.jsx:81 — login() does setUser(data) where data is login response (missing subscription_status). Either (a) update backend to include field, or (b) immediately call checkAuth() after login to fetch full user from /auth/me.",
+    "/app/frontend/src/pages/AuthPages.jsx RegisterPage step 2 (lines 262-302) — logic is correct per spec but never rendered because PublicRoute at /register redirects authenticated users to /dashboard.",
+    "/app/frontend/src/pages/OnboardingForm.jsx — no client-side SIRET verification button, no siretValid gate, and onComplete does window.location.reload() instead of redirecting to Stripe buy URL. Backend still rejects fake SIRET so security holds, but this is the form users actually see post-register.",
+    "/app/frontend/src/App.js DashboardRouter subscription gate logic correct. Renders OnboardingForm when !onboarding_complete, else subscription-required-gate when status not active/trialing, else AdminDashboard. ✓"
+  ],
+
+  "updated_files": [
+    "/app/backend/tests/test_iteration27.py (new)"
+  ],
+
+  "success_rate": {
+    "backend": "100% (9/9 tests passed)",
+    "frontend": "85% — registration→gate flow works end-to-end; deliveries badges correct; but existing paid admin incorrectly hits gate on fresh login"
+  },
+
+  "test_credentials": {
+    "admin_paid": "admin@transporter-pro.com / admin123 (subscription_status=active in DB)",
+    "driver": "driver@test.com / driver123",
+    "real_siret": "44306184100047 (GOOGLE FRANCE)",
+    "fake_sirets": ["11111111111111", "12345678901234"]
+  },
+
+  "seed_data_creation": "Test iterations create TEST_bypass_{uuid}@test.com and TEST_flow_{rand}@test.com admins via /api/auth/register. Not cleaned up — recommend main agent periodically prune TEST_* users.",
+
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+
+  "context_for_next_testing_agent": "User's 4-point security spec is verified at BACKEND level (9/9 pytest). Frontend fresh-register → onboarding → subscription-gate → Stripe flow verified. Single critical regression: /api/auth/login response missing subscription_status causes paid admins to see gate on fresh login (reload fixes it). After main agent adds the field to login response, retest by logging in fresh as admin@transporter-pro.com — should land directly on dashboard, NOT gate. Also consider testing BarcodeScanner with camera-disabled browser to confirm console.error fires.",
+
+  "rca_of_login_gate_regression": {
+    "symptom": "Fresh login as admin@transporter-pro.com shows 'Paiement requis' gate instead of dashboard.",
+    "reproduction": "1) Open /login 2) Submit admin@transporter-pro.com / admin123 3) Observe gate (data-testid=subscription-required-gate) 4) Reload page -> dashboard appears.",
+    "root_cause": "POST /api/auth/login JSON body does not include 'subscription_status'. AuthContext.login() stores the response as user state directly. DashboardRouter reads user.subscription_status — undefined strictly !== 'active', so it renders the gate. On reload, checkAuth() calls /api/auth/me which DOES include subscription_status='active', so the gate disappears.",
+    "fix": "Modify backend login endpoint to include subscription_status (and trial_ends_at, onboarding_complete which is already there) in the response, matching /auth/me shape. Alternatively, frontend AuthContext.login could follow setUser(data) with an immediate authApi.me() call."
+  },
+
+  "mocked_apis": { "has_mocked_apis": false, "mocked_apis_list": [] }
+}
