@@ -79,7 +79,7 @@ const DashboardRouter = () => {
                 L'essai de 30 jours est activé immédiatement après enregistrement de votre carte (débit 0€).
               </p>
               <a
-                href={`https://buy.stripe.com/test_eVq9AUfAI9bq11R4Su7IY04?prefilled_email=${encodeURIComponent(user.email || "")}`}
+                href={`https://buy.stripe.com/test_3cIeVebks9bqggLacO7IY07?prefilled_email=${encodeURIComponent(user.email || "")}`}
                 className="block w-full h-12 leading-[48px] bg-[#0066FF] hover:bg-[#0052CC] text-white font-semibold rounded-xl transition-colors"
                 data-testid="subscription-gate-stripe-btn"
               >

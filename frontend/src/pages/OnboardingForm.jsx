@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 import api from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 
-const STRIPE_CHECKOUT_URL = 'https://buy.stripe.com/test_eVq9AUfAI9bq11R4Su7IY04';
+const STRIPE_CHECKOUT_URL = 'https://buy.stripe.com/test_3cIeVebks9bqggLacO7IY07';
 
 const OnboardingForm = () => {
   const { user } = useAuth();

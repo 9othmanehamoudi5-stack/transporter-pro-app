@@ -139,7 +139,7 @@ export const RegisterPage = () => {
         setStep(2);
       } else {
         setStep(3);
-        const stripeLink = 'https://buy.stripe.com/test_00wbJ29ckgDSc0v70C7IY02';
+        const stripeLink = 'https://buy.stripe.com/test_3cIeVebks9bqggLacO7IY07';
         window.location.href = `${stripeLink}?prefilled_email=${encodeURIComponent(email)}`;
       }
     } else {
@@ -172,7 +172,7 @@ export const RegisterPage = () => {
         body: JSON.stringify({ company_name: companyName, siret: siret.replace(/\s/g, ''), tva_intra: tvaIntra, address })
       });
       setStep(3);
-      const stripeLink = 'https://buy.stripe.com/test_eVq9AUfAI9bq11R4Su7IY04';
+      const stripeLink = 'https://buy.stripe.com/test_3cIeVebks9bqggLacO7IY07';
       window.location.href = `${stripeLink}?prefilled_email=${encodeURIComponent(email)}`;
     } catch {
       setError('Erreur serveur. Réessayez.');
