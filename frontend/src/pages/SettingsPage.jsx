@@ -62,6 +62,7 @@ const formatDate = (iso) => {
 
 // ---------------- SECTION : Profile + Entreprise ----------------
 const ProfileSection = ({ user, company }) => {
+  const { t } = useI18n();
   const planLabel = PLAN_LABELS[user?.plan] || user?.plan || '—';
   const statusBadge =
     user?.subscription_status === 'active'
@@ -77,8 +78,8 @@ const ProfileSection = ({ user, company }) => {
           <UserIcon className="w-5 h-5 text-[#0066FF]" />
         </div>
         <div>
-          <h2 className="font-semibold text-white">Mon profil</h2>
-          <p className="text-xs text-zinc-500">Informations d'inscription et entreprise</p>
+          <h2 className="font-semibold text-white">{t('settings.profile', 'Mon profil')}</h2>
+          <p className="text-xs text-zinc-500">{t('settings.profileDesc', "Informations d'inscription et entreprise")}</p>
         </div>
       </div>
       <div className="p-6 grid sm:grid-cols-2 gap-5">
@@ -119,7 +120,7 @@ const Field = ({ icon: Icon, label, value, mono = false, testid }) => (
 
 // ---------------- SECTION : Services & Facturation ----------------
 const BillingSection = ({ user, refreshUser }) => {
-  const { lang, setLang } = useI18n();
+  const { t, lang, setLang } = useI18n();
   const [openingPortal, setOpeningPortal] = useState(false);
   const [savingLang, setSavingLang] = useState(false);
 
@@ -154,15 +155,15 @@ const BillingSection = ({ user, refreshUser }) => {
           <Receipt className="w-5 h-5 text-[#0066FF]" />
         </div>
         <div>
-          <h2 className="font-semibold text-white">Services & Facturation</h2>
-          <p className="text-xs text-zinc-500">Stripe, langue de l'interface</p>
+          <h2 className="font-semibold text-white">{t('settings.billing', 'Services & Facturation')}</h2>
+          <p className="text-xs text-zinc-500">{t('settings.billingDesc', "Stripe, langue de l'interface")}</p>
         </div>
       </div>
       <div className="p-6 space-y-5">
         <div>
-          <p className="text-sm text-zinc-300 mb-2 font-medium">Portail de facturation Stripe</p>
+          <p className="text-sm text-zinc-300 mb-2 font-medium">{t('settings.manageBilling', 'Portail de facturation Stripe')}</p>
           <p className="text-xs text-zinc-500 mb-3 max-w-md">
-            Téléchargez vos factures, mettez à jour votre carte, changez de plan ou résiliez votre abonnement en self-service.
+            {t('settings.billingDesc2', 'Téléchargez vos factures, mettez à jour votre carte, changez de plan ou résiliez votre abonnement en self-service.')}
           </p>
           <Button
             onClick={handleOpenPortal}
@@ -170,14 +171,14 @@ const BillingSection = ({ user, refreshUser }) => {
             className="bg-[#0066FF] hover:bg-[#0052CC] text-white rounded-xl"
             data-testid="open-billing-portal-btn"
           >
-            {openingPortal ? 'Ouverture…' : 'Gérer ma facturation'}
+            {openingPortal ? '…' : t('settings.manageBilling', 'Gérer ma facturation')}
             <ExternalLink className="w-4 h-4 ml-2" />
           </Button>
         </div>
 
         <div className="border-t border-[#27272A] pt-5">
           <Label className="text-zinc-300 mb-2 block flex items-center gap-2">
-            <Globe className="w-4 h-4" /> Langue de l'interface
+            <Globe className="w-4 h-4" /> {t('settings.language', "Langue de l'interface")}
           </Label>
           <Select value={lang || user?.language || 'fr'} onValueChange={handleLangChange} disabled={savingLang}>
             <SelectTrigger className="w-56 bg-[#0A0A0B] border-[#27272A]" data-testid="lang-select-trigger">
@@ -197,6 +198,7 @@ const BillingSection = ({ user, refreshUser }) => {
 
 // ---------------- SECTION : Personnalisation ----------------
 const CustomizationSection = ({ user, refreshUser }) => {
+  const { t } = useI18n();
   const fileRef = useRef(null);
   const [uploading, setUploading] = useState(false);
   const [logo, setLogo] = useState(user?.logo_base64 || '');
@@ -268,8 +270,8 @@ const CustomizationSection = ({ user, refreshUser }) => {
           <ImageIcon className="w-5 h-5 text-[#0066FF]" />
         </div>
         <div>
-          <h2 className="font-semibold text-white">Personnalisation & Alertes</h2>
-          <p className="text-xs text-zinc-500">Logo entreprise + notifications</p>
+          <h2 className="font-semibold text-white">{t('settings.customization', 'Personnalisation & Alertes')}</h2>
+          <p className="text-xs text-zinc-500">{t('settings.customizationDesc', 'Logo entreprise + notifications')}</p>
         </div>
       </div>
       <div className="p-6 space-y-6">
@@ -342,6 +344,7 @@ const PrefRow = ({ label, desc, checked, onChange, testid }) => (
 
 // ---------------- SECTION : Sécurité ----------------
 const SecuritySection = ({ user, refreshUser, logout }) => {
+  const { t } = useI18n();
   const [currentPwd, setCurrentPwd] = useState('');
   const [newPwd, setNewPwd] = useState('');
   const [confirmPwd, setConfirmPwd] = useState('');
@@ -437,8 +440,8 @@ const SecuritySection = ({ user, refreshUser, logout }) => {
             <Lock className="w-5 h-5 text-[#0066FF]" />
           </div>
           <div>
-            <h2 className="font-semibold text-white">Changer mon mot de passe</h2>
-            <p className="text-xs text-zinc-500">Minimum 8 caractères</p>
+            <h2 className="font-semibold text-white">{t('settings.changePassword', 'Changer mon mot de passe')}</h2>
+            <p className="text-xs text-zinc-500">{t('settings.minChars', 'Minimum 8 caractères')}</p>
           </div>
         </div>
         <form onSubmit={handleChangePassword} className="p-6 space-y-4 max-w-md">
@@ -477,8 +480,8 @@ const SecuritySection = ({ user, refreshUser, logout }) => {
             <KeyRound className="w-5 h-5 text-[#0066FF]" />
           </div>
           <div>
-            <h2 className="font-semibold text-white">Double authentification (2FA)</h2>
-            <p className="text-xs text-zinc-500">Code à 6 chiffres envoyé par email à chaque connexion</p>
+            <h2 className="font-semibold text-white">{t('settings.twofa', 'Double authentification (2FA)')}</h2>
+            <p className="text-xs text-zinc-500">{t('settings.twofaDesc', 'Code à 6 chiffres envoyé par email à chaque connexion')}</p>
           </div>
         </div>
         <div className="p-6">
@@ -499,12 +502,12 @@ const SecuritySection = ({ user, refreshUser, logout }) => {
             <Trash2 className="w-5 h-5 text-red-400" />
           </div>
           <div>
-            <h2 className="font-semibold text-red-300">Zone de danger</h2>
-            <p className="text-xs text-red-400/70">Action irréversible</p>
+            <h2 className="font-semibold text-red-300">{t('settings.danger', 'Zone de danger')}</h2>
+            <p className="text-xs text-red-400/70">{t('settings.dangerDesc', 'Action irréversible')}</p>
           </div>
         </div>
         <div className="p-6">
-          <p className="text-sm text-zinc-300 mb-1">Supprimer définitivement mon compte</p>
+          <p className="text-sm text-zinc-300 mb-1">{t('settings.deleteAccount', 'Supprimer définitivement mon compte')}</p>
           <p className="text-xs text-zinc-500 mb-4 max-w-md">
             Cette action résilie immédiatement votre abonnement Stripe, supprime toutes les données associées et bloque toute nouvelle connexion avec cet email.
           </p>
@@ -584,6 +587,7 @@ const formatDateTime = (iso) => {
 };
 
 const ActivitySection = () => {
+  const { t } = useI18n();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -603,8 +607,8 @@ const ActivitySection = () => {
           <Activity className="w-5 h-5 text-[#0066FF]" />
         </div>
         <div>
-          <h2 className="font-semibold text-white">Activité du compte</h2>
-          <p className="text-xs text-zinc-500">50 derniers événements (conformité RGPD/SOC2)</p>
+          <h2 className="font-semibold text-white">{t('settings.activity', 'Activité du compte')}</h2>
+          <p className="text-xs text-zinc-500">{t('settings.activityDesc', '50 derniers événements (conformité RGPD/SOC2)')}</p>
         </div>
       </div>
       <div className="divide-y divide-[#27272A] max-h-96 overflow-y-auto">

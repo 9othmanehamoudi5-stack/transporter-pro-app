@@ -1,8 +1,6 @@
 {
   "nav": { "login": "Connexion", "trial": "Essai gratuit", "problem": "Problème", "features": "Fonctionnalités", "pricing": "Tarifs" },
-  "hero": { "title": "Chaque minute, votre trésorerie fuit. Reprenez le contrôle.", "subtitle": "Marre de payer pour des colis que vous n'avez pas cassés ?", "cta": "Démarrer mon essai gratuit", "demo": "Voir la démo" },
-  "pricing": { "title": "Un plan pour chaque ambition.", "monthly": "Mensuel", "annual": "Annuel", "save": "Économisez 17%", "trial": "30 jours d'essai gratuit", "cta": "Démarrer l'essai gratuit — 30 jours" },
-  "auth": { "login": "Connexion", "register": "Créer un compte", "email": "Email", "password": "Mot de passe", "name": "Nom complet", "submit": "Se connecter", "noAccount": "Pas encore de compte ?", "hasAccount": "Déjà un compte ?" },
+  "auth": { "login": "Connexion", "register": "Créer un compte", "email": "Email", "password": "Mot de passe", "name": "Nom complet", "submit": "Se connecter", "noAccount": "Pas encore de compte ?", "hasAccount": "Déjà un compte ?", "forgot": "Mot de passe oublié ?" },
   "sidebar": {
     "overview": "Vue d'ensemble",
     "deliveries": "Livraisons",
@@ -14,6 +12,56 @@
     "subscription": "Abonnement",
     "settings": "Paramètres",
     "logout": "Déconnexion"
+  },
+  "kpi": {
+    "totalDeliveries": "Livraisons totales",
+    "inTransit": "En transit",
+    "deliveredToday": "Livrées aujourd'hui",
+    "activeDisputes": "Litiges actifs",
+    "trackingId": "TRACKING",
+    "recipient": "DESTINATAIRE",
+    "address": "ADRESSE",
+    "status": "STATUT",
+    "driver": "CHAUFFEUR",
+    "action": "ACTION"
+  },
+  "cashflow": {
+    "title": "Cash-Flow Instantané",
+    "blocked": "Argent bloqué (camions)",
+    "blockedSub": "{count} livraisons",
+    "pending": "Factures en attente",
+    "pendingSub": "Factures",
+    "monthRevenue": "CA ce mois",
+    "monthRevenueSub": "Chiffre d'affaires"
+  },
+  "actions": {
+    "generateCmr": "Générer e-CMR",
+    "gpsMap": "Carte GPS",
+    "scanBarcode": "Scan Code-barre",
+    "clientPortal": "Portail Client",
+    "newDelivery": "Nouvelle livraison",
+    "addDriver": "Ajouter chauffeur",
+    "assign": "Assigner",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "view": "Voir",
+    "refresh": "Rafraîchir"
+  },
+  "tabs": {
+    "recentDeliveries": "Dernières livraisons",
+    "allDeliveries": "Toutes les livraisons",
+    "myDrivers": "Mes chauffeurs",
+    "myDisputes": "Mes litiges",
+    "ecoScoresTitle": "Éco-Performance flotte"
+  },
+  "status": {
+    "pending": "En attente",
+    "assigned": "Assigné",
+    "in_transit": "En transit",
+    "delivered": "Livré",
+    "dispute": "Litige",
+    "active": "Actif",
+    "trialing": "Essai en cours"
   },
   "settings": {
     "title": "Paramètres",
@@ -32,7 +80,24 @@
     "danger": "Zone de danger",
     "deleteAccount": "Supprimer mon compte",
     "activity": "Activité du compte",
-    "activityDesc": "50 derniers événements (conformité RGPD/SOC2)"
+    "activityDesc": "50 derniers événements (conformité RGPD/SOC2)",
+    "currentPwd": "Mot de passe actuel",
+    "newPwd": "Nouveau mot de passe",
+    "confirmPwd": "Confirmer",
+    "save": "Enregistrer",
+    "uploadLogo": "Choisir un logo",
+    "changeLogo": "Changer le logo",
+    "removeLogo": "Supprimer",
+    "logoHint": "PNG / JPEG / WEBP / SVG · max 500 Ko",
+    "notifications": "Préférences de notification",
+    "notifNewDispute": "Nouveau litige détecté",
+    "notifNewDisputeDesc": "Email instantané dès qu'un dommage est signalé",
+    "notifWeeklyEco": "Rapport hebdomadaire Éco-score",
+    "notifWeeklyEcoDesc": "Lundi matin — synthèse de la semaine",
+    "notifQuota": "Alerte quota chauffeurs",
+    "notifQuotaDesc": "Quand vous atteignez 80% / 100% de votre quota",
+    "twofaDesc": "Code à 6 chiffres envoyé par email à chaque connexion",
+    "twofaToggle": "Activer la 2FA par email"
   },
-  "common": { "save": "Enregistrer", "cancel": "Annuler", "delete": "Supprimer", "loading": "Chargement...", "error": "Erreur", "success": "Succès" }
+  "common": { "save": "Enregistrer", "cancel": "Annuler", "delete": "Supprimer", "loading": "Chargement...", "error": "Erreur", "success": "Succès", "back": "Retour", "noData": "Aucune donnée" }
 }

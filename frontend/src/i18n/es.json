@@ -1,8 +1,6 @@
 {
   "nav": { "login": "Iniciar sesión", "trial": "Prueba gratis", "problem": "Problema", "features": "Funciones", "pricing": "Precios" },
-  "hero": { "title": "Cada minuto, tu tesorería se fuga. Recupera el control.", "subtitle": "¿Cansado de pagar por paquetes que no rompiste?", "cta": "Iniciar mi prueba gratis", "demo": "Ver demo" },
-  "pricing": { "title": "Un plan para cada ambición.", "monthly": "Mensual", "annual": "Anual", "save": "Ahorra 17%", "trial": "30 días de prueba gratis", "cta": "Iniciar la prueba — 30 días" },
-  "auth": { "login": "Iniciar sesión", "register": "Crear cuenta", "email": "Email", "password": "Contraseña", "name": "Nombre completo", "submit": "Iniciar sesión", "noAccount": "¿No tienes cuenta?", "hasAccount": "¿Ya tienes cuenta?" },
+  "auth": { "login": "Iniciar sesión", "register": "Crear cuenta", "email": "Email", "password": "Contraseña", "name": "Nombre completo", "submit": "Iniciar sesión", "noAccount": "¿No tienes cuenta?", "hasAccount": "¿Ya tienes cuenta?", "forgot": "¿Contraseña olvidada?" },
   "sidebar": {
     "overview": "Resumen",
     "deliveries": "Entregas",
@@ -14,6 +12,56 @@
     "subscription": "Suscripción",
     "settings": "Ajustes",
     "logout": "Cerrar sesión"
+  },
+  "kpi": {
+    "totalDeliveries": "Entregas totales",
+    "inTransit": "En tránsito",
+    "deliveredToday": "Entregadas hoy",
+    "activeDisputes": "Disputas activas",
+    "trackingId": "SEGUIMIENTO",
+    "recipient": "DESTINATARIO",
+    "address": "DIRECCIÓN",
+    "status": "ESTADO",
+    "driver": "CONDUCTOR",
+    "action": "ACCIÓN"
+  },
+  "cashflow": {
+    "title": "Flujo de caja instantáneo",
+    "blocked": "Dinero bloqueado (camiones)",
+    "blockedSub": "{count} entregas",
+    "pending": "Facturas pendientes",
+    "pendingSub": "Facturas",
+    "monthRevenue": "Ingresos este mes",
+    "monthRevenueSub": "Facturación"
+  },
+  "actions": {
+    "generateCmr": "Generar e-CMR",
+    "gpsMap": "Mapa GPS",
+    "scanBarcode": "Escanear código",
+    "clientPortal": "Portal cliente",
+    "newDelivery": "Nueva entrega",
+    "addDriver": "Añadir conductor",
+    "assign": "Asignar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "view": "Ver",
+    "refresh": "Actualizar"
+  },
+  "tabs": {
+    "recentDeliveries": "Últimas entregas",
+    "allDeliveries": "Todas las entregas",
+    "myDrivers": "Mis conductores",
+    "myDisputes": "Mis disputas",
+    "ecoScoresTitle": "Eco-rendimiento de la flota"
+  },
+  "status": {
+    "pending": "Pendiente",
+    "assigned": "Asignado",
+    "in_transit": "En tránsito",
+    "delivered": "Entregado",
+    "dispute": "Disputa",
+    "active": "Activo",
+    "trialing": "Prueba"
   },
   "settings": {
     "title": "Ajustes",
@@ -32,7 +80,24 @@
     "danger": "Zona peligrosa",
     "deleteAccount": "Eliminar mi cuenta",
     "activity": "Actividad de la cuenta",
-    "activityDesc": "Últimos 50 eventos (RGPD/SOC2)"
+    "activityDesc": "Últimos 50 eventos (RGPD/SOC2)",
+    "currentPwd": "Contraseña actual",
+    "newPwd": "Nueva contraseña",
+    "confirmPwd": "Confirmar",
+    "save": "Guardar",
+    "uploadLogo": "Elegir un logotipo",
+    "changeLogo": "Cambiar logotipo",
+    "removeLogo": "Eliminar",
+    "logoHint": "PNG / JPEG / WEBP / SVG · máx 500 KB",
+    "notifications": "Preferencias de notificación",
+    "notifNewDispute": "Nueva disputa detectada",
+    "notifNewDisputeDesc": "Email instantáneo cuando se reporta un daño",
+    "notifWeeklyEco": "Informe semanal Eco-score",
+    "notifWeeklyEcoDesc": "Lunes por la mañana — resumen semanal",
+    "notifQuota": "Alerta de cuota de conductores",
+    "notifQuotaDesc": "Cuando alcanzas el 80% / 100% de tu cuota",
+    "twofaDesc": "Código de 6 dígitos enviado por email en cada conexión",
+    "twofaToggle": "Activar 2FA por email"
   },
-  "common": { "save": "Guardar", "cancel": "Cancelar", "delete": "Eliminar", "loading": "Cargando...", "error": "Error", "success": "Éxito" }
+  "common": { "save": "Guardar", "cancel": "Cancelar", "delete": "Eliminar", "loading": "Cargando...", "error": "Error", "success": "Éxito", "back": "Volver", "noData": "Sin datos" }
 }

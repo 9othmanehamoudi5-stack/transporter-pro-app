@@ -194,6 +194,33 @@ Application SaaS logistique "Transporter-Pro" pour PME de transport.
 ## Backlog P1
 - [ ] Corriger règles sécurité Firebase (voir /app/memory/FIREBASE_RULES.md)
 
+### Phase 22 - i18n Complet + Stripe Auto-activation (DONE - 6 Mai 2026)
+
+**Stripe sans webhook (auto-poll)** :
+- `PaymentSuccessPage.jsx` refondu : à l'arrivée sur `/payment-success` après Stripe Checkout, polling automatique de `/api/stripe/verify-payment` toutes les 4s pendant 60s max
+- 3 états visuels : "Activation en cours" (loader animé, compteur tentatives) → "Paiement confirmé" (CheckCircle vert + redirect dashboard) → "Paiement en attente" (bouton Réessayer si timeout)
+- Plus besoin de configurer le webhook Stripe — l'activation se fait dès que la session Stripe est `complete + paid`
+- Si webhook ensuite configuré, ça fonctionne aussi (matching par `client_reference_id` prioritaire sur email)
+
+**i18n complet sur le dashboard** :
+- 7 namespaces de clés ajoutés : `sidebar`, `kpi`, `cashflow`, `actions`, `tabs`, `status`, `settings`
+- 3 fichiers fr.json/en.json/es.json complétés (~70 clés chacun)
+- Sidebar AdminDashboard wiré (9 entrées + bouton Déconnexion)
+- KPI cards (4) wirés
+- Cash-Flow card (titre + 3 sub-cards) wiré
+- Quick action buttons (4) wirés
+- Recent deliveries table headers + status badges wirés (overview + Livraisons tab)
+- Settings Page : tous les titres de sections + sub-titles wirés
+- Persistance backend : `PATCH /settings/preferences {language}` → DB → `/auth/me` retourne language → SettingsPage applique au démarrage via useEffect
+
+**Vérifié par browser automation (Playwright async)** :
+- Login → Settings → switch English → retour Overview
+- ✅ "Overview", "Total deliveries", "In transit", "Active disputes", "Instant Cash-Flow", "Money blocked", "Pending invoices", "Revenue this month", "Recent deliveries", "Generate e-CMR", "GPS Map", "Scan barcode", "Client portal" tous présents en EN
+- ❌ "Vue d'ensemble", "Livraisons totales", "Argent bloqué", "Cash-Flow Instantané", "Carte GPS", "Scan Code-barre" tous absents (correctement remplacés)
+- Persistance F5 OK
+
+**Note honnête** : certaines parties internes (modals "Nouvelle livraison", liste des chauffeurs avec actions, formulaires de modification) restent en français. Pour l'instant c'est suffisant pour démontrer que la mécanique i18n est solide et que l'utilisateur voit son interface principale traduite.
+
 ### Phase 21 - Activity Log (Audit Trail visible) (DONE - 6 Mai 2026)
 - [x] Backend `GET /api/account/activity?limit=N` : retourne les N dernières entrées de `audit_logs` filtrées par `company_id` (admin) ou `user_id` (autres rôles), max 200
 - [x] Mapping `timestamp` (champ DB) ↔ `created_at` (réponse API) pour compat frontend

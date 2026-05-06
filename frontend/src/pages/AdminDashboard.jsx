@@ -338,7 +338,7 @@ export const AdminDashboard = () => {
               data-testid="logout-btn"
             >
               <LogOut className="w-4 h-4 mr-2" />
-              Déconnexion
+              {t('sidebar.logout', 'Déconnexion')}
             </Button>
           </div>
         </div>
@@ -401,25 +401,25 @@ export const AdminDashboard = () => {
               {/* Stats Grid */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <StatCard
-                  title="Livraisons totales"
+                  title={t('kpi.totalDeliveries', 'Livraisons totales')}
                   value={stats?.total_deliveries || 0}
                   icon={Package}
                   color="blue"
                 />
                 <StatCard
-                  title="En transit"
+                  title={t('kpi.inTransit', 'En transit')}
                   value={stats?.in_transit || 0}
                   icon={Truck}
                   color="blue"
                 />
                 <StatCard
-                  title="Livrées aujourd'hui"
+                  title={t('kpi.deliveredToday', "Livrées aujourd'hui")}
                   value={stats?.delivered_today || 0}
                   icon={CheckCircle}
                   color="green"
                 />
                 <StatCard
-                  title="Litiges actifs"
+                  title={t('kpi.activeDisputes', 'Litiges actifs')}
                   value={stats?.active_litiges || 0}
                   icon={AlertTriangle}
                   color="red"
@@ -432,25 +432,25 @@ export const AdminDashboard = () => {
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold flex items-center gap-2">
                     <DollarSign className="w-5 h-5 text-[#0066FF]" />
-                    Cash-Flow Instantané
+                    {t('cashflow.title', 'Cash-Flow Instantané')}
                   </h3>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="p-4 bg-[#1A1A1E] rounded-lg">
-                    <p className="text-sm text-zinc-400 mb-1">Argent bloqué (camions)</p>
+                    <p className="text-sm text-zinc-400 mb-1">{t('cashflow.blocked', 'Argent bloqué (camions)')}</p>
                     <p className="text-2xl font-bold font-mono text-yellow-400">
                       {(cashFlow?.money_blocked_in_trucks || 0).toLocaleString('fr-FR')} €
                     </p>
-                    <p className="text-xs text-zinc-500 mt-1">{cashFlow?.blocked_deliveries_count || 0} livraisons</p>
+                    <p className="text-xs text-zinc-500 mt-1">{cashFlow?.blocked_deliveries_count || 0} {t('kpi.totalDeliveries', 'livraisons').toLowerCase()}</p>
                   </div>
                   <div className="p-4 bg-[#1A1A1E] rounded-lg">
-                    <p className="text-sm text-zinc-400 mb-1">Factures en attente</p>
+                    <p className="text-sm text-zinc-400 mb-1">{t('cashflow.pending', 'Factures en attente')}</p>
                     <p className="text-2xl font-bold font-mono text-[#0066FF]">
                       {cashFlow?.pending_invoices_count || 0}
                     </p>
                   </div>
                   <div className="p-4 bg-[#1A1A1E] rounded-lg">
-                    <p className="text-sm text-zinc-400 mb-1">CA ce mois</p>
+                    <p className="text-sm text-zinc-400 mb-1">{t('cashflow.monthRevenue', 'CA ce mois')}</p>
                     <p className="text-2xl font-bold font-mono text-green-400">
                       {(cashFlow?.revenue_this_month || 0).toLocaleString('fr-FR')} €
                     </p>
@@ -461,7 +461,7 @@ export const AdminDashboard = () => {
               {/* Quick Actions with Gating */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <GatedButton
-                  label="Générer e-CMR"
+                  label={t('actions.generateCmr', 'Générer e-CMR')}
                   icon={FileText}
                   feature="pdfGeneration"
                   hasFeature={hasFeature}
@@ -476,7 +476,7 @@ export const AdminDashboard = () => {
                   }}
                 />
                 <GatedButton
-                  label="Carte GPS"
+                  label={t('actions.gpsMap', 'Carte GPS')}
                   icon={MapPin}
                   feature="gpsMap"
                   hasFeature={hasFeature}
@@ -484,7 +484,7 @@ export const AdminDashboard = () => {
                   onClick={() => setActiveTab('livemap')}
                 />
                 <GatedButton
-                  label="Scan Code-barre"
+                  label={t('actions.scanBarcode', 'Scan Code-barre')}
                   icon={Eye}
                   feature="scanBarcode"
                   hasFeature={hasFeature}
@@ -492,7 +492,7 @@ export const AdminDashboard = () => {
                   onClick={() => setShowScanner(true)}
                 />
                 <GatedButton
-                  label="Portail Client"
+                  label={t('actions.clientPortal', 'Portail Client')}
                   icon={Users}
                   feature="clientPortal"
                   hasFeature={hasFeature}
@@ -504,17 +504,17 @@ export const AdminDashboard = () => {
               {/* Recent Deliveries */}
               <div className="bg-[#121214] border border-[#27272A] rounded-xl overflow-hidden">
                 <div className="p-4 border-b border-[#27272A]">
-                  <h3 className="font-semibold">Dernières livraisons</h3>
+                  <h3 className="font-semibold">{t('tabs.recentDeliveries', 'Dernières livraisons')}</h3>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead className="bg-[#1A1A1E] text-xs text-zinc-400 uppercase">
                       <tr>
-                        <th className="px-4 py-3 text-left">Tracking</th>
-                        <th className="px-4 py-3 text-left">Destinataire</th>
-                        <th className="px-4 py-3 text-left">Statut</th>
-                        <th className="px-4 py-3 text-left">Chauffeur</th>
-                        <th className="px-4 py-3 text-left">Action</th>
+                        <th className="px-4 py-3 text-left">{t('kpi.trackingId', 'Tracking')}</th>
+                        <th className="px-4 py-3 text-left">{t('kpi.recipient', 'Destinataire')}</th>
+                        <th className="px-4 py-3 text-left">{t('kpi.status', 'Statut')}</th>
+                        <th className="px-4 py-3 text-left">{t('kpi.driver', 'Chauffeur')}</th>
+                        <th className="px-4 py-3 text-left">{t('kpi.action', 'Action')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -527,15 +527,15 @@ export const AdminDashboard = () => {
                           <td className="px-4 py-3">{d.recipient_name}</td>
                           <td className="px-4 py-3">
                             <span className={`px-2 py-1 rounded-full text-xs ${statusColors[effectiveStatus]}`} data-testid={`status-badge-${d.tracking_id}`}>
-                              {statusLabels[effectiveStatus]}
+                              {t(`status.${effectiveStatus}`, statusLabels[effectiveStatus])}
                             </span>
                           </td>
                           <td className="px-4 py-3 text-zinc-400">{d.driver_name || (d.driver_id ? drivers.find(dr => dr.id === d.driver_id)?.name : null) || '-'}</td>
                           <td className="px-4 py-3">
                             {!d.driver_id ? (
-                              <button onClick={() => setShowAssignDriver(d.tracking_id)} className="text-xs text-[#0066FF] hover:underline font-medium" data-testid={`assign-btn-${d.tracking_id}`}>Assigner</button>
+                              <button onClick={() => setShowAssignDriver(d.tracking_id)} className="text-xs text-[#0066FF] hover:underline font-medium" data-testid={`assign-btn-${d.tracking_id}`}>{t('actions.assign', 'Assigner')}</button>
                             ) : (
-                              <span className="text-xs text-zinc-500">Assigné</span>
+                              <span className="text-xs text-zinc-500">{t('status.assigned', 'Assigné')}</span>
                             )}
                           </td>
                         </tr>
@@ -555,12 +555,12 @@ export const AdminDashboard = () => {
                 <table className="w-full" data-testid="deliveries-table">
                   <thead className="bg-[#1A1A1E] text-xs text-zinc-400 uppercase">
                     <tr>
-                      <th className="px-4 py-3 text-left">Tracking</th>
-                      <th className="px-4 py-3 text-left">Destinataire</th>
-                      <th className="px-4 py-3 text-left">Adresse</th>
-                      <th className="px-4 py-3 text-left">Statut</th>
-                      <th className="px-4 py-3 text-left">Chauffeur</th>
-                      <th className="px-4 py-3 text-left">Actions</th>
+                      <th className="px-4 py-3 text-left">{t('kpi.trackingId', 'Tracking')}</th>
+                      <th className="px-4 py-3 text-left">{t('kpi.recipient', 'Destinataire')}</th>
+                      <th className="px-4 py-3 text-left">{t('kpi.address', 'Adresse')}</th>
+                      <th className="px-4 py-3 text-left">{t('kpi.status', 'Statut')}</th>
+                      <th className="px-4 py-3 text-left">{t('kpi.driver', 'Chauffeur')}</th>
+                      <th className="px-4 py-3 text-left">{t('kpi.action', 'Actions')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -574,7 +574,7 @@ export const AdminDashboard = () => {
                         <td className="px-4 py-3 text-sm text-zinc-400 max-w-xs truncate">{d.recipient_address}</td>
                         <td className="px-4 py-3">
                           <span className={`px-2 py-1 rounded-full text-xs ${statusColors[effectiveStatus]}`} data-testid={`deliveries-status-${d.tracking_id}`}>
-                            {statusLabels[effectiveStatus]}
+                            {t(`status.${effectiveStatus}`, statusLabels[effectiveStatus])}
                           </span>
                         </td>
                         <td className="px-4 py-3 text-zinc-400">{d.driver_name || (d.driver_id ? drivers.find(dr => dr.id === d.driver_id)?.name : null) || '-'}</td>
@@ -587,7 +587,7 @@ export const AdminDashboard = () => {
                                 className="bg-[#0066FF] hover:bg-[#0052CC]"
                                 data-testid={`assign-driver-${d.tracking_id}`}
                               >
-                                Assigner
+                                {t('actions.assign', 'Assigner')}
                               </Button>
                             )}
                             {d.blockchain_proof && (

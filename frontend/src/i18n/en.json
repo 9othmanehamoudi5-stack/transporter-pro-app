@@ -1,8 +1,6 @@
 {
   "nav": { "login": "Login", "trial": "Free trial", "problem": "Problem", "features": "Features", "pricing": "Pricing" },
-  "hero": { "title": "Every minute, your cash flow leaks. Take back control.", "subtitle": "Tired of paying for parcels you didn't damage?", "cta": "Start my free trial", "demo": "See demo" },
-  "pricing": { "title": "A plan for every ambition.", "monthly": "Monthly", "annual": "Yearly", "save": "Save 17%", "trial": "30-day free trial", "cta": "Start the trial — 30 days" },
-  "auth": { "login": "Login", "register": "Create account", "email": "Email", "password": "Password", "name": "Full name", "submit": "Sign in", "noAccount": "No account yet?", "hasAccount": "Already have an account?" },
+  "auth": { "login": "Login", "register": "Create account", "email": "Email", "password": "Password", "name": "Full name", "submit": "Sign in", "noAccount": "No account yet?", "hasAccount": "Already have an account?", "forgot": "Forgot password?" },
   "sidebar": {
     "overview": "Overview",
     "deliveries": "Deliveries",
@@ -14,6 +12,56 @@
     "subscription": "Subscription",
     "settings": "Settings",
     "logout": "Sign out"
+  },
+  "kpi": {
+    "totalDeliveries": "Total deliveries",
+    "inTransit": "In transit",
+    "deliveredToday": "Delivered today",
+    "activeDisputes": "Active disputes",
+    "trackingId": "TRACKING",
+    "recipient": "RECIPIENT",
+    "address": "ADDRESS",
+    "status": "STATUS",
+    "driver": "DRIVER",
+    "action": "ACTION"
+  },
+  "cashflow": {
+    "title": "Instant Cash-Flow",
+    "blocked": "Money blocked (trucks)",
+    "blockedSub": "{count} deliveries",
+    "pending": "Pending invoices",
+    "pendingSub": "Invoices",
+    "monthRevenue": "Revenue this month",
+    "monthRevenueSub": "Turnover"
+  },
+  "actions": {
+    "generateCmr": "Generate e-CMR",
+    "gpsMap": "GPS Map",
+    "scanBarcode": "Scan barcode",
+    "clientPortal": "Client portal",
+    "newDelivery": "New delivery",
+    "addDriver": "Add driver",
+    "assign": "Assign",
+    "delete": "Delete",
+    "edit": "Edit",
+    "view": "View",
+    "refresh": "Refresh"
+  },
+  "tabs": {
+    "recentDeliveries": "Recent deliveries",
+    "allDeliveries": "All deliveries",
+    "myDrivers": "My drivers",
+    "myDisputes": "My disputes",
+    "ecoScoresTitle": "Fleet eco-performance"
+  },
+  "status": {
+    "pending": "Pending",
+    "assigned": "Assigned",
+    "in_transit": "In transit",
+    "delivered": "Delivered",
+    "dispute": "Dispute",
+    "active": "Active",
+    "trialing": "Trial"
   },
   "settings": {
     "title": "Settings",
@@ -32,7 +80,24 @@
     "danger": "Danger zone",
     "deleteAccount": "Delete my account",
     "activity": "Account activity",
-    "activityDesc": "Last 50 events (GDPR/SOC2 compliance)"
+    "activityDesc": "Last 50 events (GDPR/SOC2 compliance)",
+    "currentPwd": "Current password",
+    "newPwd": "New password",
+    "confirmPwd": "Confirm",
+    "save": "Save",
+    "uploadLogo": "Choose a logo",
+    "changeLogo": "Change logo",
+    "removeLogo": "Remove",
+    "logoHint": "PNG / JPEG / WEBP / SVG · max 500 KB",
+    "notifications": "Notification preferences",
+    "notifNewDispute": "New dispute detected",
+    "notifNewDisputeDesc": "Instant email when damage is reported",
+    "notifWeeklyEco": "Weekly Eco-score report",
+    "notifWeeklyEcoDesc": "Monday morning — week summary",
+    "notifQuota": "Driver quota alert",
+    "notifQuotaDesc": "When you reach 80% / 100% of your quota",
+    "twofaDesc": "6-digit code sent by email on every login",
+    "twofaToggle": "Enable email 2FA"
   },
-  "common": { "save": "Save", "cancel": "Cancel", "delete": "Delete", "loading": "Loading...", "error": "Error", "success": "Success" }
+  "common": { "save": "Save", "cancel": "Cancel", "delete": "Delete", "loading": "Loading...", "error": "Error", "success": "Success", "back": "Back", "noData": "No data" }
 }
