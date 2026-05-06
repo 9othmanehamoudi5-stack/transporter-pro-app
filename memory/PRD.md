@@ -194,6 +194,19 @@ Application SaaS logistique "Transporter-Pro" pour PME de transport.
 ## Backlog P1
 - [ ] Corriger règles sécurité Firebase (voir /app/memory/FIREBASE_RULES.md)
 
+### Phase 19 - Settings + Forgot Password (DONE - 6 Mai 2026)
+- [x] Backend `/api/auth/forgot-password` : token sécurisé `secrets.token_urlsafe(48)`, expire 15 min, anti-énumération (toujours même réponse)
+- [x] Backend `/api/auth/reset-password` : single-use token, vérifie expiration tz-aware, clear login_attempts
+- [x] Backend `/api/auth/change-password` : current pwd check + nouveau ≠ ancien, audit log
+- [x] Resend (re_NigMo...) intégré : email HTML stylé Transporter-Pro (dark, OLED, CTA bleu, expiration 15 min, support@)
+- [x] Mode test Resend : si envoi échoue (recipient ≠ owner), fallback `[DEV-FALLBACK]` log dans backend.err.log avec le reset_url complet
+- [x] Frontend `/forgot-password` : email input + "Vérifiez votre boîte mail" success state + retour login
+- [x] Frontend `/reset-password?token=xxx` : 2 inputs (nouveau + confirm) + minLength 8 + redirect /login après succès
+- [x] Frontend LoginPage : lien "Mot de passe oublié ?" sous le label password (data-testid: forgot-password-link)
+- [x] Frontend SettingsPage (nouveau onglet sidebar admin "Paramètres") : profile card (email, name, plan, subscription_status, date inscription) + change password form
+- [x] Lint Python + JS OK
+- [x] Tests curl : forgot → token DB → reset → re-login | single-use enforced | change-password valide current/wrong/same scenarios
+
 ## Backlog P2
 - [ ] Mode hors-ligne (localStorage + file sync)
 

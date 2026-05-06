@@ -13,6 +13,8 @@ import { CGUPage, ConfidentialitePage, ContactPage } from "./pages/LegalPages";
 import OnboardingForm from "./pages/OnboardingForm";
 import TransporterBot from "./components/TransporterBot";
 import SubscriptionGate from "./components/SubscriptionGate";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { I18nProvider } from "./i18n/index";
 import { Toaster } from "./components/ui/sonner";
@@ -170,6 +172,10 @@ function App() {
                   <RegisterPage />
                 </PublicRoute>
               } />
+
+              {/* Forgot / Reset password — public */}
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
               
               {/* Client tracking portal - public */}
               <Route path="/track" element={<TrackingSearch />} />

@@ -36,6 +36,9 @@ JWT_ALGORITHM = "HS256"
 EMERGENT_LLM_KEY = os.environ.get("EMERGENT_LLM_KEY")
 STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY")
 STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET")
+RESEND_API_KEY = os.environ.get("RESEND_API_KEY")
+SENDER_EMAIL = os.environ.get("SENDER_EMAIL", "onboarding@resend.dev")
+FRONTEND_BASE_URL = os.environ.get("FRONTEND_BASE_URL", "https://delivery-cash-flow.preview.emergentagent.com")
 
 app = FastAPI(title="Transporter-Pro API")
 api_router = APIRouter(prefix="/api")
@@ -642,6 +645,226 @@ async def logout():
 @api_router.get("/auth/me")
 async def get_me(user: dict = Depends(get_current_user)):
     return user
+
+
+# ==================== PASSWORD MANAGEMENT (Forgot / Reset / Change) ====================
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str = Field(..., min_length=8, max_length=128)
+
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str = Field(..., min_length=8, max_length=128)
+
+
+def _send_reset_email_html(name: str, reset_url: str) -> str:
+    """Inline-CSS HTML email template for password reset (Transporter-Pro brand)."""
+    safe_name = (name or "").split("@")[0] or "Bonjour"
+    return f"""<!DOCTYPE html>
+<html lang="fr">
+<head><meta charset="utf-8" /></head>
+<body style="margin:0;padding:0;background:#0A0A0B;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#0A0A0B;padding:40px 20px;">
+    <tr><td align="center">
+      <table role="presentation" width="560" cellspacing="0" cellpadding="0" style="max-width:560px;background:#121214;border:1px solid #27272A;border-radius:16px;overflow:hidden;">
+        <tr><td style="padding:40px 40px 24px;">
+          <table role="presentation" cellspacing="0" cellpadding="0">
+            <tr>
+              <td style="background:#0066FF;width:48px;height:48px;border-radius:12px;text-align:center;vertical-align:middle;">
+                <span style="color:#fff;font-size:22px;font-weight:bold;">T</span>
+              </td>
+              <td style="padding-left:14px;color:#fff;font-size:22px;font-weight:700;letter-spacing:-0.02em;">Transporter-Pro</td>
+            </tr>
+          </table>
+        </td></tr>
+        <tr><td style="padding:8px 40px 0;">
+          <h1 style="color:#fff;font-size:26px;line-height:1.25;margin:0 0 14px;font-weight:700;letter-spacing:-0.02em;">Réinitialisez votre mot de passe</h1>
+          <p style="color:#a1a1aa;font-size:15px;line-height:1.6;margin:0 0 24px;">
+            Bonjour <strong style="color:#fff;">{safe_name}</strong>, nous avons reçu une demande de réinitialisation
+            du mot de passe associé à votre compte Transporter-Pro. Cliquez sur le bouton ci-dessous —
+            il est valable <strong style="color:#fff;">15 minutes</strong>.
+          </p>
+        </td></tr>
+        <tr><td align="center" style="padding:0 40px 8px;">
+          <a href="{reset_url}" style="display:inline-block;background:#0066FF;color:#fff;text-decoration:none;padding:14px 32px;border-radius:12px;font-weight:600;font-size:15px;letter-spacing:0.01em;">
+            Choisir un nouveau mot de passe →
+          </a>
+        </td></tr>
+        <tr><td style="padding:24px 40px 0;">
+          <p style="color:#71717a;font-size:12px;line-height:1.6;margin:0 0 8px;">
+            Si le bouton ne fonctionne pas, copie-colle ce lien dans ton navigateur :
+          </p>
+          <p style="color:#0066FF;font-size:11px;font-family:'SF Mono',Menlo,monospace;word-break:break-all;margin:0;">
+            {reset_url}
+          </p>
+        </td></tr>
+        <tr><td style="padding:32px 40px 40px;">
+          <hr style="border:none;border-top:1px solid #27272A;margin:0 0 18px;" />
+          <p style="color:#52525b;font-size:11px;line-height:1.6;margin:0;">
+            Tu n'as pas demandé cette réinitialisation ? Ignore cet email — ton mot de passe restera inchangé.
+            Pour toute question, contacte-nous à support@transporter-pro.com.
+          </p>
+        </td></tr>
+      </table>
+      <p style="color:#3f3f46;font-size:11px;margin:18px 0 0;">© 2026 Transporter-Pro · Outil SaaS pour PME du transport</p>
+    </td></tr>
+  </table>
+</body>
+</html>"""
+
+
+async def _send_password_reset_email(email: str, name: str, reset_url: str) -> bool:
+    """Send the password-reset email via Resend. Returns True on success."""
+    if not RESEND_API_KEY:
+        logger.error("RESEND_API_KEY not configured — cannot send reset email")
+        return False
+    import asyncio
+    import resend as resend_sdk
+    resend_sdk.api_key = RESEND_API_KEY
+    params = {
+        "from": SENDER_EMAIL,
+        "to": [email],
+        "subject": "Réinitialisation de votre mot de passe Transporter-Pro",
+        "html": _send_reset_email_html(name, reset_url),
+    }
+    try:
+        result = await asyncio.to_thread(resend_sdk.Emails.send, params)
+        logger.info(f"Reset email sent to {email} (id={result.get('id')})")
+        return True
+    except Exception as e:
+        logger.error(f"Resend email failed for {email}: {e}")
+        return False
+
+
+@api_router.post("/auth/forgot-password")
+async def forgot_password(data: ForgotPasswordRequest):
+    """Generate a single-use password reset token and email it to the user.
+    Anti-enumeration: always returns the same generic success message regardless of email existence."""
+    email = data.email.lower().strip()
+    user = await db.users.find_one({"email": email})
+
+    generic_response = {
+        "message": "Si un compte existe avec cet email, un lien de réinitialisation vient d'être envoyé.",
+    }
+
+    if not user:
+        logger.info(f"Forgot-password: unknown email {email} (silently OK)")
+        return generic_response
+
+    # Invalidate previous unused tokens for this user (one active token at a time)
+    await db.password_resets.update_many(
+        {"user_id": str(user["_id"]), "used": False},
+        {"$set": {"used": True, "invalidated_at": datetime.now(timezone.utc)}},
+    )
+
+    token = secrets.token_urlsafe(48)
+    expires_at = datetime.now(timezone.utc) + timedelta(minutes=15)
+    await db.password_resets.insert_one({
+        "user_id": str(user["_id"]),
+        "email": email,
+        "token": token,
+        "expires_at": expires_at,
+        "used": False,
+        "created_at": datetime.now(timezone.utc),
+    })
+
+    reset_url = f"{FRONTEND_BASE_URL}/reset-password?token={token}"
+    sent = await _send_password_reset_email(email, user.get("name", ""), reset_url)
+    if not sent:
+        # Dev / Resend test-mode convenience: surface the link in logs so the operator
+        # can still use it. Production will use a verified domain (no fallback needed).
+        logger.warning(f"[DEV-FALLBACK] Reset link for {email}: {reset_url}")
+
+    await log_action(
+        str(user["_id"]),
+        user.get("company_id", str(user["_id"])),
+        "password_reset_requested",
+        "user",
+        str(user["_id"]),
+        f"Reset email {'sent' if sent else 'FAILED'} to {email}",
+    )
+
+    return generic_response
+
+
+@api_router.post("/auth/reset-password")
+async def reset_password(data: ResetPasswordRequest):
+    """Consume a password reset token and set the new password."""
+    record = await db.password_resets.find_one({"token": data.token, "used": False})
+    if not record:
+        raise HTTPException(status_code=400, detail="Lien invalide ou déjà utilisé")
+
+    expires_at = record.get("expires_at")
+    if isinstance(expires_at, datetime):
+        # Make tz-aware comparison safe
+        if expires_at.tzinfo is None:
+            expires_at = expires_at.replace(tzinfo=timezone.utc)
+        if expires_at < datetime.now(timezone.utc):
+            raise HTTPException(status_code=400, detail="Lien expiré — demandez un nouveau lien")
+
+    user = await db.users.find_one({"_id": ObjectId(record["user_id"])})
+    if not user:
+        raise HTTPException(status_code=404, detail="Compte introuvable")
+
+    new_hash = hash_password(data.new_password)
+    await db.users.update_one(
+        {"_id": user["_id"]},
+        {"$set": {"password_hash": new_hash, "password_updated_at": datetime.now(timezone.utc)}},
+    )
+    await db.password_resets.update_one(
+        {"_id": record["_id"]},
+        {"$set": {"used": True, "used_at": datetime.now(timezone.utc)}},
+    )
+    # Clear any login-attempt lockout
+    await db.login_attempts.delete_many({"identifier": {"$regex": f"{user['email']}$"}})
+
+    await log_action(
+        str(user["_id"]),
+        user.get("company_id", str(user["_id"])),
+        "password_reset_completed",
+        "user",
+        str(user["_id"]),
+        "Password reset via email link",
+    )
+
+    return {"message": "Mot de passe modifié — vous pouvez vous connecter."}
+
+
+@api_router.post("/auth/change-password")
+async def change_password(data: ChangePasswordRequest, user: dict = Depends(get_current_user)):
+    """Authenticated password change (settings page). Requires current password."""
+    user_doc = await db.users.find_one({"_id": ObjectId(user["id"])})
+    if not user_doc:
+        raise HTTPException(status_code=404, detail="Compte introuvable")
+    if not verify_password(data.current_password, user_doc["password_hash"]):
+        raise HTTPException(status_code=400, detail="Mot de passe actuel incorrect")
+
+    if data.current_password == data.new_password:
+        raise HTTPException(status_code=400, detail="Le nouveau mot de passe doit être différent")
+
+    await db.users.update_one(
+        {"_id": user_doc["_id"]},
+        {"$set": {
+            "password_hash": hash_password(data.new_password),
+            "password_updated_at": datetime.now(timezone.utc),
+        }},
+    )
+    await log_action(
+        user["id"],
+        user.get("company_id", user["id"]),
+        "password_changed",
+        "user",
+        user["id"],
+        "Password changed via settings",
+    )
+    return {"message": "Mot de passe modifié avec succès"}
+
 
 @api_router.get("/auth/company-quota")
 async def get_company_quota(user: dict = Depends(require_role("admin"))):

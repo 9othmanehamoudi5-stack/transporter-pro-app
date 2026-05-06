@@ -6,6 +6,7 @@ import { firestoreDrivers } from '../services/firebase';
 import { generateInvoicePDF, generateAllInvoicesPDF } from '../services/pdfGenerator';
 import BarcodeScanner from '../components/BarcodeScanner';
 import ThemeToggle from '../components/ThemeToggle';
+import SettingsPage from './SettingsPage';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
@@ -13,7 +14,7 @@ import {
   Truck, Package, DollarSign, AlertTriangle, Leaf, Users, 
   Clock, CheckCircle, XCircle, TrendingUp, LogOut, Menu, X,
   Plus, Eye, MapPin, FileText, Shield, RefreshCw, Bell,
-  CreditCard, UserPlus, Trash2, Lock, Crown, Camera, Map
+  CreditCard, UserPlus, Trash2, Lock, Crown, Camera, Map, Settings as SettingsIcon
 } from 'lucide-react';
 import {
   Dialog,
@@ -232,6 +233,7 @@ export const AdminDashboard = () => {
     { id: 'litiges', label: 'Litiges', icon: AlertTriangle },
     { id: 'eco', label: 'Éco-scores', icon: Leaf },
     ...(user?.role === 'admin' ? [{ id: 'subscription', label: 'Abonnement', icon: CreditCard }] : []),
+    { id: 'settings', label: 'Paramètres', icon: SettingsIcon },
   ];
 
   return (
@@ -947,6 +949,9 @@ export const AdminDashboard = () => {
             />
             )
           )}
+
+          {/* Settings Tab */}
+          {activeTab === 'settings' && <SettingsPage />}
         </div>
       </main>
 

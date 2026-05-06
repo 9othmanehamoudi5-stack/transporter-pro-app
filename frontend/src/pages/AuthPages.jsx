@@ -58,7 +58,12 @@ export const LoginPage = () => {
               <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email@example.com" required data-testid="login-email-input" className="h-12 bg-[#0A0A0B] border-[#27272A]" />
             </div>
             <div className="space-y-2">
-              <Label>Mot de passe</Label>
+              <div className="flex items-center justify-between">
+                <Label>Mot de passe</Label>
+                <Link to="/forgot-password" className="text-xs text-[#0066FF] hover:underline" data-testid="forgot-password-link">
+                  Mot de passe oublié ?
+                </Link>
+              </div>
               <div className="relative">
                 <Input type={showPassword ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required data-testid="login-password-input" className="h-12 bg-[#0A0A0B] border-[#27272A] pr-12" />
                 <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white">
