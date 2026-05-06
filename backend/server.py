@@ -545,7 +545,7 @@ async def register(data: UserCreate):
         "password_hash": hash_password(data.password),
         "name": data.name,
         "role": data.role,
-        "plan": "solo",
+        "plan": "croissance",
         "created_at": datetime.now(timezone.utc)
     }
     result = await db.users.insert_one(user_doc)
@@ -572,7 +572,7 @@ async def register(data: UserCreate):
         "role": data.role,
         "onboarding_complete": False,
         "company_id": user_id if data.role == "admin" else "",
-        "plan": "solo",
+        "plan": "croissance",
         "subscription_status": "incomplete" if data.role == "admin" else "n/a",
         "access_token": access_token,
         "refresh_token": refresh_token
@@ -919,7 +919,9 @@ async def create_stripe_checkout(plan: str, billing: str = "monthly", user: dict
 
 def _detect_plan_from_amount(amount: float) -> tuple:
     """Map a Stripe amount (in main currency unit, e.g. EUR) → (plan_type, billing_cycle).
-    Trial sessions can have amount=0 — we default to 'solo'/'monthly' in that case."""
+    Trial sessions can have amount=0 — we default to 'croissance'/'monthly' (Plan Growth)
+    so every new customer lands directly on the recommended business tier (15 chauffeurs).
+    Higher amounts auto-detect upgrades (Flotte Pro, yearly, etc.)."""
     if amount >= 4000:
         return "flotte_pro", "yearly"
     if amount >= 1500:
@@ -930,7 +932,10 @@ def _detect_plan_from_amount(amount: float) -> tuple:
         return "croissance", "monthly"
     if amount >= 300:
         return "solo", "yearly"
-    return "solo", "monthly"
+    if amount > 0 and amount < 50:
+        return "solo", "monthly"
+    # Trial / zero-amount session → default Plan Growth (Croissance)
+    return "croissance", "monthly"
 
 
 async def _activate_admin_subscription(admin: dict, session: dict, source: str = "webhook") -> dict:
@@ -1365,7 +1370,12 @@ async def get_invoices(user: dict = Depends(get_current_user)):
     query = {}
     if user["role"] == "client":
         query["client_id"] = user["id"]
-    
+    elif user["role"] == "admin":
+        query["company_id"] = user["company_id"]
+    elif user["role"] == "driver":
+        # drivers don't see invoices
+        return []
+
     invoices = await db.invoices.find(query, {"_id": 0}).sort("created_at", -1).to_list(100)
     
     for inv in invoices:
@@ -1507,25 +1517,46 @@ async def update_eco_score(data: EcoScoreUpdate, user: dict = Depends(require_ro
     score_doc["created_at"] = score_doc["created_at"].isoformat()
     return score_doc
 
+async def _company_driver_ids(company_id: str) -> list:
+    """Return list of stringified ObjectId driver IDs that belong to this company."""
+    cursor = db.users.find({"role": "driver", "company_id": company_id}, {"_id": 1})
+    return [str(d["_id"]) async for d in cursor]
+
+
 @api_router.get("/eco-scores")
 async def get_eco_scores(user: dict = Depends(get_current_user), driver_id: Optional[str] = None):
     query = {}
     if user["role"] == "driver":
         query["driver_id"] = user["id"]
+    elif user["role"] == "admin":
+        # STRICT multi-tenancy: only scores from drivers belonging to admin's company
+        company_driver_ids = await _company_driver_ids(user["company_id"])
+        if not company_driver_ids:
+            return []
+        if driver_id:
+            if driver_id not in company_driver_ids:
+                return []
+            query["driver_id"] = driver_id
+        else:
+            query["driver_id"] = {"$in": company_driver_ids}
     elif driver_id:
         query["driver_id"] = driver_id
-    
+
     scores = await db.eco_scores.find(query, {"_id": 0}).sort("date", -1).to_list(30)
-    
+
     for s in scores:
         if isinstance(s.get("created_at"), datetime):
             s["created_at"] = s["created_at"].isoformat()
-    
+
     return scores
 
 @api_router.get("/eco-scores/summary")
 async def get_eco_summary(user: dict = Depends(require_role("admin"))):
+    company_driver_ids = await _company_driver_ids(user["company_id"])
+    if not company_driver_ids:
+        return []
     pipeline = [
+        {"$match": {"driver_id": {"$in": company_driver_ids}}},
         {"$group": {
             "_id": "$driver_id",
             "avg_score": {"$avg": "$score"},
@@ -1553,9 +1584,12 @@ async def get_eco_summary(user: dict = Depends(require_role("admin"))):
 @api_router.get("/eco-scores/daily-avg")
 async def get_eco_daily_avg(user: dict = Depends(require_role("admin"))):
     """Company-wide daily average eco-score for last 30 days"""
+    company_driver_ids = await _company_driver_ids(user["company_id"])
+    if not company_driver_ids:
+        return []
     thirty_days_ago = (datetime.now(timezone.utc) - timedelta(days=30)).strftime("%Y-%m-%d")
     pipeline = [
-        {"$match": {"date": {"$gte": thirty_days_ago}}},
+        {"$match": {"date": {"$gte": thirty_days_ago}, "driver_id": {"$in": company_driver_ids}}},
         {"$group": {
             "_id": "$date",
             "avg_score": {"$avg": "$score"},
@@ -1829,65 +1863,6 @@ async def startup():
     await db.deliveries.create_index("driver_id")
     await db.invoices.create_index("invoice_id", unique=True)
     await db.login_attempts.create_index("identifier")
-    
-    # Seed admin user
-    admin_email = os.environ.get("ADMIN_EMAIL", "admin@transporter-pro.com")
-    admin_password = os.environ.get("ADMIN_PASSWORD", "admin123")
-    
-    existing = await db.users.find_one({"email": admin_email})
-    if not existing:
-        await db.users.insert_one({
-            "email": admin_email,
-            "password_hash": hash_password(admin_password),
-            "name": "Admin",
-            "role": "admin",
-            "created_at": datetime.now(timezone.utc)
-        })
-        logger.info(f"Admin user created: {admin_email}")
-    elif not verify_password(admin_password, existing["password_hash"]):
-        await db.users.update_one(
-            {"email": admin_email},
-            {"$set": {"password_hash": hash_password(admin_password)}}
-        )
-        logger.info("Admin password updated")
-    
-    # Seed test driver
-    driver_email = "driver@test.com"
-    existing_driver = await db.users.find_one({"email": driver_email})
-    if not existing_driver:
-        await db.users.insert_one({
-            "email": driver_email,
-            "password_hash": hash_password("driver123"),
-            "name": "Jean Dupont",
-            "role": "driver",
-            "created_at": datetime.now(timezone.utc)
-        })
-        logger.info(f"Test driver created: {driver_email}")
-    
-    # Seed test client
-    client_email = "client@test.com"
-    existing_client = await db.users.find_one({"email": client_email})
-    if not existing_client:
-        await db.users.insert_one({
-            "email": client_email,
-            "password_hash": hash_password("client123"),
-            "name": "Marie Martin",
-            "role": "client",
-            "created_at": datetime.now(timezone.utc)
-        })
-        logger.info(f"Test client created: {client_email}")
-    
-    # Write test credentials
-    try:
-        os.makedirs("/app/memory", exist_ok=True)
-        with open("/app/memory/test_credentials.md", "w") as f:
-            f.write("# Test Credentials\n\n")
-            f.write(f"## Admin\n- Email: {admin_email}\n- Password: {admin_password}\n- Role: admin\n\n")
-            f.write("## Driver\n- Email: driver@test.com\n- Password: driver123\n- Role: driver\n\n")
-            f.write("## Client\n- Email: client@test.com\n- Password: client123\n- Role: client\n\n")
-            f.write("## Auth Endpoints\n- POST /api/auth/login\n- POST /api/auth/register\n- POST /api/auth/logout\n- GET /api/auth/me\n")
-    except Exception as e:
-        logger.error(f"Could not write test credentials: {e}")
     
     logger.info("Transporter-Pro API started successfully")
 
