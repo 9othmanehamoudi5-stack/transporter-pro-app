@@ -3,7 +3,36 @@
   "hero": { "title": "Every minute, your cash flow leaks. Take back control.", "subtitle": "Tired of paying for parcels you didn't damage?", "cta": "Start my free trial", "demo": "See demo" },
   "pricing": { "title": "A plan for every ambition.", "monthly": "Monthly", "annual": "Yearly", "save": "Save 17%", "trial": "30-day free trial", "cta": "Start the trial — 30 days" },
   "auth": { "login": "Login", "register": "Create account", "email": "Email", "password": "Password", "name": "Full name", "submit": "Sign in", "noAccount": "No account yet?", "hasAccount": "Already have an account?" },
-  "dashboard": { "overview": "Overview", "deliveries": "Deliveries", "drivers": "Drivers", "disputes": "Disputes", "subscription": "Subscription", "cashflow": "Cash-Flow", "ecoScores": "Eco-scores" },
-  "driver": { "scan": "Scan a parcel", "takePhoto": "Take a photo", "gallery": "Pick from gallery", "confirm": "Confirm photo" },
+  "sidebar": {
+    "overview": "Overview",
+    "deliveries": "Deliveries",
+    "livemap": "Live Map",
+    "cashflow": "Cash-Flow",
+    "drivers": "Drivers",
+    "litiges": "Disputes",
+    "eco": "Eco-scores",
+    "subscription": "Subscription",
+    "settings": "Settings",
+    "logout": "Sign out"
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Profile, company, billing, customization and security.",
+    "profile": "My profile",
+    "profileDesc": "Registration and company information",
+    "billing": "Services & Billing",
+    "billingDesc": "Stripe, interface language",
+    "manageBilling": "Manage my billing",
+    "language": "Interface language",
+    "customization": "Customization & Alerts",
+    "customizationDesc": "Company logo + notifications",
+    "security": "Security",
+    "changePassword": "Change my password",
+    "twofa": "Two-factor authentication (2FA)",
+    "danger": "Danger zone",
+    "deleteAccount": "Delete my account",
+    "activity": "Account activity",
+    "activityDesc": "Last 50 events (GDPR/SOC2 compliance)"
+  },
   "common": { "save": "Save", "cancel": "Cancel", "delete": "Delete", "loading": "Loading...", "error": "Error", "success": "Success" }
 }

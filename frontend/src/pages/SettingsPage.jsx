@@ -372,16 +372,32 @@ const SecuritySection = ({ user, refreshUser, logout }) => {
       setNewPwd('');
       setConfirmPwd('');
     } catch (err) {
-      setPwdError(err.response?.data?.detail || 'Erreur');
+      const detail = err.response?.data?.detail;
+      const msg = typeof detail === 'string'
+        ? detail
+        : err.response?.status === 401
+        ? 'Session expirée — reconnectez-vous'
+        : err.message || 'Erreur réseau';
+      setPwdError(msg);
     }
     setLoading(false);
   };
 
   const handleToggle2FA = async (next) => {
+    if (next) {
+      const ok = window.confirm(
+        "⚠️ Activation de la 2FA par email\n\n" +
+        "À chaque connexion, un code à 6 chiffres sera envoyé à " + (user?.email || '') + ".\n\n" +
+        "IMPORTANT : si Resend est en mode test ou si votre domaine n'est pas vérifié, " +
+        "vous risquez de ne pas recevoir l'email et d'être bloqué.\n\n" +
+        "Confirmez-vous l'activation ?"
+      );
+      if (!ok) return;
+    }
     setTwoFa(next);
     try {
       await api.patch('/settings/preferences', { two_fa_enabled: next });
-      toast.success(next ? '2FA activée — un code sera envoyé à chaque connexion' : '2FA désactivée');
+      toast.success(next ? '2FA activée' : '2FA désactivée');
       refreshUser?.();
     } catch (err) {
       toast.error('Erreur sauvegarde');
@@ -625,7 +641,16 @@ const ActivitySection = () => {
 // ---------------- MAIN ----------------
 const SettingsPage = () => {
   const { user, logout, checkAuth } = useAuth();
+  const { t, locale, changeLocale } = useI18n();
   const [company, setCompany] = useState(null);
+
+  // Sync UI locale to user.language on first load (so reload restores user's chosen lang)
+  useEffect(() => {
+    if (user?.language && ['fr', 'en', 'es'].includes(user.language) && user.language !== locale) {
+      changeLocale(user.language);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.language]);
 
   const refreshUser = async () => {
     try {
@@ -644,8 +669,8 @@ const SettingsPage = () => {
   return (
     <div className="space-y-6" data-testid="settings-page">
       <div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">Paramètres</h1>
-        <p className="text-sm text-zinc-400 mt-1">Profil, entreprise, facturation, personnalisation et sécurité.</p>
+        <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">{t('settings.title', 'Paramètres')}</h1>
+        <p className="text-sm text-zinc-400 mt-1">{t('settings.subtitle', 'Profil, entreprise, facturation, personnalisation et sécurité.')}</p>
       </div>
       <ProfileSection user={user} company={company} />
       <BillingSection user={user} refreshUser={refreshUser} />

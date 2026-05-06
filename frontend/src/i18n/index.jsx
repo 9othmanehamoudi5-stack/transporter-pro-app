@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import fr from './fr.json';
 import en from './en.json';
 import es from './es.json';
@@ -12,13 +12,27 @@ export const useI18n = () => useContext(I18nContext);
 export const I18nProvider = ({ children }) => {
   const [locale, setLocale] = useState(() => localStorage.getItem('tp-locale') || 'fr');
 
-  const t = (key) => {
+  // Sync from user preference once it's loaded (auth-aware)
+  useEffect(() => {
+    const handler = (e) => {
+      const newLoc = e.detail?.locale;
+      if (newLoc && ['fr', 'en', 'es'].includes(newLoc) && newLoc !== locale) {
+        setLocale(newLoc);
+        localStorage.setItem('tp-locale', newLoc);
+        document.documentElement.setAttribute('lang', newLoc);
+      }
+    };
+    window.addEventListener('tp-locale-change', handler);
+    return () => window.removeEventListener('tp-locale-change', handler);
+  }, [locale]);
+
+  const t = (key, fallback) => {
     const keys = key.split('.');
     let value = translations[locale] || translations.fr;
     for (const k of keys) {
       value = value?.[k];
     }
-    return value || key;
+    return value || fallback || key;
   };
 
   const changeLocale = (newLocale) => {
@@ -32,7 +46,6 @@ export const I18nProvider = ({ children }) => {
     <I18nContext.Provider
       value={{
         locale,
-        // alias for ergonomics
         lang: locale,
         t,
         changeLocale,

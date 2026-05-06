@@ -7,6 +7,7 @@ import { generateInvoicePDF, generateAllInvoicesPDF } from '../services/pdfGener
 import BarcodeScanner from '../components/BarcodeScanner';
 import ThemeToggle from '../components/ThemeToggle';
 import SettingsPage from './SettingsPage';
+import { useI18n } from '../i18n/index';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
@@ -53,6 +54,7 @@ const statusColors = {
 export const AdminDashboard = () => {
   const { user, logout } = useAuth();
   const { plan, hasFeature, getRestrictionMessage, getPlanInfo, canAccessPage } = useSubscription();
+  const { t } = useI18n();
   const planInfo = getPlanInfo();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
@@ -225,15 +227,15 @@ export const AdminDashboard = () => {
   };
 
   const sidebarItems = [
-    { id: 'overview', label: 'Vue d\'ensemble', icon: TrendingUp },
-    { id: 'deliveries', label: 'Livraisons', icon: Package },
-    { id: 'livemap', label: 'Carte Live', icon: Map },
-    ...(user?.role === 'admin' ? [{ id: 'cashflow', label: 'Cash-Flow', icon: DollarSign }] : []),
-    { id: 'drivers', label: 'Chauffeurs', icon: Users },
-    { id: 'litiges', label: 'Litiges', icon: AlertTriangle },
-    { id: 'eco', label: 'Éco-scores', icon: Leaf },
-    ...(user?.role === 'admin' ? [{ id: 'subscription', label: 'Abonnement', icon: CreditCard }] : []),
-    { id: 'settings', label: 'Paramètres', icon: SettingsIcon },
+    { id: 'overview', label: t('sidebar.overview', "Vue d'ensemble"), icon: TrendingUp },
+    { id: 'deliveries', label: t('sidebar.deliveries', 'Livraisons'), icon: Package },
+    { id: 'livemap', label: t('sidebar.livemap', 'Carte Live'), icon: Map },
+    ...(user?.role === 'admin' ? [{ id: 'cashflow', label: t('sidebar.cashflow', 'Cash-Flow'), icon: DollarSign }] : []),
+    { id: 'drivers', label: t('sidebar.drivers', 'Chauffeurs'), icon: Users },
+    { id: 'litiges', label: t('sidebar.litiges', 'Litiges'), icon: AlertTriangle },
+    { id: 'eco', label: t('sidebar.eco', 'Éco-scores'), icon: Leaf },
+    ...(user?.role === 'admin' ? [{ id: 'subscription', label: t('sidebar.subscription', 'Abonnement'), icon: CreditCard }] : []),
+    { id: 'settings', label: t('sidebar.settings', 'Paramètres'), icon: SettingsIcon },
   ];
 
   return (

@@ -3,7 +3,36 @@
   "hero": { "title": "Chaque minute, votre trésorerie fuit. Reprenez le contrôle.", "subtitle": "Marre de payer pour des colis que vous n'avez pas cassés ?", "cta": "Démarrer mon essai gratuit", "demo": "Voir la démo" },
   "pricing": { "title": "Un plan pour chaque ambition.", "monthly": "Mensuel", "annual": "Annuel", "save": "Économisez 17%", "trial": "30 jours d'essai gratuit", "cta": "Démarrer l'essai gratuit — 30 jours" },
   "auth": { "login": "Connexion", "register": "Créer un compte", "email": "Email", "password": "Mot de passe", "name": "Nom complet", "submit": "Se connecter", "noAccount": "Pas encore de compte ?", "hasAccount": "Déjà un compte ?" },
-  "dashboard": { "overview": "Vue d'ensemble", "deliveries": "Livraisons", "drivers": "Chauffeurs", "disputes": "Litiges", "subscription": "Abonnement", "cashflow": "Cash-Flow", "ecoScores": "Éco-scores" },
-  "driver": { "scan": "Scanner un colis", "takePhoto": "Prendre une photo", "gallery": "Choisir depuis la galerie", "confirm": "Confirmer la photo" },
+  "sidebar": {
+    "overview": "Vue d'ensemble",
+    "deliveries": "Livraisons",
+    "livemap": "Carte Live",
+    "cashflow": "Cash-Flow",
+    "drivers": "Chauffeurs",
+    "litiges": "Litiges",
+    "eco": "Éco-scores",
+    "subscription": "Abonnement",
+    "settings": "Paramètres",
+    "logout": "Déconnexion"
+  },
+  "settings": {
+    "title": "Paramètres",
+    "subtitle": "Profil, entreprise, facturation, personnalisation et sécurité.",
+    "profile": "Mon profil",
+    "profileDesc": "Informations d'inscription et entreprise",
+    "billing": "Services & Facturation",
+    "billingDesc": "Stripe, langue de l'interface",
+    "manageBilling": "Gérer ma facturation",
+    "language": "Langue de l'interface",
+    "customization": "Personnalisation & Alertes",
+    "customizationDesc": "Logo entreprise + notifications",
+    "security": "Sécurité",
+    "changePassword": "Changer mon mot de passe",
+    "twofa": "Double authentification (2FA)",
+    "danger": "Zone de danger",
+    "deleteAccount": "Supprimer mon compte",
+    "activity": "Activité du compte",
+    "activityDesc": "50 derniers événements (conformité RGPD/SOC2)"
+  },
   "common": { "save": "Enregistrer", "cancel": "Annuler", "delete": "Supprimer", "loading": "Chargement...", "error": "Erreur", "success": "Succès" }
 }
