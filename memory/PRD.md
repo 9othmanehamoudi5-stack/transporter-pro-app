@@ -194,6 +194,13 @@ Application SaaS logistique "Transporter-Pro" pour PME de transport.
 ## Backlog P1
 - [ ] Corriger règles sécurité Firebase (voir /app/memory/FIREBASE_RULES.md)
 
+### Phase 21 - Activity Log (Audit Trail visible) (DONE - 6 Mai 2026)
+- [x] Backend `GET /api/account/activity?limit=N` : retourne les N dernières entrées de `audit_logs` filtrées par `company_id` (admin) ou `user_id` (autres rôles), max 200
+- [x] Mapping `timestamp` (champ DB) ↔ `created_at` (réponse API) pour compat frontend
+- [x] Frontend `ActivitySection` : 5e section dans Settings, scrollable max 96, dot color-coded par type d'action (16 types mappés), formatage date FR, `data-testid="activity-section"` + `activity-item-{i}`
+- [x] Conformité RGPD/SOC2 : utilisateur peut consulter ses 50 derniers événements directement dans son compte
+- [x] Vérifié curl : 8 derniers events de azer (login, settings_updated x3, etc.) avec timestamps + details ✅
+
 ### Phase 20 - Settings Refonte Pro + 2FA + Customer Portal + Delete (DONE - 6 Mai 2026)
 
 **Backend** (5 nouveaux endpoints + 1 amend):

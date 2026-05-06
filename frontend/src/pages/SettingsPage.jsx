@@ -38,6 +38,8 @@ import {
   Trash2,
   ExternalLink,
   Upload,
+  Activity,
+  Clock,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '../services/api';
@@ -536,6 +538,90 @@ const SecuritySection = ({ user, refreshUser, logout }) => {
   );
 };
 
+// ---------------- SECTION : Activité du compte ----------------
+const ACTION_LABELS = {
+  login: { label: 'Connexion', color: 'text-zinc-400' },
+  register: { label: 'Création de compte', color: 'text-blue-400' },
+  onboarding_complete: { label: 'Onboarding KYB', color: 'text-blue-400' },
+  password_reset_requested: { label: 'Réinitialisation mot de passe demandée', color: 'text-amber-400' },
+  password_reset_completed: { label: 'Mot de passe réinitialisé', color: 'text-green-400' },
+  password_changed: { label: 'Mot de passe modifié', color: 'text-green-400' },
+  '2fa_verified': { label: '2FA validée', color: 'text-green-400' },
+  settings_updated: { label: 'Paramètres modifiés', color: 'text-zinc-400' },
+  logo_updated: { label: 'Logo mis à jour', color: 'text-zinc-400' },
+  stripe_payment: { label: 'Paiement Stripe', color: 'text-green-400' },
+  manual_subscription_activation: { label: 'Activation manuelle', color: 'text-amber-400' },
+  account_deleted: { label: 'Suppression de compte', color: 'text-red-400' },
+  delivery_created: { label: 'Livraison créée', color: 'text-blue-400' },
+  driver_added: { label: 'Chauffeur ajouté', color: 'text-blue-400' },
+  driver_deleted: { label: 'Chauffeur supprimé', color: 'text-red-400' },
+};
+
+const formatDateTime = (iso) => {
+  if (!iso) return '—';
+  try {
+    const d = new Date(iso);
+    return d.toLocaleString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  } catch {
+    return '—';
+  }
+};
+
+const ActivitySection = () => {
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+    api.get('/account/activity?limit=50')
+      .then((r) => mounted && setItems(r.data.items || []))
+      .catch(() => mounted && setItems([]))
+      .finally(() => mounted && setLoading(false));
+    return () => { mounted = false; };
+  }, []);
+
+  return (
+    <div className="bg-[#121214] border border-[#27272A] rounded-2xl overflow-hidden" data-testid="activity-section">
+      <div className="p-6 border-b border-[#27272A] flex items-center gap-3">
+        <div className="w-10 h-10 bg-[#0066FF]/10 rounded-xl flex items-center justify-center">
+          <Activity className="w-5 h-5 text-[#0066FF]" />
+        </div>
+        <div>
+          <h2 className="font-semibold text-white">Activité du compte</h2>
+          <p className="text-xs text-zinc-500">50 derniers événements (conformité RGPD/SOC2)</p>
+        </div>
+      </div>
+      <div className="divide-y divide-[#27272A] max-h-96 overflow-y-auto">
+        {loading ? (
+          <div className="p-6 text-center text-zinc-500 text-sm">Chargement…</div>
+        ) : items.length === 0 ? (
+          <div className="p-6 text-center text-zinc-500 text-sm">Aucune activité enregistrée</div>
+        ) : (
+          items.map((item, idx) => {
+            const meta = ACTION_LABELS[item.action] || { label: item.action.replace(/_/g, ' '), color: 'text-zinc-400' };
+            return (
+              <div key={idx} className="p-4 hover:bg-[#1A1A1E]/50 transition-colors flex items-start gap-3" data-testid={`activity-item-${idx}`}>
+                <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${meta.color.replace('text-', 'bg-')}`} />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className={`text-sm font-medium ${meta.color}`}>{meta.label}</p>
+                    <span className="text-[11px] text-zinc-500 font-mono whitespace-nowrap flex items-center gap-1">
+                      <Clock className="w-3 h-3" /> {formatDateTime(item.created_at)}
+                    </span>
+                  </div>
+                  {item.details && (
+                    <p className="text-xs text-zinc-500 mt-1 line-clamp-2">{item.details}</p>
+                  )}
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+    </div>
+  );
+};
+
 // ---------------- MAIN ----------------
 const SettingsPage = () => {
   const { user, logout, checkAuth } = useAuth();
@@ -565,6 +651,7 @@ const SettingsPage = () => {
       <BillingSection user={user} refreshUser={refreshUser} />
       <CustomizationSection user={user} refreshUser={refreshUser} />
       <SecuritySection user={user} refreshUser={refreshUser} logout={logout} />
+      <ActivitySection />
     </div>
   );
 };

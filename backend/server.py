@@ -1158,6 +1158,30 @@ async def delete_my_account(data: DeleteAccountRequest, user: dict = Depends(req
     return response
 
 
+# ==================== ACCOUNT ACTIVITY (Audit Log) ====================
+
+@api_router.get("/account/activity")
+async def get_account_activity(user: dict = Depends(get_current_user), limit: int = 50):
+    """Return the last N audit-log entries for the current user (or company-wide for admin)."""
+    if limit > 200:
+        limit = 200
+    query = (
+        {"company_id": user["company_id"]}
+        if user["role"] == "admin"
+        else {"user_id": user["id"]}
+    )
+    cursor = db.audit_logs.find(query, {"_id": 0}).sort("timestamp", -1).limit(limit)
+    items = []
+    async for doc in cursor:
+        ts = doc.get("timestamp") or doc.get("created_at")
+        if isinstance(ts, datetime):
+            doc["created_at"] = ts.isoformat()
+        else:
+            doc["created_at"] = str(ts) if ts else ""
+        items.append(doc)
+    return {"items": items, "count": len(items)}
+
+
 @api_router.get("/auth/company-quota")
 async def get_company_quota(user: dict = Depends(require_role("admin"))):
     """Get current driver count vs plan limit"""
