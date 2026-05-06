@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
-import { Truck, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { Truck, AlertCircle, Eye, EyeOff, KeyRound } from 'lucide-react';
 
 export const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -12,7 +12,10 @@ export const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  // 2FA challenge state
+  const [twoFaToken, setTwoFaToken] = useState('');
+  const [twoFaCode, setTwoFaCode] = useState('');
+  const { login, verify2FA } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -20,6 +23,21 @@ export const LoginPage = () => {
     setError('');
     setLoading(true);
     const result = await login(email, password);
+    if (result.success && result.requires_2fa) {
+      setTwoFaToken(result.challenge_token);
+    } else if (result.success) {
+      navigate('/dashboard');
+    } else {
+      setError(result.error);
+    }
+    setLoading(false);
+  };
+
+  const handle2FASubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+    const result = await verify2FA(twoFaToken, twoFaCode);
     if (result.success) {
       navigate('/dashboard');
     } else {
@@ -42,48 +60,95 @@ export const LoginPage = () => {
         </div>
 
         <div className="bg-[#121214] border border-[#27272A] rounded-2xl p-8">
-          <h2 className="text-2xl font-bold mb-2 text-white">Connexion</h2>
-          <p className="text-zinc-400 mb-6">Accédez à votre tableau de bord</p>
-
-          {error && (
-            <div className="flex items-center gap-2 p-3 mb-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400" data-testid="login-error">
-              <AlertCircle className="w-5 h-5 flex-shrink-0" />
-              <span className="text-sm">{error}</span>
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label>Email</Label>
-              <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email@example.com" required data-testid="login-email-input" className="h-12 bg-[#0A0A0B] border-[#27272A]" />
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label>Mot de passe</Label>
-                <Link to="/forgot-password" className="text-xs text-[#0066FF] hover:underline" data-testid="forgot-password-link">
-                  Mot de passe oublié ?
-                </Link>
+          {twoFaToken ? (
+            <>
+              <div className="flex items-center gap-2 mb-2">
+                <KeyRound className="w-5 h-5 text-[#0066FF]" />
+                <h2 className="text-2xl font-bold text-white">Vérification 2FA</h2>
               </div>
-              <div className="relative">
-                <Input type={showPassword ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required data-testid="login-password-input" className="h-12 bg-[#0A0A0B] border-[#27272A] pr-12" />
-                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white">
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              <p className="text-zinc-400 mb-6 text-sm">
+                Un code à 6 chiffres a été envoyé à <strong className="text-white">{email}</strong>. Il expire dans 10 minutes.
+              </p>
+              {error && (
+                <div className="flex items-center gap-2 p-3 mb-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400" data-testid="login-2fa-error">
+                  <AlertCircle className="w-5 h-5 flex-shrink-0" /> <span className="text-sm">{error}</span>
+                </div>
+              )}
+              <form onSubmit={handle2FASubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Code à 6 chiffres</Label>
+                  <Input
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={6}
+                    value={twoFaCode}
+                    onChange={(e) => setTwoFaCode(e.target.value.replace(/\D/g, ''))}
+                    placeholder="000000"
+                    required
+                    autoFocus
+                    data-testid="login-2fa-code"
+                    className="h-14 bg-[#0A0A0B] border-[#27272A] text-center font-mono text-2xl tracking-[0.5em]"
+                  />
+                </div>
+                <Button type="submit" disabled={loading || twoFaCode.length !== 6} data-testid="login-2fa-submit" className="w-full h-12 bg-[#0066FF] hover:bg-[#0052CC] text-white font-semibold">
+                  {loading ? 'Vérification…' : 'Valider le code'}
+                </Button>
+                <button
+                  type="button"
+                  onClick={() => { setTwoFaToken(''); setTwoFaCode(''); setError(''); }}
+                  className="w-full text-xs text-zinc-500 hover:text-zinc-300"
+                  data-testid="login-2fa-cancel"
+                >
+                  ← Recommencer la connexion
                 </button>
-              </div>
-            </div>
-            <Button type="submit" disabled={loading} data-testid="login-submit-btn" className="w-full h-12 bg-[#0066FF] hover:bg-[#0052CC] text-white font-semibold">
-              {loading ? 'Connexion...' : 'Se connecter'}
-            </Button>
-          </form>
+              </form>
+            </>
+          ) : (
+            <>
+              <h2 className="text-2xl font-bold mb-2 text-white">Connexion</h2>
+              <p className="text-zinc-400 mb-6">Accédez à votre tableau de bord</p>
 
-          <div className="mt-6 text-center text-sm text-zinc-400">
-            Pas encore de compte ?{' '}
-            <Link to="/register" className="text-[#0066FF] hover:underline" data-testid="register-link">Créer un compte</Link>
-          </div>
+              {error && (
+                <div className="flex items-center gap-2 p-3 mb-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400" data-testid="login-error">
+                  <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                  <span className="text-sm">{error}</span>
+                </div>
+              )}
+
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Email</Label>
+                  <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email@example.com" required data-testid="login-email-input" className="h-12 bg-[#0A0A0B] border-[#27272A]" />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label>Mot de passe</Label>
+                    <Link to="/forgot-password" className="text-xs text-[#0066FF] hover:underline" data-testid="forgot-password-link">
+                      Mot de passe oublié ?
+                    </Link>
+                  </div>
+                  <div className="relative">
+                    <Input type={showPassword ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required data-testid="login-password-input" className="h-12 bg-[#0A0A0B] border-[#27272A] pr-12" />
+                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white">
+                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
+                  </div>
+                </div>
+                <Button type="submit" disabled={loading} data-testid="login-submit-btn" className="w-full h-12 bg-[#0066FF] hover:bg-[#0052CC] text-white font-semibold">
+                  {loading ? 'Connexion...' : 'Se connecter'}
+                </Button>
+              </form>
+
+              <div className="mt-6 text-center text-sm text-zinc-400">
+                Pas encore de compte ?{' '}
+                <Link to="/register" className="text-[#0066FF] hover:underline" data-testid="register-link">Créer un compte</Link>
+              </div>
+            </>
+          )}
         </div>
 
         <div className="mt-4 text-center text-xs text-zinc-500">
-          <p>Demo: admin@transporter-pro.com / admin123</p>
+          <p>{twoFaToken ? 'Saisissez le code reçu par email' : ''}</p>
         </div>
       </div>
     </div>

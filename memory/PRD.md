@@ -194,18 +194,41 @@ Application SaaS logistique "Transporter-Pro" pour PME de transport.
 ## Backlog P1
 - [ ] Corriger règles sécurité Firebase (voir /app/memory/FIREBASE_RULES.md)
 
-### Phase 19 - Settings + Forgot Password (DONE - 6 Mai 2026)
-- [x] Backend `/api/auth/forgot-password` : token sécurisé `secrets.token_urlsafe(48)`, expire 15 min, anti-énumération (toujours même réponse)
-- [x] Backend `/api/auth/reset-password` : single-use token, vérifie expiration tz-aware, clear login_attempts
-- [x] Backend `/api/auth/change-password` : current pwd check + nouveau ≠ ancien, audit log
-- [x] Resend (re_NigMo...) intégré : email HTML stylé Transporter-Pro (dark, OLED, CTA bleu, expiration 15 min, support@)
-- [x] Mode test Resend : si envoi échoue (recipient ≠ owner), fallback `[DEV-FALLBACK]` log dans backend.err.log avec le reset_url complet
-- [x] Frontend `/forgot-password` : email input + "Vérifiez votre boîte mail" success state + retour login
-- [x] Frontend `/reset-password?token=xxx` : 2 inputs (nouveau + confirm) + minLength 8 + redirect /login après succès
-- [x] Frontend LoginPage : lien "Mot de passe oublié ?" sous le label password (data-testid: forgot-password-link)
-- [x] Frontend SettingsPage (nouveau onglet sidebar admin "Paramètres") : profile card (email, name, plan, subscription_status, date inscription) + change password form
-- [x] Lint Python + JS OK
-- [x] Tests curl : forgot → token DB → reset → re-login | single-use enforced | change-password valide current/wrong/same scenarios
+### Phase 20 - Settings Refonte Pro + 2FA + Customer Portal + Delete (DONE - 6 Mai 2026)
+
+**Backend** (5 nouveaux endpoints + 1 amend):
+- `GET /api/company` : KYB info read-only (siret, tva, address, company_name, created_at)
+- `PATCH /api/settings/preferences` : language ('fr'|'en'|'es') + notification_prefs (new_dispute, weekly_eco, quota_alert) + 2fa_enabled
+- `POST /api/settings/logo` : upload base64 (max 600KB) → stocké sur user + companies
+- `DELETE /api/settings/logo` : supprime
+- `POST /api/billing/portal` : crée une session Stripe Customer Portal et retourne URL → erreur claire si portail non activé sur dashboard Stripe
+- `DELETE /api/auth/account` : danger zone — annule sub Stripe (best-effort), marque user `status:"deleted"`, renomme email pour bloquer re-login, supprime cookies
+- `POST /api/auth/2fa/verify` : exchange challenge_token+code (6 chiffres bcrypt-hashed, TTL 10 min, max 5 tentatives) pour vrais access/refresh tokens
+- `POST /api/auth/login` (amend) : si `2fa_enabled=true` côté admin, renvoie `{requires_2fa, challenge_token, message}` + email Resend automatique au lieu d'access_token
+- `get_current_user` (amend) : refuse les comptes `status:"deleted"` (HTTP 403)
+- `/auth/me` étendu : `language`, `logo_base64`, `2fa_enabled`, `notification_prefs`
+
+**Frontend SettingsPage refondu** (1100 lignes):
+- 4 sections distinctes (ProfileSection, BillingSection, CustomizationSection, SecuritySection)
+- ProfileSection : email, name, plan, status badge, date inscription + KYB read-only (raison sociale, SIRET, TVA, adresse)
+- BillingSection : bouton "Gérer ma facturation" (Stripe Portal) + sélecteur langue 🇫🇷 🇬🇧 🇪🇸
+- CustomizationSection : upload logo (PNG/JPEG/WEBP/SVG max 500KB) + 3 toggles notifications
+- SecuritySection : changement mot de passe + toggle 2FA email + zone de danger (Dialog avec confirmation `SUPPRIMER` + password)
+- Sidebar AdminDashboard : logo entreprise affiché si uploadé (sinon icon Truck)
+
+**i18n** : ajout `en.json`, refonte `index.jsx` (alias `lang`/`setLang`, locales fr/en/es au lieu de fr/pl/es)
+
+**LoginPage** : flow 2FA conditionnel — quand `requires_2fa:true`, masque le formulaire login et affiche un input 6-chiffres avec auto-focus + bouton "Recommencer"
+
+**AuthContext** : `verify2FA(challenge_token, code)` ajouté + login retourne `{success, requires_2fa, challenge_token}` quand applicable
+
+**Tests curl validés** :
+- GET /api/company → SIRET 44306184100047, GOOGLE FRANCE, adresse Paris ✅
+- PATCH /settings/preferences → langue + notifs + 2FA persistés ✅
+- POST /billing/portal → erreur attendue (azer activé manuellement, pas de vrai customer Stripe) ✅
+- POST /auth/login avec 2FA on → retourne challenge_token ✅
+- POST /auth/2fa/verify avec mauvais code → "Code incorrect" + compteur tentatives ✅
+- DELETE /auth/account avec mauvais password → "Mot de passe incorrect" ✅
 
 ## Backlog P2
 - [ ] Mode hors-ligne (localStorage + file sync)

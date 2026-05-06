@@ -262,8 +262,12 @@ export const AdminDashboard = () => {
       {/* Sidebar */}
       <aside className={`fixed lg:static inset-y-0 left-0 z-[9999] w-64 bg-[#0A0A0B] border-r border-[#27272A] transform transition-transform lg:transform-none flex flex-col ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
         <div className="flex items-center gap-3 p-4 border-b border-[#27272A]">
-          <div className="w-10 h-10 bg-[#0066FF] rounded-lg flex items-center justify-center">
-            <Truck className="w-6 h-6 text-white" />
+          <div className="w-10 h-10 bg-[#0066FF] rounded-lg flex items-center justify-center overflow-hidden" data-testid="sidebar-logo">
+            {user?.logo_base64 ? (
+              <img src={user.logo_base64} alt="Logo" className="w-full h-full object-contain bg-white" />
+            ) : (
+              <Truck className="w-6 h-6 text-white" />
+            )}
           </div>
           <div className="flex-1 min-w-0">
             <span className="font-bold text-lg block">Transporter-Pro</span>

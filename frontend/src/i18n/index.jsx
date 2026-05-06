@@ -1,9 +1,9 @@
 import React, { createContext, useContext, useState } from 'react';
 import fr from './fr.json';
-import pl from './pl.json';
+import en from './en.json';
 import es from './es.json';
 
-const translations = { fr, pl, es };
+const translations = { fr, en, es };
 
 const I18nContext = createContext();
 
@@ -22,12 +22,24 @@ export const I18nProvider = ({ children }) => {
   };
 
   const changeLocale = (newLocale) => {
+    if (!['fr', 'en', 'es'].includes(newLocale)) return;
     setLocale(newLocale);
     localStorage.setItem('tp-locale', newLocale);
+    document.documentElement.setAttribute('lang', newLocale);
   };
 
   return (
-    <I18nContext.Provider value={{ locale, t, changeLocale, locales: ['fr', 'pl', 'es'] }}>
+    <I18nContext.Provider
+      value={{
+        locale,
+        // alias for ergonomics
+        lang: locale,
+        t,
+        changeLocale,
+        setLang: changeLocale,
+        locales: ['fr', 'en', 'es'],
+      }}
+    >
       {children}
     </I18nContext.Provider>
   );

@@ -1,6 +1,7 @@
 from dotenv import load_dotenv
 load_dotenv()
 
+import asyncio
 from fastapi import FastAPI, APIRouter, HTTPException, Request, Depends, UploadFile, File, Form
 from fastapi.responses import JSONResponse, FileResponse
 from starlette.middleware.cors import CORSMiddleware
@@ -170,6 +171,8 @@ async def get_current_user(request: Request) -> dict:
         user = await db.users.find_one({"_id": ObjectId(payload["sub"])})
         if not user:
             raise HTTPException(status_code=401, detail="User not found")
+        if user.get("status") == "deleted":
+            raise HTTPException(status_code=403, detail="Account deleted")
         return {
             "id": str(user["_id"]),
             "email": user["email"],
@@ -180,7 +183,15 @@ async def get_current_user(request: Request) -> dict:
             "subscription_status": user.get("subscription_status", "trial"),
             "trial_ends_at": user.get("trial_ends_at", "").isoformat() if isinstance(user.get("trial_ends_at"), datetime) else str(user.get("trial_ends_at", "")),
             "onboarding_complete": user.get("onboarding_complete", False),
-            "created_at": user.get("created_at", "").isoformat() if isinstance(user.get("created_at"), datetime) else str(user.get("created_at", ""))
+            "created_at": user.get("created_at", "").isoformat() if isinstance(user.get("created_at"), datetime) else str(user.get("created_at", "")),
+            "language": user.get("language", "fr"),
+            "logo_base64": user.get("logo_base64", ""),
+            "2fa_enabled": user.get("2fa_enabled", False),
+            "notification_prefs": user.get("notification_prefs", {
+                "new_dispute": True,
+                "weekly_eco": True,
+                "quota_alert": True,
+            }),
         }
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token expired")
@@ -609,11 +620,40 @@ async def login(data: UserLogin, request: Request):
             upsert=True
         )
         raise HTTPException(status_code=401, detail="Invalid credentials")
-    
+
+    # Hard block deleted accounts
+    if user.get("status") == "deleted":
+        raise HTTPException(status_code=403, detail="Ce compte a été supprimé et ne peut plus se connecter.")
+
     # Clear attempts on success
     await db.login_attempts.delete_one({"identifier": identifier})
-    
+
     user_id = str(user["_id"])
+
+    # ==================== 2FA GATE ====================
+    # If user has 2fa_enabled, issue a short-lived challenge token instead of access_token
+    if user.get("2fa_enabled") is True and user.get("role") == "admin":
+        code = "".join(secrets.choice("0123456789") for _ in range(6))
+        challenge_token = secrets.token_urlsafe(32)
+        await db.two_factor_challenges.insert_one({
+            "token": challenge_token,
+            "user_id": user_id,
+            "email": email,
+            "code_hash": hash_password(code),
+            "expires_at": datetime.now(timezone.utc) + timedelta(minutes=10),
+            "attempts": 0,
+            "used": False,
+            "created_at": datetime.now(timezone.utc),
+        })
+        # Send code via Resend
+        await _send_2fa_email(email, user.get("name", ""), code)
+        return JSONResponse(content={
+            "requires_2fa": True,
+            "challenge_token": challenge_token,
+            "message": "Un code à 6 chiffres a été envoyé à votre email.",
+        })
+    # ==================== END 2FA GATE ====================
+
     access_token = create_access_token(user_id, email, user["role"])
     refresh_token = create_refresh_token(user_id)
     
@@ -864,6 +904,258 @@ async def change_password(data: ChangePasswordRequest, user: dict = Depends(get_
         "Password changed via settings",
     )
     return {"message": "Mot de passe modifié avec succès"}
+
+
+# ==================== 2FA EMAIL ====================
+
+async def _send_2fa_email(email: str, name: str, code: str) -> bool:
+    """Send a 6-digit 2FA code via Resend."""
+    if not RESEND_API_KEY:
+        logger.warning(f"[DEV] 2FA code for {email}: {code}")
+        return False
+    import asyncio
+    import resend as resend_sdk
+    resend_sdk.api_key = RESEND_API_KEY
+    safe_name = (name or "").split("@")[0] or "Bonjour"
+    html = f"""<!DOCTYPE html><html><body style="background:#0A0A0B;font-family:-apple-system,sans-serif;padding:40px;">
+<div style="max-width:480px;margin:0 auto;background:#121214;border:1px solid #27272A;border-radius:16px;padding:40px;text-align:center;">
+<div style="background:#0066FF;width:48px;height:48px;border-radius:12px;display:inline-block;line-height:48px;color:#fff;font-size:22px;font-weight:bold;margin-bottom:20px;">T</div>
+<h1 style="color:#fff;font-size:22px;margin:0 0 8px;">Code de vérification</h1>
+<p style="color:#a1a1aa;font-size:14px;margin:0 0 28px;">Bonjour {safe_name}, voici votre code à usage unique :</p>
+<div style="background:#0066FF;color:#fff;font-size:32px;font-weight:700;letter-spacing:0.4em;padding:18px;border-radius:12px;font-family:'SF Mono',monospace;">{code}</div>
+<p style="color:#71717a;font-size:12px;margin:20px 0 0;">Expire dans 10 minutes. Ne partagez jamais ce code.</p>
+</div></body></html>"""
+    try:
+        await asyncio.to_thread(resend_sdk.Emails.send, {
+            "from": SENDER_EMAIL,
+            "to": [email],
+            "subject": f"Code de vérification Transporter-Pro : {code}",
+            "html": html,
+        })
+        return True
+    except Exception as e:
+        logger.error(f"2FA email failed for {email}: {e}")
+        logger.warning(f"[DEV-FALLBACK] 2FA code for {email}: {code}")
+        return False
+
+
+class TwoFactorVerify(BaseModel):
+    challenge_token: str
+    code: str = Field(..., min_length=6, max_length=6)
+
+
+@api_router.post("/auth/2fa/verify")
+async def verify_2fa(data: TwoFactorVerify):
+    """Exchange a valid 2FA challenge_token+code for real access/refresh tokens."""
+    challenge = await db.two_factor_challenges.find_one({"token": data.challenge_token, "used": False})
+    if not challenge:
+        raise HTTPException(status_code=400, detail="Session 2FA invalide ou expirée")
+
+    expires_at = challenge.get("expires_at")
+    if isinstance(expires_at, datetime):
+        if expires_at.tzinfo is None:
+            expires_at = expires_at.replace(tzinfo=timezone.utc)
+        if expires_at < datetime.now(timezone.utc):
+            raise HTTPException(status_code=400, detail="Code expiré — reconnectez-vous")
+
+    if challenge.get("attempts", 0) >= 5:
+        raise HTTPException(status_code=429, detail="Trop de tentatives. Reconnectez-vous.")
+
+    if not verify_password(data.code, challenge["code_hash"]):
+        await db.two_factor_challenges.update_one(
+            {"_id": challenge["_id"]},
+            {"$inc": {"attempts": 1}},
+        )
+        raise HTTPException(status_code=400, detail="Code incorrect")
+
+    user = await db.users.find_one({"_id": ObjectId(challenge["user_id"])})
+    if not user or user.get("status") == "deleted":
+        raise HTTPException(status_code=403, detail="Compte indisponible")
+
+    await db.two_factor_challenges.update_one(
+        {"_id": challenge["_id"]},
+        {"$set": {"used": True, "used_at": datetime.now(timezone.utc)}},
+    )
+
+    user_id = str(user["_id"])
+    access_token = create_access_token(user_id, user["email"], user["role"])
+    refresh_token = create_refresh_token(user_id)
+    response = JSONResponse(content={
+        "id": user_id,
+        "email": user["email"],
+        "name": user["name"],
+        "role": user["role"],
+        "company_id": user.get("company_id", user_id),
+        "plan": user.get("plan", "solo"),
+        "onboarding_complete": user.get("onboarding_complete", False),
+        "subscription_status": user.get("subscription_status", "incomplete"),
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+    })
+    response.set_cookie("access_token", access_token, httponly=True, secure=True, samesite="none", max_age=3600, path="/")
+    response.set_cookie("refresh_token", refresh_token, httponly=True, secure=True, samesite="none", max_age=604800, path="/")
+    await log_action(user_id, user.get("company_id", user_id), "2fa_verified", "user", user_id, "Login 2FA OK")
+    return response
+
+
+# ==================== COMPANY INFO ====================
+
+@api_router.get("/company")
+async def get_company_info(user: dict = Depends(require_role("admin"))):
+    """Return company KYB info (read-only for settings page)."""
+    company = await db.companies.find_one({"admin_id": user["id"]}, {"_id": 0})
+    if not company:
+        return {
+            "company_name": "",
+            "siret": "",
+            "tva_intra": "",
+            "address": "",
+        }
+    for field in ["created_at", "updated_at"]:
+        if isinstance(company.get(field), datetime):
+            company[field] = company[field].isoformat()
+    return company
+
+
+# ==================== SETTINGS / PREFERENCES ====================
+
+class UserPreferences(BaseModel):
+    language: Optional[Literal["fr", "en", "es"]] = None
+    notification_prefs: Optional[dict] = None
+    two_fa_enabled: Optional[bool] = None
+
+
+@api_router.patch("/settings/preferences")
+async def update_preferences(data: UserPreferences, user: dict = Depends(get_current_user)):
+    """Update non-sensitive user preferences (language, notifications, 2FA toggle)."""
+    update: dict = {}
+    if data.language is not None:
+        update["language"] = data.language
+    if data.notification_prefs is not None:
+        allowed_keys = {"new_dispute", "weekly_eco", "quota_alert"}
+        prefs = {k: bool(v) for k, v in data.notification_prefs.items() if k in allowed_keys}
+        update["notification_prefs"] = prefs
+    if data.two_fa_enabled is not None:
+        update["2fa_enabled"] = bool(data.two_fa_enabled)
+
+    if not update:
+        return {"message": "No change"}
+
+    await db.users.update_one({"_id": ObjectId(user["id"])}, {"$set": update})
+    await log_action(user["id"], user.get("company_id", user["id"]), "settings_updated", "user", user["id"], f"Fields: {list(update.keys())}")
+    return {"message": "Préférences mises à jour", "updated": list(update.keys())}
+
+
+class LogoUpload(BaseModel):
+    logo_base64: str = Field(..., min_length=10, max_length=800_000)  # ~600KB image max
+
+
+@api_router.post("/settings/logo")
+async def upload_logo(data: LogoUpload, user: dict = Depends(require_role("admin"))):
+    """Upload a company logo (stored as base64 data URI on user doc)."""
+    logo = data.logo_base64.strip()
+    if not (logo.startswith("data:image/") or logo.startswith("iVBORw") or logo.startswith("/9j/")):
+        raise HTTPException(status_code=400, detail="Format d'image invalide (PNG/JPEG attendu)")
+    await db.users.update_one({"_id": ObjectId(user["id"])}, {"$set": {"logo_base64": logo}})
+    await db.companies.update_one({"admin_id": user["id"]}, {"$set": {"logo_base64": logo}}, upsert=False)
+    await log_action(user["id"], user.get("company_id", user["id"]), "logo_updated", "user", user["id"], "Logo uploaded")
+    return {"message": "Logo mis à jour"}
+
+
+@api_router.delete("/settings/logo")
+async def remove_logo(user: dict = Depends(require_role("admin"))):
+    await db.users.update_one({"_id": ObjectId(user["id"])}, {"$unset": {"logo_base64": ""}})
+    await db.companies.update_one({"admin_id": user["id"]}, {"$unset": {"logo_base64": ""}})
+    return {"message": "Logo supprimé"}
+
+
+# ==================== STRIPE CUSTOMER PORTAL ====================
+
+@api_router.post("/billing/portal")
+async def create_billing_portal(user: dict = Depends(require_role("admin"))):
+    """Create a Stripe Customer Portal session for self-service billing/invoices."""
+    import stripe
+    stripe.api_key = STRIPE_SECRET_KEY
+    if not STRIPE_SECRET_KEY:
+        raise HTTPException(status_code=500, detail="Stripe non configuré")
+
+    user_doc = await db.users.find_one({"_id": ObjectId(user["id"])})
+    customer_id = (user_doc or {}).get("stripe_customer_id", "")
+    if not customer_id or customer_id.startswith("manual_"):
+        raise HTTPException(
+            status_code=400,
+            detail="Aucun compte de facturation Stripe lié — passez par le webhook ou contactez le support.",
+        )
+
+    try:
+        session = await asyncio.to_thread(
+            stripe.billing_portal.Session.create,
+            customer=customer_id,
+            return_url=f"{FRONTEND_BASE_URL}/dashboard",
+        )
+        return {"url": session.url}
+    except stripe.error.InvalidRequestError as e:
+        # Common cause: portal not configured on Stripe dashboard
+        logger.error(f"Stripe portal error: {e}")
+        raise HTTPException(
+            status_code=400,
+            detail="Portail Stripe non activé. Activez-le sur https://dashboard.stripe.com/test/settings/billing/portal",
+        )
+    except Exception as e:
+        logger.error(f"Stripe portal error: {e}")
+        raise HTTPException(status_code=502, detail=f"Erreur Stripe: {e}")
+
+
+# ==================== DELETE ACCOUNT ====================
+
+class DeleteAccountRequest(BaseModel):
+    password: str
+    confirmation: Literal["SUPPRIMER"]
+
+
+@api_router.delete("/auth/account")
+async def delete_my_account(data: DeleteAccountRequest, user: dict = Depends(require_role("admin"))):
+    """Danger zone: cancel Stripe subscription + mark user deleted + force logout."""
+    user_doc = await db.users.find_one({"_id": ObjectId(user["id"])})
+    if not user_doc or not verify_password(data.password, user_doc["password_hash"]):
+        raise HTTPException(status_code=400, detail="Mot de passe incorrect")
+
+    # Best-effort: cancel Stripe subscription immediately
+    sub_id = user_doc.get("stripe_subscription_id", "")
+    if sub_id and not sub_id.startswith("sub_test_"):
+        try:
+            import stripe
+            stripe.api_key = STRIPE_SECRET_KEY
+            await asyncio.to_thread(stripe.Subscription.delete, sub_id)
+            logger.info(f"Stripe subscription {sub_id} cancelled for deleted user {user['id']}")
+        except Exception as e:
+            logger.warning(f"Stripe cancel failed for {sub_id}: {e}")
+
+    # Mark user deleted (anonymize email so the slot can be re-registered if you want; but keep a tombstone)
+    await db.users.update_one(
+        {"_id": user_doc["_id"]},
+        {"$set": {
+            "status": "deleted",
+            "deleted_at": datetime.now(timezone.utc),
+            "subscription_status": "cancelled",
+            "email_deleted_suffix": datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S"),
+        }},
+    )
+    # Rename email to prevent any future login with this address
+    await db.users.update_one(
+        {"_id": user_doc["_id"]},
+        [{"$set": {"email": {"$concat": ["$email", ".deleted.", "$email_deleted_suffix"]}}}],
+    )
+
+    # Clear any active sessions
+    await db.login_attempts.delete_many({"identifier": {"$regex": f"{user_doc['email']}$"}})
+
+    await log_action(user["id"], user.get("company_id", user["id"]), "account_deleted", "user", user["id"], f"Self-service account deletion; sub={sub_id}")
+
+    response = JSONResponse(content={"message": "Compte supprimé. Vous allez être déconnecté."})
+    response.delete_cookie("access_token", path="/", secure=True, samesite="none")
+    response.delete_cookie("refresh_token", path="/", secure=True, samesite="none")
+    return response
 
 
 @api_router.get("/auth/company-quota")
