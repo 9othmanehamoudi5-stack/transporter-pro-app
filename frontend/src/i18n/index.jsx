@@ -10,7 +10,22 @@ const I18nContext = createContext();
 export const useI18n = () => useContext(I18nContext);
 
 export const I18nProvider = ({ children }) => {
-  const [locale, setLocale] = useState(() => localStorage.getItem('tp-locale') || 'fr');
+  const [locale, setLocale] = useState(() => {
+    // 1) Explicit choice (last selected by user) wins
+    const stored = localStorage.getItem('tp-locale');
+    if (stored && ['fr', 'en', 'es'].includes(stored)) return stored;
+    // 2) Auto-detect from browser navigator language (e.g., "es-ES" → "es")
+    if (typeof navigator !== 'undefined' && navigator.language) {
+      const detected = navigator.language.slice(0, 2).toLowerCase();
+      if (['fr', 'en', 'es'].includes(detected)) {
+        // Persist so subsequent visits don't re-detect (avoids surprise if user's nav lang changes)
+        localStorage.setItem('tp-locale', detected);
+        return detected;
+      }
+    }
+    // 3) Sensible default: English (international SaaS audience)
+    return 'en';
+  });
 
   // Sync from user preference once it's loaded (auth-aware)
   useEffect(() => {

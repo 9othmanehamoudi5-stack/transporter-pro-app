@@ -22,6 +22,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "../components/ui/dialog";
 import { 
   Select,
@@ -381,7 +382,7 @@ export const AdminDashboard = () => {
               {activeTab === 'deliveries' && (
                 <Button onClick={() => setShowNewDelivery(true)} className="bg-[#0066FF] hover:bg-[#0052CC]" data-testid="new-delivery-btn">
                   <Plus className="w-4 h-4 mr-2" />
-                  Nouvelle livraison
+                  {t('actions.newDelivery', 'Nouvelle livraison')}
                 </Button>
               )}
               {activeTab === 'drivers' && driverQuota.can_add && (
@@ -965,7 +966,10 @@ export const AdminDashboard = () => {
       <Dialog open={showNewDelivery} onOpenChange={setShowNewDelivery}>
         <DialogContent className="bg-[#121214] border border-[#27272A] text-white">
           <DialogHeader>
-            <DialogTitle>Nouvelle livraison</DialogTitle>
+          <DialogTitle>{t('modals.newDelivery.title', 'Nouvelle livraison')}</DialogTitle>
+          <DialogDescription className="text-zinc-400">
+            {t('modals.newDelivery.subtitle', 'Créez une nouvelle livraison pour votre flotte')}
+          </DialogDescription>
           </DialogHeader>
           <NewDeliveryForm drivers={drivers} onSubmit={handleNewDelivery} onCancel={() => setShowNewDelivery(false)} />
         </DialogContent>
@@ -1574,6 +1578,7 @@ const DamageReportCard = ({ report, onRetrySuccess }) => {
 
 
 const NewDeliveryForm = ({ drivers, onSubmit, onCancel }) => {
+  const { t } = useI18n();
   const [formData, setFormData] = useState({
     recipient_name: '',
     recipient_address: '',
@@ -1591,51 +1596,54 @@ const NewDeliveryForm = ({ drivers, onSubmit, onCancel }) => {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Label>Chauffeur assigné</Label>
+        <Label>{t('modals.newDelivery.driver', 'Chauffeur assigné')}</Label>
         <select
           value={formData.driver_id}
           onChange={(e) => setFormData({ ...formData, driver_id: e.target.value })}
           className="w-full h-12 bg-[#0A0A0B] border border-[#27272A] rounded-lg px-3 text-white text-sm"
           data-testid="delivery-driver-select"
         >
-          <option value="">— Non assigné —</option>
+          <option value="">— {t('modals.newDelivery.noDriver', 'Non assigné')} —</option>
           {(drivers || []).map(d => (
             <option key={d.id} value={d.id}>{d.name} {d.vehicle_plate ? `(${d.vehicle_plate})` : ''}</option>
           ))}
         </select>
       </div>
       <div className="space-y-2">
-        <Label>Nom du destinataire</Label>
+        <Label>{t('modals.newDelivery.recipientName', 'Nom du destinataire')}</Label>
         <Input
           value={formData.recipient_name}
           onChange={(e) => setFormData({ ...formData, recipient_name: e.target.value })}
           required
+          placeholder={t('modals.newDelivery.recipientNamePh', 'Jean Dupont')}
           className="bg-[#0A0A0B] border-[#27272A]"
           data-testid="delivery-recipient-name"
         />
       </div>
       <div className="space-y-2">
-        <Label>Adresse</Label>
+        <Label>{t('modals.newDelivery.address', 'Adresse')}</Label>
         <Input
           value={formData.recipient_address}
           onChange={(e) => setFormData({ ...formData, recipient_address: e.target.value })}
           required
+          placeholder={t('modals.newDelivery.addressPh', '12 Rue de la Paix, 75002 Paris')}
           className="bg-[#0A0A0B] border-[#27272A]"
           data-testid="delivery-address"
         />
       </div>
       <div className="space-y-2">
-        <Label>Téléphone</Label>
+        <Label>{t('modals.newDelivery.recipientPhone', 'Téléphone')}</Label>
         <Input
           value={formData.recipient_phone}
           onChange={(e) => setFormData({ ...formData, recipient_phone: e.target.value })}
           required
+          placeholder={t('modals.newDelivery.recipientPhonePh', '+33 6 12 34 56 78')}
           className="bg-[#0A0A0B] border-[#27272A]"
         />
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-2">
-          <Label>Description colis</Label>
+          <Label>{t('modals.newDelivery.packageDesc', 'Description colis')}</Label>
           <Input
             value={formData.package_description}
             onChange={(e) => setFormData({ ...formData, package_description: e.target.value })}
@@ -1644,7 +1652,7 @@ const NewDeliveryForm = ({ drivers, onSubmit, onCancel }) => {
           />
         </div>
         <div className="space-y-2">
-          <Label>Poids (kg)</Label>
+          <Label>{t('modals.newDelivery.weight', 'Poids (kg)')}</Label>
           <Input
             type="number" step="0.1" min="0.1"
             value={formData.weight_kg}
@@ -1656,10 +1664,10 @@ const NewDeliveryForm = ({ drivers, onSubmit, onCancel }) => {
       </div>
       <div className="flex gap-3">
         <Button type="button" variant="outline" onClick={onCancel} className="flex-1 border-[#27272A]">
-          Annuler
+          {t('actions.cancel', 'Annuler')}
         </Button>
         <Button type="submit" className="flex-1 bg-[#0066FF] hover:bg-[#0052CC]" data-testid="delivery-submit-btn">
-          Créer
+          {t('actions.create', 'Créer')}
         </Button>
       </div>
     </form>
@@ -1667,6 +1675,7 @@ const NewDeliveryForm = ({ drivers, onSubmit, onCancel }) => {
 };
 
 const NewDriverForm = ({ onSubmit, onCancel }) => {
+  const { t } = useI18n();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -1683,28 +1692,28 @@ const NewDriverForm = ({ onSubmit, onCancel }) => {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Label>Nom complet</Label>
+        <Label>{t('modals.addDriver.name', 'Nom complet')}</Label>
         <Input
           value={formData.name}
           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
           required
-          placeholder="Jean Dupont"
+          placeholder={t('modals.addDriver.namePh', 'Jean Dupont')}
           className="bg-[#0A0A0B] border-[#27272A]"
         />
       </div>
       <div className="space-y-2">
-        <Label>Email</Label>
+        <Label>{t('modals.addDriver.email', 'Email')}</Label>
         <Input
           type="email"
           value={formData.email}
           onChange={(e) => setFormData({ ...formData, email: e.target.value })}
           required
-          placeholder="jean@example.com"
+          placeholder={t('modals.addDriver.emailPh', 'jean@example.com')}
           className="bg-[#0A0A0B] border-[#27272A]"
         />
       </div>
       <div className="space-y-2">
-        <Label>Mot de passe</Label>
+        <Label>{t('modals.addDriver.password', 'Mot de passe')}</Label>
         <Input
           type="password"
           value={formData.password}
@@ -1715,7 +1724,7 @@ const NewDriverForm = ({ onSubmit, onCancel }) => {
         />
       </div>
       <div className="space-y-2">
-        <Label>Téléphone</Label>
+        <Label>{t('modals.addDriver.phone', 'Téléphone')}</Label>
         <Input
           value={formData.phone}
           onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
@@ -1724,7 +1733,7 @@ const NewDriverForm = ({ onSubmit, onCancel }) => {
         />
       </div>
       <div className="space-y-2">
-        <Label>Immatriculation véhicule</Label>
+        <Label>{t('modals.addDriver.vehiclePlate', 'Immatriculation véhicule')}</Label>
         <Input
           value={formData.vehicle_plate}
           onChange={(e) => setFormData({ ...formData, vehicle_plate: e.target.value })}
@@ -1734,10 +1743,10 @@ const NewDriverForm = ({ onSubmit, onCancel }) => {
       </div>
       <div className="flex gap-3">
         <Button type="button" variant="outline" onClick={onCancel} className="flex-1 border-[#27272A]">
-          Annuler
+          {t('actions.cancel', 'Annuler')}
         </Button>
         <Button type="submit" className="flex-1 bg-[#0066FF] hover:bg-[#0052CC]">
-          Créer le compte
+          {t('modals.addDriver.submit', 'Ajouter le chauffeur')}
         </Button>
       </div>
     </form>
