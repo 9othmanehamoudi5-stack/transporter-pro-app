@@ -139,10 +139,10 @@ export const AdminDashboard = () => {
       }
     } catch (error) {
       console.error('Error fetching data:', error);
-      toast.error(`Erreur chargement : ${error.message}`);
+      toast.error(`${t('toasts.error', 'Erreur')} : ${error.message}`);
     }
     setLoading(false);
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     fetchData();
@@ -159,7 +159,7 @@ export const AdminDashboard = () => {
   const handleNewDelivery = async (data) => {
     try {
       await deliveriesApi.create(data);
-      toast.success('Livraison créée avec succès');
+      toast.success(t('toasts.deliveryCreated', 'Livraison créée'));
       setShowNewDelivery(false);
       fetchData();
     } catch (error) {
@@ -167,45 +167,45 @@ export const AdminDashboard = () => {
       const msg = Array.isArray(detail)
         ? detail.map(e => e.msg || e).join(', ')
         : detail || error.message;
-      toast.error(`Erreur création : ${msg}`);
+      toast.error(`${t('toasts.deliveryFailed', 'Échec création livraison')} : ${msg}`);
     }
   };
 
   const handleAssignDriver = async (trackingId, driverId) => {
     try {
       await deliveriesApi.assignDriver(trackingId, driverId);
-      toast.success('Chauffeur assigné');
+      toast.success(t('toasts.assigned', 'Livraison assignée'));
       setShowAssignDriver(null);
       fetchData();
     } catch (error) {
       const detail = error.response?.data?.detail;
       const msg = typeof detail === 'string' ? detail : error.message;
-      toast.error(`Erreur assignation : ${msg}`);
+      toast.error(`${t('toasts.assignFailed', "Erreur d'assignation")} : ${msg}`);
     }
   };
 
   const handleCreateDriver = async (driverData) => {
     try {
       await adminDriversApi.create(driverData);
-      toast.success('Chauffeur créé avec succès');
+      toast.success(t('toasts.driverAdded', 'Chauffeur ajouté'));
       setShowNewDriver(false);
       fetchData();
     } catch (error) {
       const detail = error.response?.data?.detail;
       const msg = typeof detail === 'string' ? detail : error.message;
-      toast.error(`Erreur : ${msg}`);
+      toast.error(`${t('toasts.error', 'Erreur')} : ${msg}`);
     }
   };
 
   const handleDeleteDriver = async (driverId) => {
-    if (!window.confirm('Supprimer ce chauffeur ? Cette action est irréversible.')) return;
+    if (!window.confirm(t('modals.deleteDriver.warning', 'Cette action est irréversible.'))) return;
     try {
       await adminDriversApi.delete(driverId);
       setDrivers(prev => prev.filter(d => d.id !== driverId));
-      toast.success('Chauffeur supprimé');
+      toast.success(t('toasts.driverDeleted', 'Chauffeur supprimé'));
       fetchData();
     } catch (error) {
-      toast.error(`Erreur suppression : ${error.response?.data?.detail || error.message}`);
+      toast.error(`${t('toasts.error', 'Erreur')} : ${error.response?.data?.detail || error.message}`);
     }
   };
 
@@ -220,10 +220,10 @@ export const AdminDashboard = () => {
   const handleMarkPaid = async (invoiceId) => {
     try {
       await invoicesApi.markPaid(invoiceId);
-      toast.success('Facture marquée comme payée');
+      toast.success(t('toasts.invoicePaid', 'Facture marquée comme payée'));
       fetchData();
     } catch (error) {
-      toast.error(`Erreur paiement : ${error.response?.data?.detail || error.message}`);
+      toast.error(`${t('toasts.error', 'Erreur')} : ${error.response?.data?.detail || error.message}`);
     }
   };
 
@@ -248,7 +248,7 @@ export const AdminDashboard = () => {
         <BarcodeScanner
           onScan={(code) => {
             setShowScanner(false);
-            toast.success(`Code scanné : ${code}`);
+            toast.success(`${t('toasts.scanned', 'Code scanné')} : ${code}`);
             setShowNewDelivery(true);
             // Auto-fill will be handled by the new delivery form
             window.__scannedBarcode = code;
@@ -470,9 +470,9 @@ export const AdminDashboard = () => {
                   onClick={() => {
                     const result = generateAllInvoicesPDF(invoices);
                     if (result.count > 0) {
-                      toast.success(`${result.count} facture(s) PDF générée(s)`);
+                      toast.success(`${result.count} ${t('toasts.invoicesGenerated', 'facture(s) PDF générée(s)')}`);
                     } else {
-                      toast.info('Aucune facture en attente');
+                      toast.info(t('toasts.noInvoices', 'Aucune facture en attente'));
                     }
                   }}
                 />
@@ -641,26 +641,26 @@ export const AdminDashboard = () => {
                 <div className="bg-[#121214] border border-[#27272A] rounded-xl p-6">
                   <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                     <Clock className="w-5 h-5 text-yellow-400" />
-                    Pont de Trésorerie
+                    {t('cashflow.bridgeTitle', 'Pont de Trésorerie')}
                   </h3>
                   <div className="text-4xl font-bold font-mono text-yellow-400 mb-2">
                     {(cashFlow?.money_blocked_in_trucks || 0).toLocaleString('fr-FR')} €
                   </div>
-                  <p className="text-zinc-400">Argent bloqué dans les camions</p>
+                  <p className="text-zinc-400">{t('cashflow.blockedDesc', 'Argent bloqué dans les camions')}</p>
                   <p className="text-sm text-zinc-500 mt-2">
-                    {cashFlow?.blocked_deliveries_count || 0} livraisons terminées en attente de paiement
+                    {cashFlow?.blocked_deliveries_count || 0} {t('cashflow.blockedSubDesc', 'livraisons terminées en attente de paiement')}
                   </p>
                 </div>
 
                 <div className="bg-[#121214] border border-[#27272A] rounded-xl p-6">
                   <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                     <FileText className="w-5 h-5 text-[#0066FF]" />
-                    Factures Factur-X
+                    {t('cashflow.facturXTitle', 'Factures Factur-X')}
                   </h3>
                   <div className="text-4xl font-bold font-mono text-[#0066FF] mb-2">
                     {cashFlow?.pending_invoices_count || 0}
                   </div>
-                  <p className="text-zinc-400">Factures en attente</p>
+                  <p className="text-zinc-400">{t('cashflow.pendingTitle', 'Factures en attente')}</p>
                   <Button 
                     onClick={() => {
                       if (!hasFeature('pdfGeneration')) {
@@ -669,9 +669,9 @@ export const AdminDashboard = () => {
                       }
                       const result = generateAllInvoicesPDF(invoices);
                       if (result.count > 0) {
-                        toast.success(`${result.count} facture(s) PDF générée(s)`);
+                        toast.success(`${result.count} ${t('toasts.invoicesGenerated', 'facture(s) PDF générée(s)')}`);
                       } else {
-                        toast.info('Aucune facture en attente à générer');
+                        toast.info(t('toasts.noPendingInvoices', 'Aucune facture en attente à générer'));
                       }
                     }}
                     className={`mt-3 ${hasFeature('pdfGeneration') ? 'bg-[#0066FF] hover:bg-[#0052CC]' : 'bg-zinc-700 cursor-not-allowed'}`}
@@ -679,7 +679,7 @@ export const AdminDashboard = () => {
                   >
                     {!hasFeature('pdfGeneration') && <Lock className="w-4 h-4 mr-2" />}
                     <FileText className="w-4 h-4 mr-2" />
-                    Générer e-CMR PDF
+                    {t('cashflow.generatePdfBtn', 'Générer e-CMR PDF')}
                   </Button>
                 </div>
               </div>
@@ -687,17 +687,17 @@ export const AdminDashboard = () => {
               {/* Invoices List */}
               <div className="bg-[#121214] border border-[#27272A] rounded-xl overflow-hidden">
                 <div className="p-4 border-b border-[#27272A]">
-                  <h3 className="font-semibold">Factures récentes</h3>
+                  <h3 className="font-semibold">{t('cashflow.recentInvoices', 'Factures récentes')}</h3>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full" data-testid="invoices-table">
                     <thead className="bg-[#1A1A1E] text-xs text-zinc-400 uppercase">
                       <tr>
-                        <th className="px-4 py-3 text-left">N° Facture</th>
-                        <th className="px-4 py-3 text-left">Livraison</th>
-                        <th className="px-4 py-3 text-left">Montant</th>
-                        <th className="px-4 py-3 text-left">Statut</th>
-                        <th className="px-4 py-3 text-left">Actions</th>
+                        <th className="px-4 py-3 text-left">{t('cashflow.invoiceNum', 'N° Facture')}</th>
+                        <th className="px-4 py-3 text-left">{t('cashflow.delivery', 'Livraison')}</th>
+                        <th className="px-4 py-3 text-left">{t('cashflow.amount', 'Montant')}</th>
+                        <th className="px-4 py-3 text-left">{t('cashflow.status', 'Statut')}</th>
+                        <th className="px-4 py-3 text-left">{t('cashflow.actions', 'Actions')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -712,7 +712,7 @@ export const AdminDashboard = () => {
                               inv.status === 'ready_to_send' ? 'text-blue-400 bg-blue-400/10' :
                               'text-yellow-400 bg-yellow-400/10'
                             }`}>
-                              {inv.status === 'paid' ? 'Payée' : inv.status === 'ready_to_send' ? 'Prête' : 'En attente'}
+                              {inv.status === 'paid' ? t('cashflow.statusPaid', 'Payée') : inv.status === 'ready_to_send' ? t('cashflow.statusReady', 'Prête') : t('cashflow.statusPending', 'En attente')}
                             </span>
                           </td>
                           <td className="px-4 py-3 flex items-center gap-2">
@@ -724,7 +724,7 @@ export const AdminDashboard = () => {
                                   return;
                                 }
                                 generateInvoicePDF(inv);
-                                toast.success(`PDF ${inv.invoice_id} téléchargé`);
+                                toast.success(`PDF ${inv.invoice_id} ${t('toasts.pdfDownloaded', 'téléchargé')}`);
                               }}
                               variant="outline"
                               className="border-[#27272A] text-zinc-400 hover:text-white"
@@ -740,7 +740,7 @@ export const AdminDashboard = () => {
                                 className="bg-green-600 hover:bg-green-700 cursor-pointer"
                                 data-testid={`mark-paid-${inv.invoice_id}`}
                               >
-                                Marquer payée
+                                {t('cashflow.markPaid', 'Marquer payée')}
                               </Button>
                             )}
                           </td>
@@ -762,13 +762,13 @@ export const AdminDashboard = () => {
                 <div>
                   <h3 className="font-semibold flex items-center gap-2">
                     <Users className="w-5 h-5 text-[#0066FF]" />
-                    Gestion de Flotte
+                    {t('drivers.fleetMgmt', 'Gestion de Flotte')}
                   </h3>
                   <p className="text-sm text-zinc-400 mt-1">
                     {driverQuota.max_drivers === -1 
-                      ? `${drivers.length} chauffeurs (illimité)` 
-                      : `${drivers.length} / ${driverQuota.max_drivers} chauffeurs`}
-                    <span className="ml-2 text-xs uppercase tracking-wider text-zinc-500">Plan {driverQuota.plan}</span>
+                      ? t('drivers.unlimitedDrivers', `${drivers.length} chauffeurs (illimité)`).replace('{count}', drivers.length)
+                      : t('drivers.driversCount', `${drivers.length} / ${driverQuota.max_drivers} chauffeurs`).replace('{current}', drivers.length).replace('{max}', driverQuota.max_drivers)}
+                    <span className="ml-2 text-xs uppercase tracking-wider text-zinc-500">{t('drivers.plan', 'Plan')} {driverQuota.plan}</span>
                   </p>
                   {/* Progress bar */}
                   {driverQuota.max_drivers !== -1 && (
@@ -788,7 +788,7 @@ export const AdminDashboard = () => {
                       data-testid="upgrade-fleet-btn"
                     >
                       <Crown className="w-4 h-4 mr-2" />
-                      Passer au niveau supérieur
+                      {t('drivers.upgradePlan', 'Passer au niveau supérieur')}
                     </Button>
                   )}
                   <Button
@@ -798,7 +798,7 @@ export const AdminDashboard = () => {
                     data-testid="add-driver-btn"
                   >
                     <UserPlus className="w-4 h-4 mr-2" />
-                    Ajouter un chauffeur
+                    {t('drivers.addDriver', 'Ajouter un chauffeur')}
                   </Button>
                 </div>
               </div>
@@ -806,25 +806,25 @@ export const AdminDashboard = () => {
               {/* Stats */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <StatCard
-                  title="Total chauffeurs"
+                  title={t('drivers.totalDrivers', 'Total chauffeurs')}
                   value={drivers.length}
                   icon={Users}
                   color="blue"
                 />
                 <StatCard
-                  title="Actifs"
+                  title={t('drivers.active', 'Actifs')}
                   value={drivers.filter(d => d.status === 'active').length}
                   icon={CheckCircle}
                   color="green"
                 />
                 <StatCard
-                  title="En mission"
+                  title={t('drivers.onMission', 'En mission')}
                   value={drivers.filter(d => d.in_progress > 0).length}
                   icon={Truck}
                   color="yellow"
                 />
                 <StatCard
-                  title="Score moyen"
+                  title={t('drivers.avgScore', 'Score moyen')}
                   value={Math.round(drivers.reduce((a, d) => a + (d.eco_score || 0), 0) / (drivers.length || 1))}
                   icon={Leaf}
                   color="green"
@@ -866,15 +866,15 @@ export const AdminDashboard = () => {
                     
                     <div className="grid grid-cols-3 gap-3">
                       <div className="p-3 bg-[#1A1A1E] rounded-lg text-center">
-                        <p className="text-xs text-zinc-400">Terminées</p>
+                        <p className="text-xs text-zinc-400">{t('drivers.completed', 'Terminées')}</p>
                         <p className="text-xl font-bold font-mono text-green-400">{driver.completed_deliveries || 0}</p>
                       </div>
                       <div className="p-3 bg-[#1A1A1E] rounded-lg text-center">
-                        <p className="text-xs text-zinc-400">En cours</p>
+                        <p className="text-xs text-zinc-400">{t('drivers.inProgress', 'En cours')}</p>
                         <p className="text-xl font-bold font-mono text-[#0066FF]">{driver.in_progress || 0}</p>
                       </div>
                       <div className="p-3 bg-[#1A1A1E] rounded-lg text-center">
-                        <p className="text-xs text-zinc-400">Éco-score</p>
+                        <p className="text-xs text-zinc-400">{t('drivers.ecoScore', 'Éco-score')}</p>
                         <p className={`text-xl font-bold font-mono ${
                           driver.eco_score >= 80 ? 'text-green-400' : 
                           driver.eco_score >= 60 ? 'text-yellow-400' : 'text-red-400'
@@ -898,26 +898,26 @@ export const AdminDashboard = () => {
               {/* Stats */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <StatCard
-                  title="Total rapports"
+                  title={t('litiges.totalReports', 'Total rapports')}
                   value={damageReports.length}
                   icon={Shield}
                   color="blue"
                 />
                 <StatCard
-                  title="Dommages détectés"
+                  title={t('litiges.damagesDetected', 'Dommages détectés')}
                   value={damageReports.filter(r => r.ai_analysis?.is_damaged).length}
                   icon={AlertTriangle}
                   color="red"
                   pulse={damageReports.filter(r => r.ai_analysis?.is_damaged).length > 0}
                 />
                 <StatCard
-                  title="Colis intacts"
+                  title={t('litiges.packagesIntact', 'Colis intacts')}
                   value={damageReports.filter(r => !r.ai_analysis?.is_damaged).length}
                   icon={CheckCircle}
                   color="green"
                 />
                 <StatCard
-                  title="Confiance moy."
+                  title={t('litiges.avgConfidence', 'Confiance moy.')}
                   value={damageReports.length > 0 ? Math.round(damageReports.reduce((a, r) => a + (r.ai_analysis?.confidence || 0), 0) / damageReports.length) + '%' : '0%'}
                   icon={Eye}
                   color="blue"
@@ -927,8 +927,8 @@ export const AdminDashboard = () => {
               {damageReports.length === 0 ? (
                 <div className="bg-[#121214] border border-[#27272A] rounded-xl p-12 text-center">
                   <Shield className="w-12 h-12 mx-auto mb-4 text-green-400" />
-                  <p className="text-lg font-medium">Aucun litige détecté</p>
-                  <p className="text-zinc-400">Les chauffeurs peuvent signaler des dommages via le bouton Photo</p>
+                  <p className="text-lg font-medium">{t('litiges.noDisputes', 'Aucun litige détecté')}</p>
+                  <p className="text-zinc-400">{t('litiges.driversCanReport', 'Les chauffeurs peuvent signaler des dommages via le bouton Photo')}</p>
                 </div>
               ) : (
                 damageReports.map((report) => (
@@ -979,7 +979,7 @@ export const AdminDashboard = () => {
       <Dialog open={!!showAssignDriver} onOpenChange={() => setShowAssignDriver(null)}>
         <DialogContent className="bg-[#121214] border border-[#27272A] text-white sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle className="text-xl">Assigner une livraison</DialogTitle>
+            <DialogTitle className="text-xl">{t('modals.assignDriver.title', 'Assigner une livraison')}</DialogTitle>
           </DialogHeader>
           <AssignDeliveryForm 
             trackingId={showAssignDriver}
@@ -998,7 +998,7 @@ export const AdminDashboard = () => {
                 setShowAssignDriver(null);
                 fetchData();
               } catch (error) {
-                toast.error('Erreur lors de l\'assignation');
+                toast.error(t('toasts.assignFailed', "Erreur d'assignation"));
               }
             }}
             onCancel={() => setShowAssignDriver(null)}
@@ -1010,7 +1010,7 @@ export const AdminDashboard = () => {
       <Dialog open={showNewDriver} onOpenChange={setShowNewDriver}>
         <DialogContent className="bg-[#121214] border border-[#27272A] text-white">
           <DialogHeader>
-            <DialogTitle>Nouveau chauffeur</DialogTitle>
+            <DialogTitle>{t('modals.addDriver.title', 'Nouveau chauffeur')}</DialogTitle>
           </DialogHeader>
           <NewDriverForm onSubmit={handleCreateDriver} onCancel={() => setShowNewDriver(false)} />
         </DialogContent>
@@ -1022,12 +1022,12 @@ export const AdminDashboard = () => {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Bell className="w-5 h-5" />
-              Notifications
+              {t('modals.notifications.title', 'Notifications')}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
             {notifications.length === 0 ? (
-              <p className="text-center text-zinc-400 py-8">Aucune notification</p>
+              <p className="text-center text-zinc-400 py-8">{t('modals.notifications.empty', 'Aucune notification')}</p>
             ) : (
               notifications.map((notif, idx) => (
                 <div 
@@ -1064,16 +1064,17 @@ export const AdminDashboard = () => {
 
 // ==================== ECO SCORES TAB (extracted) ====================
 const EcoScoresTab = ({ stats, ecoSummary, ecoDailyAvg, drivers, fetchData }) => {
+  const { t } = useI18n();
   const [recalculating, setRecalculating] = React.useState(false);
 
   const handleRecalculate = async () => {
     setRecalculating(true);
     try {
       await ecoScoresApi.recalculate();
-      toast.success('Scores recalculés avec succès !');
+      toast.success(t('toasts.scoresRecalculated', 'Scores recalculés avec succès !'));
       fetchData();
     } catch {
-      toast.error('Erreur lors du recalcul');
+      toast.error(t('toasts.recalculationFailed', 'Erreur lors du recalcul'));
     }
     setRecalculating(false);
   };
@@ -1094,9 +1095,9 @@ const EcoScoresTab = ({ stats, ecoSummary, ecoDailyAvg, drivers, fetchData }) =>
         <div>
           <h2 className="text-2xl font-bold flex items-center gap-2">
             <Leaf className="w-6 h-6 text-green-400" />
-            Éco-conduite
+            {t('eco.title', 'Éco-conduite')}
           </h2>
-          <p className="text-sm text-zinc-400 mt-1">Scores calculés à partir des livraisons et rapports IA</p>
+          <p className="text-sm text-zinc-400 mt-1">{t('eco.subtitle', 'Scores calculés à partir des livraisons et rapports IA')}</p>
         </div>
         <Button
           onClick={handleRecalculate}
@@ -1106,14 +1107,14 @@ const EcoScoresTab = ({ stats, ecoSummary, ecoDailyAvg, drivers, fetchData }) =>
           data-testid="recalculate-btn"
         >
           <RefreshCw className={`w-4 h-4 mr-2 ${recalculating ? 'animate-spin' : ''}`} />
-          {recalculating ? 'Recalcul...' : 'Recalculer'}
+          {recalculating ? t('eco.recalculating', 'Recalcul...') : t('eco.recalculate', 'Recalculer')}
         </Button>
       </div>
 
       {/* Podium - Top 3 */}
       {top3.length > 0 && (
         <div data-testid="eco-podium">
-          <h3 className="text-lg font-semibold mb-4">Top 3 de la semaine</h3>
+          <h3 className="text-lg font-semibold mb-4">{t('eco.top3Week', 'Top 3 de la semaine')}</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {top3.map((driver, i) => (
               <div
@@ -1131,7 +1132,7 @@ const EcoScoresTab = ({ stats, ecoSummary, ecoDailyAvg, drivers, fetchData }) =>
                   driver.avg_score >= 80 ? 'text-green-400' : 
                   driver.avg_score >= 60 ? 'text-yellow-400' : 'text-red-400'
                 }`}>{Math.round(driver.avg_score)}</p>
-                <p className="text-xs text-zinc-400 mt-1">points / 100</p>
+                <p className="text-xs text-zinc-400 mt-1">{t('eco.points', 'points / 100')}</p>
               </div>
             ))}
           </div>
@@ -1141,23 +1142,23 @@ const EcoScoresTab = ({ stats, ecoSummary, ecoDailyAvg, drivers, fetchData }) =>
       {/* Score moyen card + Impact */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-[#121214] border border-[#27272A] rounded-xl p-6 text-center">
-          <p className="text-sm text-zinc-400 mb-2">Score moyen entreprise</p>
+          <p className="text-sm text-zinc-400 mb-2">{t('eco.avgScoreCompany', 'Score moyen entreprise')}</p>
           <p className="text-5xl font-bold font-mono text-green-400" data-testid="avg-eco-score">{stats?.avg_eco_score || 0}</p>
-          <p className="text-xs text-zinc-500 mt-2">sur 100</p>
+          <p className="text-xs text-zinc-500 mt-2">{t('eco.outOf100', 'sur 100')}</p>
         </div>
         <div className="bg-[#121214] border border-[#27272A] rounded-xl p-6 text-center">
-          <p className="text-sm text-zinc-400 mb-2">CO2 total</p>
+          <p className="text-sm text-zinc-400 mb-2">{t('eco.totalCo2', 'CO2 total')}</p>
           <p className="text-3xl font-bold font-mono text-blue-400" data-testid="total-co2">
             {Math.round(ecoSummary.reduce((a, e) => a + (e.total_co2 || 0), 0))}
           </p>
-          <p className="text-xs text-zinc-500 mt-2">kg émis</p>
+          <p className="text-xs text-zinc-500 mt-2">{t('eco.kgEmitted', 'kg émis')}</p>
         </div>
         <div className="bg-[#121214] border border-[#27272A] rounded-xl p-6 text-center">
-          <p className="text-sm text-zinc-400 mb-2">Distance totale</p>
+          <p className="text-sm text-zinc-400 mb-2">{t('eco.totalDistance', 'Distance totale')}</p>
           <p className="text-3xl font-bold font-mono text-purple-400" data-testid="total-distance">
             {Math.round(ecoSummary.reduce((a, e) => a + (e.total_distance || 0), 0))}
           </p>
-          <p className="text-xs text-zinc-500 mt-2">km parcourus</p>
+          <p className="text-xs text-zinc-500 mt-2">{t('eco.kmTraveled', 'km parcourus')}</p>
         </div>
       </div>
 
@@ -1167,7 +1168,7 @@ const EcoScoresTab = ({ stats, ecoSummary, ecoDailyAvg, drivers, fetchData }) =>
       {/* Driver table */}
       <div className="bg-[#121214] border border-[#27272A] rounded-xl overflow-hidden">
         <div className="p-4 border-b border-[#27272A] flex items-center justify-between">
-          <h3 className="font-semibold">Résumé par chauffeur</h3>
+          <h3 className="font-semibold">{t('eco.summaryByDriver', 'Résumé par chauffeur')}</h3>
           <Button
             variant="outline"
             className="border-[#27272A] text-xs"
@@ -1178,24 +1179,24 @@ const EcoScoresTab = ({ stats, ecoSummary, ecoDailyAvg, drivers, fetchData }) =>
               a.href = URL.createObjectURL(blob);
               a.download = `rapport-eco-${new Date().toISOString().split('T')[0]}.txt`;
               a.click();
-              toast.success('Rapport téléchargé');
+              toast.success(t('toasts.reportDownloaded', 'Rapport téléchargé'));
             }}
             data-testid="eco-report-btn"
           >
             <FileText className="w-3 h-3 mr-1" />
-            Exporter
+            {t('eco.exportReport', 'Exporter')}
           </Button>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full" data-testid="eco-driver-table">
             <thead className="bg-[#1A1A1E] text-xs text-zinc-400 uppercase">
               <tr>
-                <th className="px-4 py-3 text-left">#</th>
-                <th className="px-4 py-3 text-left">Chauffeur</th>
-                <th className="px-4 py-3 text-left">Score moyen</th>
-                <th className="px-4 py-3 text-left">Distance (km)</th>
-                <th className="px-4 py-3 text-left">CO2 (kg)</th>
-                <th className="px-4 py-3 text-left">Carburant (L)</th>
+                <th className="px-4 py-3 text-left">{t('eco.rankNum', '#')}</th>
+                <th className="px-4 py-3 text-left">{t('eco.driverCol', 'Chauffeur')}</th>
+                <th className="px-4 py-3 text-left">{t('eco.avgScoreCol', 'Score moyen')}</th>
+                <th className="px-4 py-3 text-left">{t('eco.distanceKm', 'Distance (km)')}</th>
+                <th className="px-4 py-3 text-left">{t('eco.co2Kg', 'CO2 (kg)')}</th>
+                <th className="px-4 py-3 text-left">{t('eco.fuelL', 'Carburant (L)')}</th>
               </tr>
             </thead>
             <tbody>
@@ -1215,7 +1216,7 @@ const EcoScoresTab = ({ stats, ecoSummary, ecoDailyAvg, drivers, fetchData }) =>
                 </tr>
               ))}
               {ecoSummary.length === 0 && (
-                <tr><td colSpan={6} className="text-center py-8 text-zinc-500">Aucune donnée éco-score. Cliquez "Recalculer" pour générer les scores.</td></tr>
+                <tr><td colSpan={6} className="text-center py-8 text-zinc-500">{t('eco.noEcoData', 'Aucune donnée éco-score. Cliquez "Recalculer" pour générer les scores.')}</td></tr>
               )}
             </tbody>
           </table>
@@ -1227,6 +1228,7 @@ const EcoScoresTab = ({ stats, ecoSummary, ecoDailyAvg, drivers, fetchData }) =>
 
 // ==================== ECO CHART (Recharts) ====================
 const EcoChart = ({ data }) => {
+  const { t } = useI18n();
   // Inline import to avoid top-level import for lazy-loaded tab
   const [ChartComponents, setChartComponents] = React.useState(null);
 
@@ -1251,10 +1253,10 @@ const EcoChart = ({ data }) => {
       <div className="bg-[#121214] border border-[#27272A] rounded-xl p-6">
         <h3 className="font-semibold mb-4 flex items-center gap-2">
           <TrendingUp className="w-5 h-5 text-[#0066FF]" />
-          Évolution du score (30 jours)
+          {t('eco.scoreEvolution', 'Évolution du score (30 jours)')}
         </h3>
         <div className="h-48 flex items-center justify-center text-zinc-500 text-sm">
-          {!ChartComponents ? 'Chargement du graphique...' : 'Aucune donnée sur les 30 derniers jours'}
+          {!ChartComponents ? t('eco.loadingChart', 'Chargement du graphique...') : t('eco.noData30d', 'Aucune donnée sur les 30 derniers jours')}
         </div>
       </div>
     );
@@ -1272,7 +1274,7 @@ const EcoChart = ({ data }) => {
     <div className="bg-[#121214] border border-[#27272A] rounded-xl p-6" data-testid="eco-chart">
       <h3 className="font-semibold mb-4 flex items-center gap-2">
         <TrendingUp className="w-5 h-5 text-[#0066FF]" />
-        Évolution du score moyen (30 jours)
+        {t('eco.scoreEvolution30d', 'Évolution du score moyen (30 jours)')}
       </h3>
       <div className="h-64">
         <ResponsiveContainer width="100%" height="100%">
@@ -1301,23 +1303,26 @@ const EcoChart = ({ data }) => {
 
 
 
-const LockedFeatureOverlay = ({ feature, message, onUpgrade }) => (
-  <div className="bg-[#121214] border border-[#27272A] rounded-2xl p-12 text-center" data-testid={`locked-${feature}`}>
-    <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-zinc-800/50 flex items-center justify-center">
-      <Lock className="w-8 h-8 text-zinc-500" />
+const LockedFeatureOverlay = ({ feature, message, onUpgrade }) => {
+  const { t } = useI18n();
+  return (
+    <div className="bg-[#121214] border border-[#27272A] rounded-2xl p-12 text-center" data-testid={`locked-${feature}`}>
+      <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-zinc-800/50 flex items-center justify-center">
+        <Lock className="w-8 h-8 text-zinc-500" />
+      </div>
+      <h3 className="text-xl font-semibold mb-2">{t('common.lockedFeature', 'Fonctionnalité verrouillée')}</h3>
+      <p className="text-zinc-400 mb-6 max-w-md mx-auto">{message}</p>
+      <Button
+        onClick={onUpgrade}
+        className="bg-[#0066FF] hover:bg-[#0052CC] px-8"
+        data-testid={`upgrade-from-${feature}`}
+      >
+        <Crown className="w-4 h-4 mr-2" />
+        {t('common.changePlan', 'Changer de plan')}
+      </Button>
     </div>
-    <h3 className="text-xl font-semibold mb-2">Fonctionnalité verrouillée</h3>
-    <p className="text-zinc-400 mb-6 max-w-md mx-auto">{message}</p>
-    <Button
-      onClick={onUpgrade}
-      className="bg-[#0066FF] hover:bg-[#0052CC] px-8"
-      data-testid={`upgrade-from-${feature}`}
-    >
-      <Crown className="w-4 h-4 mr-2" />
-      Changer de plan
-    </Button>
-  </div>
-);
+  );
+};
 
 const GatedButton = ({ label, icon: Icon, feature, hasFeature, getMessage, onClick }) => {
   const locked = !hasFeature(feature);
@@ -1369,20 +1374,22 @@ const StatCard = ({ title, value, icon: Icon, color, pulse }) => {
   );
 };
 
-const SEVERITY_CONFIG = {
-  none: { label: 'Aucun', color: 'text-green-400 bg-green-400/10', barColor: 'bg-green-400' },
-  minor: { label: 'Faible', color: 'text-yellow-400 bg-yellow-400/10', barColor: 'bg-yellow-400' },
-  moderate: { label: 'Moyenne', color: 'text-orange-400 bg-orange-400/10', barColor: 'bg-orange-400' },
-  severe: { label: 'Élevée', color: 'text-red-400 bg-red-400/10', barColor: 'bg-red-400' },
-  unknown: { label: 'Inconnue', color: 'text-zinc-400 bg-zinc-400/10', barColor: 'bg-zinc-400' }
+const SEVERITY_KEYS = {
+  none: { labelKey: 'litiges.severityNone', color: 'text-green-400 bg-green-400/10', barColor: 'bg-green-400' },
+  minor: { labelKey: 'litiges.severityMinor', color: 'text-yellow-400 bg-yellow-400/10', barColor: 'bg-yellow-400' },
+  moderate: { labelKey: 'litiges.severityModerate', color: 'text-orange-400 bg-orange-400/10', barColor: 'bg-orange-400' },
+  severe: { labelKey: 'litiges.severeLevel', color: 'text-red-400 bg-red-400/10', barColor: 'bg-red-400' },
+  unknown: { labelKey: 'litiges.severityUnknown', color: 'text-zinc-400 bg-zinc-400/10', barColor: 'bg-zinc-400' }
 };
 
 const DamageReportCard = ({ report, onRetrySuccess }) => {
+  const { t } = useI18n();
   const [photoUrl, setPhotoUrl] = useState(null);
   const [loadingPhoto, setLoadingPhoto] = useState(false);
   const [retrying, setRetrying] = useState(false);
   const analysis = report.ai_analysis || {};
-  const severity = SEVERITY_CONFIG[analysis.damage_severity] || SEVERITY_CONFIG.unknown;
+  const severityCfg = SEVERITY_KEYS[analysis.damage_severity] || SEVERITY_KEYS.unknown;
+  const severityLabel = t(severityCfg.labelKey, 'Inconnue');
   const confidence = analysis.confidence || 0;
   const hasError = !!(
     analysis.damage_severity === 'unknown' ||
@@ -1416,18 +1423,18 @@ const DamageReportCard = ({ report, onRetrySuccess }) => {
     try {
       const res = await damageReportsApi.retry(report.report_id);
       if (res.data?.ai_analysis) {
-        toast.success('Analyse relancée avec succès');
+        toast.success(t('toasts.analysisRetried', 'Analyse relancée avec succès'));
         if (onRetrySuccess) onRetrySuccess();
       }
     } catch (e) {
-      toast.error('Échec de la relance');
+      toast.error(t('toasts.retryFailed', 'Échec de la relance'));
     }
     setRetrying(false);
   };
 
   // Clean error message for display
   const displayDescription = hasError
-    ? 'Analyse automatique impossible - Image non reconnue ou format incompatible'
+    ? t('litiges.errorMsg', 'Analyse automatique impossible - Image non reconnue ou format incompatible')
     : analysis.description;
 
   return (
@@ -1443,22 +1450,22 @@ const DamageReportCard = ({ report, onRetrySuccess }) => {
           <div>
             <div className="flex items-center gap-2">
               <p className="font-mono text-sm text-zinc-500">{report.report_id}</p>
-              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${severity.color}`}>
-                {severity.label}
+              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${severityCfg.color}`}>
+                {severityLabel}
               </span>
             </div>
-            <p className="font-semibold mt-1">Livraison : {report.delivery_id}</p>
-            {report.driver_name && <p className="text-sm text-zinc-400">Chauffeur : {report.driver_name}</p>}
+            <p className="font-semibold mt-1">{t('litiges.deliveryLabel', 'Livraison')} : {report.delivery_id}</p>
+            {report.driver_name && <p className="text-sm text-zinc-400">{t('litiges.driverLabel', 'Chauffeur')} : {report.driver_name}</p>}
           </div>
           {analysis.is_damaged ? (
             <span className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm bg-red-500/10 text-red-400 border border-red-500/20">
               <AlertTriangle className="w-4 h-4" />
-              Dommage détecté
+              {t('litiges.damageDetected', 'Dommage détecté')}
             </span>
           ) : (
             <span className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm bg-green-500/10 text-green-400 border border-green-500/20">
               <CheckCircle className="w-4 h-4" />
-              Colis intact
+              {t('litiges.packageOk', 'Colis intact')}
             </span>
           )}
         </div>
@@ -1467,22 +1474,22 @@ const DamageReportCard = ({ report, onRetrySuccess }) => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
           {/* Severity */}
           <div className="p-4 bg-[#1A1A1E] rounded-lg">
-            <p className="text-xs text-zinc-400 mb-2">Sévérité</p>
-            <span className={`inline-flex px-3 py-1 rounded-full text-sm font-semibold ${severity.color}`}>
-              {severity.label}
+            <p className="text-xs text-zinc-400 mb-2">{t('litiges.severity', 'Sévérité')}</p>
+            <span className={`inline-flex px-3 py-1 rounded-full text-sm font-semibold ${severityCfg.color}`}>
+              {severityLabel}
             </span>
             {analysis.damage_type && (
-              <p className="text-xs text-zinc-500 mt-2">Type : {analysis.damage_type}</p>
+              <p className="text-xs text-zinc-500 mt-2">{t('litiges.type', 'Type')} : {analysis.damage_type}</p>
             )}
           </div>
 
           {/* Confidence */}
           <div className="p-4 bg-[#1A1A1E] rounded-lg">
-            <p className="text-xs text-zinc-400 mb-2">Confiance IA</p>
+            <p className="text-xs text-zinc-400 mb-2">{t('litiges.aiConfidence', 'Confiance IA')}</p>
             <p className="text-2xl font-bold font-mono mb-2">{confidence}%</p>
             <div className="w-full h-2 bg-[#27272A] rounded-full overflow-hidden">
               <div 
-                className={`h-full rounded-full transition-all ${severity.barColor}`}
+                className={`h-full rounded-full transition-all ${severityCfg.barColor}`}
                 style={{ width: `${confidence}%` }}
               />
             </div>
@@ -1490,7 +1497,7 @@ const DamageReportCard = ({ report, onRetrySuccess }) => {
 
           {/* Blockchain Proof */}
           <div className="p-4 bg-[#1A1A1E] rounded-lg">
-            <p className="text-xs text-zinc-400 mb-2">Preuve horodatée</p>
+            <p className="text-xs text-zinc-400 mb-2">{t('litiges.blockchainProof', 'Preuve horodatée')}</p>
             <p className="font-mono text-xs text-green-400 truncate mb-1">
               {report.blockchain_proof?.hash?.substring(0, 24)}...
             </p>
@@ -1506,7 +1513,7 @@ const DamageReportCard = ({ report, onRetrySuccess }) => {
             <div className="flex items-start gap-3">
               <Shield className="w-5 h-5 text-[#0066FF] flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-xs text-[#0066FF] font-medium mb-1">Analyse Gemini Vision</p>
+                <p className="text-xs text-[#0066FF] font-medium mb-1">{t('litiges.geminiVision', 'Analyse Gemini Vision')}</p>
                 <p className="text-sm text-zinc-300">{displayDescription}</p>
               </div>
             </div>
@@ -1519,7 +1526,7 @@ const DamageReportCard = ({ report, onRetrySuccess }) => {
               <div className="flex items-start gap-3 flex-1">
                 <AlertTriangle className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-xs text-yellow-400 font-medium mb-1">Analyse en erreur</p>
+                  <p className="text-xs text-yellow-400 font-medium mb-1">{t('litiges.errorAnalysis', 'Analyse en erreur')}</p>
                   <p className="text-sm text-zinc-400">{displayDescription}</p>
                 </div>
               </div>
@@ -1532,9 +1539,9 @@ const DamageReportCard = ({ report, onRetrySuccess }) => {
                   data-testid={`retry-analysis-${report.report_id}`}
                 >
                   {retrying ? (
-                    <><RefreshCw className="w-3.5 h-3.5 mr-1.5 animate-spin" /> Analyse...</>
+                    <><RefreshCw className="w-3.5 h-3.5 mr-1.5 animate-spin" /> {t('litiges.retrying', 'Analyse...')}</>
                   ) : (
-                    <><RefreshCw className="w-3.5 h-3.5 mr-1.5" /> Relancer</>
+                    <><RefreshCw className="w-3.5 h-3.5 mr-1.5" /> {t('litiges.retry', 'Relancer')}</>
                   )}
                 </Button>
               )}
@@ -1554,16 +1561,16 @@ const DamageReportCard = ({ report, onRetrySuccess }) => {
                 data-testid={`load-photo-${report.report_id}`}
               >
                 {loadingPhoto ? (
-                  <><RefreshCw className="w-4 h-4 mr-2 animate-spin" /> Chargement...</>
+                  <><RefreshCw className="w-4 h-4 mr-2 animate-spin" /> {t('litiges.loadingPhoto', 'Chargement...')}</>
                 ) : (
-                  <><Camera className="w-4 h-4 mr-2" /> Voir la photo</>
+                  <><Camera className="w-4 h-4 mr-2" /> {t('litiges.viewPhoto', 'Voir la photo')}</>
                 )}
               </Button>
             ) : (
               <div className="mt-2">
                 <img 
                   src={photoUrl} 
-                  alt="Photo du colis" 
+                  alt={t('litiges.photoAlt', 'Photo du colis')}
                   className="max-h-64 rounded-lg border border-[#27272A] object-contain"
                   data-testid={`photo-preview-${report.report_id}`}
                 />
@@ -1755,6 +1762,7 @@ const NewDriverForm = ({ onSubmit, onCancel }) => {
 
 // Formulaire d'assignation de livraison avec dropdown chauffeurs
 const AssignDeliveryForm = ({ trackingId, delivery, drivers, onSubmit, onCancel }) => {
+  const { t } = useI18n();
   const [formData, setFormData] = useState({
     client_name: delivery?.recipient_name || '',
     address: delivery?.recipient_address || '',
@@ -1765,7 +1773,7 @@ const AssignDeliveryForm = ({ trackingId, delivery, drivers, onSubmit, onCancel 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.driver_id) {
-      toast.error('Veuillez sélectionner un chauffeur');
+      toast.error(t('toasts.driverRequired', 'Veuillez sélectionner un chauffeur'));
       return;
     }
     setIsSubmitting(true);
@@ -1777,18 +1785,18 @@ const AssignDeliveryForm = ({ trackingId, delivery, drivers, onSubmit, onCancel 
     <form onSubmit={handleSubmit} className="space-y-5" data-testid="assign-delivery-form">
       {/* Tracking ID Display */}
       <div className="p-3 bg-[#1A1A1E] rounded-lg">
-        <p className="text-xs text-zinc-400">Livraison</p>
+        <p className="text-xs text-zinc-400">{t('modals.assignDriver.delivery', 'Livraison')}</p>
         <p className="font-mono font-semibold text-[#0066FF]">{trackingId}</p>
       </div>
 
       {/* Nom du Client */}
       <div className="space-y-2">
-        <Label htmlFor="client_name">Nom du Client</Label>
+        <Label htmlFor="client_name">{t('modals.assignDriver.clientName', 'Nom du Client')}</Label>
         <Input
           id="client_name"
           value={formData.client_name}
           onChange={(e) => setFormData({ ...formData, client_name: e.target.value })}
-          placeholder="Entrez le nom du client"
+          placeholder={t('modals.assignDriver.clientNamePh', 'Entrez le nom du client')}
           className="h-12 bg-[#0A0A0B] border border-[#27272A] focus:border-[#0066FF]"
           data-testid="client-name-input"
         />
@@ -1796,12 +1804,12 @@ const AssignDeliveryForm = ({ trackingId, delivery, drivers, onSubmit, onCancel 
 
       {/* Adresse de Livraison */}
       <div className="space-y-2">
-        <Label htmlFor="address">Adresse de Livraison</Label>
+        <Label htmlFor="address">{t('modals.assignDriver.address', 'Adresse de Livraison')}</Label>
         <Input
           id="address"
           value={formData.address}
           onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-          placeholder="Entrez l'adresse complète"
+          placeholder={t('modals.assignDriver.addressPh', "Entrez l'adresse complète")}
           className="h-12 bg-[#0A0A0B] border border-[#27272A] focus:border-[#0066FF]"
           data-testid="address-input"
         />
@@ -1809,7 +1817,7 @@ const AssignDeliveryForm = ({ trackingId, delivery, drivers, onSubmit, onCancel 
 
       {/* Liste déroulante des Chauffeurs */}
       <div className="space-y-2">
-        <Label htmlFor="driver">Chauffeur</Label>
+        <Label htmlFor="driver">{t('modals.assignDriver.driver', 'Chauffeur')}</Label>
         <Select 
           value={formData.driver_id} 
           onValueChange={(value) => setFormData({ ...formData, driver_id: value })}
@@ -1818,11 +1826,11 @@ const AssignDeliveryForm = ({ trackingId, delivery, drivers, onSubmit, onCancel 
             className="h-12 bg-[#0A0A0B] border border-[#27272A] focus:border-[#0066FF]"
             data-testid="driver-select"
           >
-            <SelectValue placeholder="Sélectionnez un chauffeur" />
+            <SelectValue placeholder={t('modals.assignDriver.selectDriver', 'Sélectionnez un chauffeur')} />
           </SelectTrigger>
           <SelectContent className="bg-[#1A1A1E] border border-[#27272A]">
             {drivers.length === 0 ? (
-              <SelectItem value="none" disabled>Aucun chauffeur disponible</SelectItem>
+              <SelectItem value="none" disabled>{t('modals.assignDriver.noDrivers', 'Aucun chauffeur disponible')}</SelectItem>
             ) : (
               drivers.map((driver) => (
                 <SelectItem 
@@ -1851,7 +1859,7 @@ const AssignDeliveryForm = ({ trackingId, delivery, drivers, onSubmit, onCancel 
           onClick={onCancel} 
           className="flex-1 h-12 border border-[#27272A] hover:bg-[#1A1A1E]"
         >
-          Annuler
+          {t('actions.cancel', 'Annuler')}
         </Button>
         <Button 
           type="submit" 
@@ -1859,7 +1867,7 @@ const AssignDeliveryForm = ({ trackingId, delivery, drivers, onSubmit, onCancel 
           className="flex-1 h-12 bg-[#0066FF] hover:bg-[#0052CC] disabled:opacity-50"
           data-testid="confirm-assign-btn"
         >
-          {isSubmitting ? 'Assignation...' : 'Confirmer l\'Assignation'}
+          {isSubmitting ? t('modals.assignDriver.submitting', 'Assignation...') : t('modals.assignDriver.submit', "Confirmer l'Assignation")}
         </Button>
       </div>
     </form>

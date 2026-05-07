@@ -1,95 +1,98 @@
 import React, { useState } from 'react';
 import { useSubscription } from '../contexts/SubscriptionContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useI18n } from '../i18n/index';
 import { Button } from '../components/ui/button';
 import { Switch } from '../components/ui/switch';
 import { 
   Check, Crown, Truck, Zap, Shield, Clock, 
-  ChevronRight, Sparkles, Building2, Lock, LogIn
+  ChevronRight, Sparkles, Building2, Lock
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-const PLANS = [
+const buildPlans = (t) => [
   {
     id: 'solo',
-    name: 'SOLO',
-    description: 'Parfait pour démarrer',
+    name: t('subscription.plans.solo.name', 'SOLO'),
+    description: t('subscription.plans.solo.description', 'Parfait pour démarrer'),
     monthlyPrice: 19,
     yearlyPrice: 190,
     features: [
-      'Jusqu\'à 3 camions',
-      'Livraisons illimitées',
-      'Tracking client basique',
-      'Support email'
+      t('subscription.plans.solo.f1', "Jusqu'à 3 camions"),
+      t('subscription.plans.solo.f2', 'Livraisons illimitées'),
+      t('subscription.plans.solo.f3', 'Tracking client basique'),
+      t('subscription.plans.solo.f4', 'Support email'),
     ],
     lockedFeatures: [
-      'Génération PDF e-CMR',
-      'Carte GPS temps réel',
-      'Dashboard Cash-Flow',
-      'Scan Code-barre'
+      t('subscription.plans.solo.lf1', 'Génération PDF e-CMR'),
+      t('subscription.plans.solo.lf2', 'Carte GPS temps réel'),
+      t('subscription.plans.solo.lf3', 'Dashboard Cash-Flow'),
+      t('subscription.plans.solo.lf4', 'Scan Code-barre'),
     ],
     icon: Truck,
-    popular: false
+    popular: false,
   },
   {
     id: 'croissance',
-    name: 'CROISSANCE',
-    description: 'Pour les PME en expansion',
+    name: t('subscription.plans.croissance.name', 'CROISSANCE'),
+    description: t('subscription.plans.croissance.description', 'Pour les PME en expansion'),
     monthlyPrice: 189,
     yearlyPrice: 1890,
     features: [
-      'Jusqu\'à 15 camions',
-      'e-CMR PDF illimitées',
-      'Carte GPS temps réel',
-      'IA Anti-litige',
-      'Cash-Flow Dashboard',
-      'Score Éco-conduite',
-      'Support prioritaire'
+      t('subscription.plans.croissance.f1', "Jusqu'à 15 camions"),
+      t('subscription.plans.croissance.f2', 'e-CMR PDF illimitées'),
+      t('subscription.plans.croissance.f3', 'Carte GPS temps réel'),
+      t('subscription.plans.croissance.f4', 'IA Anti-litige'),
+      t('subscription.plans.croissance.f5', 'Cash-Flow Dashboard'),
+      t('subscription.plans.croissance.f6', 'Score Éco-conduite'),
+      t('subscription.plans.croissance.f7', 'Support prioritaire'),
     ],
     lockedFeatures: [
-      'Scan Code-barre',
-      'Portail Client avancé',
-      'API Access'
+      t('subscription.plans.croissance.lf1', 'Scan Code-barre'),
+      t('subscription.plans.croissance.lf2', 'Portail Client avancé'),
+      t('subscription.plans.croissance.lf3', 'API Access'),
     ],
     icon: Zap,
-    popular: true
+    popular: true,
   },
   {
     id: 'flotte_pro',
-    name: 'FLOTTE PRO',
-    description: 'Solution entreprise complète',
+    name: t('subscription.plans.flotte_pro.name', 'FLOTTE PRO'),
+    description: t('subscription.plans.flotte_pro.description', 'Solution entreprise complète'),
     monthlyPrice: 489,
     yearlyPrice: 4890,
     features: [
-      'Camions illimités',
-      'Toutes fonctionnalités',
-      'Scan Code-barre',
-      'Portail Client avancé',
-      'API Access complet',
-      'Carte Temps Réel',
-      'Support 24/7',
-      'Manager dédié'
+      t('subscription.plans.flotte_pro.f1', 'Camions illimités'),
+      t('subscription.plans.flotte_pro.f2', 'Toutes fonctionnalités'),
+      t('subscription.plans.flotte_pro.f3', 'Scan Code-barre'),
+      t('subscription.plans.flotte_pro.f4', 'Portail Client avancé'),
+      t('subscription.plans.flotte_pro.f5', 'API Access complet'),
+      t('subscription.plans.flotte_pro.f6', 'Carte Temps Réel'),
+      t('subscription.plans.flotte_pro.f7', 'Support 24/7'),
+      t('subscription.plans.flotte_pro.f8', 'Manager dédié'),
     ],
     lockedFeatures: [],
     icon: Building2,
-    popular: false
-  }
+    popular: false,
+  },
 ];
 
 export const SubscriptionPage = () => {
+  const { t } = useI18n();
   const [isYearly, setIsYearly] = useState(false);
   const [updating, setUpdating] = useState(false);
   const { plan: currentPlan, loading, updatePlan } = useSubscription();
   const { user } = useAuth();
+  const PLANS = buildPlans(t);
 
   const handleSelectPlan = async (planId) => {
     if (!user) {
-      toast.error('Veuillez vous connecter pour changer de plan');
+      toast.error(t('toasts.loginRequired', 'Veuillez vous connecter pour changer de plan'));
       return;
     }
 
     if (currentPlan === planId) {
-      toast.info('Vous êtes déjà sur ce plan');
+      toast.info(t('toasts.alreadyOnPlan', 'Vous êtes déjà sur ce plan'));
       return;
     }
 
@@ -97,13 +100,13 @@ export const SubscriptionPage = () => {
     try {
       const result = await updatePlan(planId, isYearly ? 'yearly' : 'monthly');
       if (result.success) {
-        toast.success(`Plan ${PLANS.find(p => p.id === planId)?.name} activé !`);
+        toast.success(`${PLANS.find(p => p.id === planId)?.name} — ${t('toasts.planActivated', 'Plan activé !')}`);
       } else {
-        toast.error(`Erreur : ${result.error || 'Mise à jour impossible'}`);
+        toast.error(`${t('toasts.error', 'Erreur')} : ${result.error || t('toasts.planUpdateFailed', 'Mise à jour impossible')}`);
       }
     } catch (error) {
       console.error('Plan update error:', error);
-      toast.error(`Erreur : ${error.response?.data?.detail || error.message}`);
+      toast.error(`${t('toasts.error', 'Erreur')} : ${error.response?.data?.detail || error.message}`);
     }
     setUpdating(false);
   };
@@ -126,8 +129,8 @@ export const SubscriptionPage = () => {
     <div className="space-y-8">
       {/* Header */}
       <div className="text-center">
-        <h2 className="text-3xl font-bold mb-2">Mon Abonnement</h2>
-        <p className="text-zinc-400">Choisissez le plan qui correspond à votre flotte</p>
+        <h2 className="text-3xl font-bold mb-2">{t('subscription.title', 'Mon Abonnement')}</h2>
+        <p className="text-zinc-400">{t('subscription.subtitle', 'Choisissez le plan qui correspond à votre flotte')}</p>
       </div>
 
       {/* Current Status */}
@@ -138,15 +141,15 @@ export const SubscriptionPage = () => {
               <Crown className="w-6 h-6 text-[#0066FF]" />
               <div>
                 <p className="font-semibold">
-                  Plan actuel : {PLANS.find(p => p.id === currentPlan)?.name || currentPlan}
+                  {t('subscription.currentPlan', 'Plan actuel')} : {PLANS.find(p => p.id === currentPlan)?.name || currentPlan}
                 </p>
                 <p className="text-sm text-zinc-400">
-                  Facturation {isYearly ? 'annuelle' : 'mensuelle'}
+                  {t('subscription.billingCycle', 'Facturation')} {isYearly ? t('subscription.billingYearly', 'annuelle') : t('subscription.billingMonthly', 'mensuelle')}
                 </p>
               </div>
             </div>
             <span className={`px-3 py-1 rounded-full text-sm text-white ${getPlanBadgeColor(currentPlan)}`}>
-              Actif
+              {t('subscription.active', 'Actif')}
             </span>
           </div>
         </div>
@@ -155,7 +158,7 @@ export const SubscriptionPage = () => {
       {/* Billing Toggle */}
       <div className="flex items-center justify-center gap-4">
         <span className={`font-medium ${!isYearly ? 'text-white' : 'text-zinc-400'}`}>
-          Mensuel
+          {t('subscription.monthly', 'Mensuel')}
         </span>
         <Switch
           checked={isYearly}
@@ -164,10 +167,10 @@ export const SubscriptionPage = () => {
           data-testid="billing-toggle"
         />
         <span className={`font-medium ${isYearly ? 'text-white' : 'text-zinc-400'}`}>
-          Annuel
+          {t('subscription.yearly', 'Annuel')}
         </span>
         <span className="px-3 py-1 bg-green-500/10 text-green-400 rounded-full text-sm font-medium">
-          -20% (2 mois offerts)
+          {t('subscription.saveYear', '-20% (2 mois offerts)')}
         </span>
       </div>
 
@@ -193,7 +196,7 @@ export const SubscriptionPage = () => {
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                   <span className="px-4 py-1 bg-[#0066FF] text-white text-xs font-semibold rounded-full flex items-center gap-1">
                     <Sparkles className="w-3 h-3" />
-                    POPULAIRE
+                    {t('subscription.popular', 'POPULAIRE')}
                   </span>
                 </div>
               )}
@@ -216,11 +219,11 @@ export const SubscriptionPage = () => {
                   <span className="text-zinc-400">€</span>
                 </div>
                 <p className="text-sm text-zinc-400">
-                  {isYearly ? '/an' : '/mois'}
+                  {isYearly ? t('subscription.perYear', '/an') : t('subscription.perMonth', '/mois')}
                 </p>
                 {isYearly && (
                   <p className="text-xs text-green-400 mt-1">
-                    Économisez {savings(plan.monthlyPrice, plan.yearlyPrice)}%
+                    {t('subscription.save', 'Économisez {percent}%').replace('{percent}', savings(plan.monthlyPrice, plan.yearlyPrice))}
                   </p>
                 )}
               </div>
@@ -263,11 +266,11 @@ export const SubscriptionPage = () => {
                 {isCurrentPlan ? (
                   <>
                     <Check className="w-4 h-4 mr-2" />
-                    Plan actuel
+                    {t('subscription.currentPlanBtn', 'Plan actuel')}
                   </>
                 ) : (
                   <>
-                    Choisir ce plan
+                    {t('subscription.selectPlan', 'Choisir ce plan')}
                     <ChevronRight className="w-4 h-4 ml-2" />
                   </>
                 )}
@@ -279,22 +282,22 @@ export const SubscriptionPage = () => {
 
       {/* Features Comparison */}
       <div className="bg-[#121214] border border-[#27272A] rounded-xl p-6">
-        <h3 className="text-lg font-semibold mb-4">Pourquoi passer au plan supérieur ?</h3>
+        <h3 className="text-lg font-semibold mb-4">{t('subscription.whyUpgrade', 'Pourquoi passer au plan supérieur ?')}</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="p-4 bg-[#1A1A1E] rounded-lg">
             <Shield className="w-8 h-8 text-[#0066FF] mb-3" />
-            <h4 className="font-semibold mb-1">IA Anti-litige</h4>
-            <p className="text-sm text-zinc-400">Protégez-vous des fausses réclamations avec l'analyse photo automatique</p>
+            <h4 className="font-semibold mb-1">{t('subscription.upgrade1Title', 'IA Anti-litige')}</h4>
+            <p className="text-sm text-zinc-400">{t('subscription.upgrade1Desc', "Protégez-vous des fausses réclamations avec l'analyse photo automatique")}</p>
           </div>
           <div className="p-4 bg-[#1A1A1E] rounded-lg">
             <Zap className="w-8 h-8 text-yellow-400 mb-3" />
-            <h4 className="font-semibold mb-1">Cash-Flow Instantané</h4>
-            <p className="text-sm text-zinc-400">Facturez à la seconde et suivez l'argent bloqué en temps réel</p>
+            <h4 className="font-semibold mb-1">{t('subscription.upgrade2Title', 'Cash-Flow Instantané')}</h4>
+            <p className="text-sm text-zinc-400">{t('subscription.upgrade2Desc', "Facturez à la seconde et suivez l'argent bloqué en temps réel")}</p>
           </div>
           <div className="p-4 bg-[#1A1A1E] rounded-lg">
             <Clock className="w-8 h-8 text-green-400 mb-3" />
-            <h4 className="font-semibold mb-1">Support Prioritaire</h4>
-            <p className="text-sm text-zinc-400">Assistance dédiée pour résoudre vos problèmes rapidement</p>
+            <h4 className="font-semibold mb-1">{t('subscription.upgrade3Title', 'Support Prioritaire')}</h4>
+            <p className="text-sm text-zinc-400">{t('subscription.upgrade3Desc', 'Assistance dédiée pour résoudre vos problèmes rapidement')}</p>
           </div>
         </div>
       </div>

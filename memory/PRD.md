@@ -266,7 +266,20 @@ Application SaaS logistique "Transporter-Pro" pour PME de transport.
 
 ## Backlog P2
 - [ ] Mode hors-ligne (localStorage + file sync)
+- [ ] Refacto `server.py` (~2400 lignes) → routers FastAPI modulaires (`/routes/auth.py`, `/routes/deliveries.py`, `/routes/settings.py`, `/routes/stripe.py`)
+- [ ] Refacto `AdminDashboard.jsx` (~1900 lignes) → extraire modals, EcoScoresTab, DamageReportCard, DeliveriesTab, DriversTab dans des fichiers séparés
+- [ ] Optimisation route OSRM (temps réel)
 
 ## Problèmes Connus
 - Firestore writes échouent silencieusement (Permission Denied) - non-bloquant
 - Blockchain timestamping MOCKÉ (SHA256)
+- Resend en mode test : ne peut envoyer qu'à l'email du compte Resend (2FA désactivée par défaut pour cette raison)
+
+### Phase 21 - i18n 100% Couverture (DONE - 7 Mai 2026)
+- [x] Auto-détection `navigator.language` au 1er chargement, respect du choix manuel sauvegardé en localStorage
+- [x] Suppression du fichier `pl.json` (focus sur FR/EN/ES uniquement)
+- [x] `fr.json`, `en.json`, `es.json` complétés avec sections : `cashflow.*` (détaillé), `drivers.*`, `litiges.*`, `subscription.plans.*`, `eco.*`, `toasts.*`, `modals.assignDriver.*`, `modals.notifications.*`
+- [x] AdminDashboard.jsx : tous toasts, modals (NewDelivery, AddDriver, AssignDelivery, Notifications), Cash-Flow détaillé (factures), Drivers tab, Litiges/DamageReportCard, EcoScoresTab, EcoChart, LockedFeatureOverlay traduits via `t()`
+- [x] SubscriptionPage.jsx : 100% refondu avec `buildPlans(t)` — plans, features, lockedFeatures, billing toggle, upgrade comparison
+- [x] Validé visuellement : FR/EN/ES rendent correctement sur Dashboard + Subscription + Sidebar + Settings
+
