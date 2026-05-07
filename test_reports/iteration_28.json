@@ -1,0 +1,97 @@
+{
+  "summary": "Iteration 28 — Regression testing after (1) backend server.py modular refactor into core/{db,models,auth,services}.py, (2) AdminDashboard.jsx split into components/admin/* sub-components, (3) new LanguageSwitcher header component with FR/EN/ES. Backend: 19/19 pytest pass — all critical endpoints (auth, company, drivers, dashboard stats, deliveries, eco-scores, damage, notifications, audit-logs, SIRET verify, subscription, stripe payment-links, settings/preferences PATCH, change-password, forgot-password, refresh, logout) respond correctly post-refactor. Frontend: Language switcher present in header with globe + locale label, opens menu with FR/EN/ES options (all data-testid present), switching to EN persists to localStorage tp-locale='en' and survives reload. Translations work on Overview ('Overview', 'Money locked (trucks)'), Drivers tab ('Add a driver', 'Total drivers'), Eco-scores tab, Subscription page ('My Subscription', 'Choose this plan', 'Current plan : GROWTH', 'Active'), Settings page ('Settings', 'My profile', 'Services & Billing', 'Manage billing'). NewDeliveryForm modal opens with EN labels (Recipient name, Address, Phone, Package description, Weight). Stripe shows Current plan : GROWTH Active correctly. NO regression on backend or major UI flows.",
+
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "Settings page (locale=en)",
+        "issues": [
+          "Partial i18n coverage — several hardcoded French strings remain when locale=en: 'NOM' (should be 'NAME'), 'STATUT' (should be 'STATUS'), 'Actif' (should be 'Active'), 'DATE D'INSCRIPTION', 'RAISON SOCIALE', 'TVA INTRA', 'ADRESSE DU SIÈGE', 'Logo entreprise (sidebar + futurs e-CMR PDF)', 'Choisir un logo', 'PNG / JPEG / WEBP / SVG · max 500 KB', 'Préférences de notification', 'Email envoyé'. The 4 spec-required strings (Settings / My profile / Services & Billing / Manage billing) ARE translated correctly so spec passes, but residual FR labels look inconsistent in EN UI."
+        ]
+      }
+    ]
+  },
+
+  "passed_tests": [
+    "Backend: POST /api/auth/login returns access_token (PASS)",
+    "Backend: GET /api/auth/me returns user with plan, subscription_status, language (PASS)",
+    "Backend: GET /api/auth/company-quota (PASS)",
+    "Backend: POST /api/auth/refresh (PASS)",
+    "Backend: GET /api/company returns SIRET company info (PASS)",
+    "Backend: GET /api/admin/drivers multi-tenant list (PASS)",
+    "Backend: GET /api/dashboard/stats (PASS)",
+    "Backend: GET /api/audit-logs?limit=3 (PASS)",
+    "Backend: GET /api/deliveries (PASS)",
+    "Backend: GET /api/eco-scores/summary (PASS)",
+    "Backend: GET /api/damage-reports (PASS)",
+    "Backend: GET /api/notifications (PASS)",
+    "Backend: GET /api/verify-siret/00000000000000 returns valid:false with 'introuvable' (PASS)",
+    "Backend: GET /api/subscription/plans (PASS)",
+    "Backend: GET /api/stripe/payment-links (PASS)",
+    "Backend: PATCH /api/settings/preferences {language:'en'} updates and is reflected in /auth/me (PASS)",
+    "Backend: POST /api/auth/forgot-password anti-enumeration returns 200 for unknown email (PASS)",
+    "Backend: POST /api/auth/change-password with valid current pwd succeeds + rollback (PASS)",
+    "Backend: POST /api/auth/logout (PASS)",
+    "Frontend: Login as azer@gmail.com lands on /dashboard (PASS)",
+    "Frontend: lang-switcher-btn visible in header with globe + locale label (PASS)",
+    "Frontend: Clicking switcher opens menu with lang-option-fr / -en / -es (PASS)",
+    "Frontend: Clicking EN switches dashboard text to English ('Overview', 'Money locked (trucks)', 'Generate e-CMR') (PASS)",
+    "Frontend: localStorage.tp-locale='en' after switching (PASS)",
+    "Frontend: Page reload preserves EN locale (switcher still shows EN, body still English) (PASS)",
+    "Frontend: Drivers tab in EN shows 'Add a driver' and 'Total drivers' (PASS)",
+    "Frontend: Eco-scores tab in EN renders with translations (extracted EcoScoresTab component) (PASS)",
+    "Frontend: Subscription page (sidebar) in EN shows 'My Subscription', 'Choose this plan', 'Current plan : GROWTH', 'Active', plan tiers (PASS)",
+    "Frontend: Settings page (sidebar) in EN shows 'Settings', 'My profile', 'Services & Billing', 'Manage billing' (PASS — spec strings)",
+    "Frontend: Add Driver modal opens via data-testid=add-driver-btn (extracted NewDriverForm) (PASS)",
+    "Frontend: New Delivery modal opens via data-testid=new-delivery-btn on Deliveries tab (extracted NewDeliveryForm) with EN labels Recipient name/Address/Phone/Package description/Weight (PASS)",
+    "Frontend: Stripe Current plan = GROWTH (CROISSANCE) Active badge visible (PASS)"
+  ],
+
+  "failed_tests": [],
+
+  "test_report_links": [
+    "/app/backend/tests/test_iteration28.py",
+    "/app/test_reports/pytest/pytest_iteration28.xml"
+  ],
+
+  "action_items": [
+    "MINOR i18n polish: Translate residual French strings on Settings page when locale=en — 'NOM' → 'NAME', 'STATUT' → 'STATUS', 'Actif' → 'Active', 'DATE D'INSCRIPTION' → 'REGISTRATION DATE', 'RAISON SOCIALE', 'TVA INTRA', 'ADRESSE DU SIÈGE' (these are French legal/admin terms, decide if they should be left as-is for FR business context or translated), 'Logo entreprise (sidebar + futurs e-CMR PDF)', 'Choisir un logo', 'Préférences de notification', 'Email envoyé'. Add corresponding keys to /app/frontend/src/i18n/{en,es}.json and replace hardcoded JSX text with t() calls in SettingsPage component."
+  ],
+
+  "critical_code_review_comments": [
+    "Backend refactor is clean — server.py imports from core/ work correctly; no circular imports detected; all 16 critical endpoints regression-tested green.",
+    "LanguageSwitcher component correctly stores manual override in localStorage and respects navigator.language autodetect on first visit (test browser detected 'en' → showed EN as default, which matches /app/frontend/src/i18n/index.jsx auto-detect spec).",
+    "AdminDashboard refactor (1067 lines from 1869) — extracted DashboardForms (NewDeliveryForm, NewDriverForm), DashboardHelpers (StatCard, GatedButton, LockedFeatureOverlay), DamageReportCard, EcoScoresTab — all render correctly when triggered by their data-testid buttons. No regression on tab switching, modal open/close, or chart rendering.",
+    "Iteration 27 critical bug (login response missing subscription_status) appears resolved — admin login flow works without gate redirect (azer@gmail.com lands directly on dashboard).",
+    "Settings page has incomplete i18n — about 8-10 hardcoded French strings remain. Not a regression (likely pre-existing), but worth fixing for full EN/ES experience."
+  ],
+
+  "updated_files": [
+    "/app/backend/tests/test_iteration28.py (new — 19 regression tests)"
+  ],
+
+  "success_rate": {
+    "backend": "100% (19/19 tests passed)",
+    "frontend": "95% — all spec-required flows pass; minor residual FR strings on Settings page in EN locale"
+  },
+
+  "test_credentials": {
+    "admin": "azer@gmail.com / Othmane2026! (plan: croissance, status: active)"
+  },
+
+  "seed_data_creation": "None — read-only regression tests; change-password test rolls back to original password.",
+
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+
+  "context_for_next_testing_agent": "Backend modular refactor is verified clean — /app/backend/tests/test_iteration28.py is the regression suite, run it after any future changes to core/* or server.py. Frontend i18n switcher and refactored AdminDashboard sub-components all work. Only residual finding is partial FR strings on SettingsPage when locale=en (NOM/STATUT/Actif/etc) — main agent should add ~10 i18n keys and replace hardcoded JSX. Sidebar navigation to Subscription/Settings keeps URL as /dashboard (these are tabs, not separate routes), so test by clicking the sidebar items not URL navigation.",
+
+  "mocked_apis": { "has_mocked_apis": false, "mocked_apis_list": [] }
+}

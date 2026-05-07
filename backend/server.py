@@ -5,7 +5,6 @@ import asyncio
 from fastapi import FastAPI, APIRouter, HTTPException, Request, Depends, UploadFile, File, Form
 from fastapi.responses import JSONResponse, FileResponse
 from starlette.middleware.cors import CORSMiddleware
-from motor.motor_asyncio import AsyncIOMotorClient
 from bson import ObjectId
 import os
 import logging
@@ -20,205 +19,44 @@ from typing import List, Optional, Literal
 import uuid
 from datetime import datetime, timezone, timedelta
 
+# Core (extracted helpers — see /app/backend/core/)
+from core.db import (
+    db, client, mongo_url,
+    JWT_SECRET, JWT_ALGORITHM,
+    EMERGENT_LLM_KEY, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET,
+    RESEND_API_KEY, SENDER_EMAIL, FRONTEND_BASE_URL,
+)
+from core.auth import (
+    hash_password, verify_password,
+    create_access_token, create_refresh_token,
+    get_current_user, require_role, log_action,
+)
+from core.services import (
+    create_blockchain_hash,
+    preprocess_image_base64, analyze_package_damage,
+    create_notification,
+)
+from core.models import (
+    UserCreate, UserLogin, UserResponse,
+    DeliveryCreate, DeliveryUpdate,
+    InvoiceCreate, DamageReportCreate,
+    EcoScoreUpdate, OfflineSyncData, ChatMessage,
+    CompanyOnboarding, DriverCreate,
+    SubscriptionUpdate, NotificationCreate,
+    ForgotPasswordRequest, ResetPasswordRequest, ChangePasswordRequest,
+    TwoFactorVerify, UserPreferences, LogoUpload, DeleteAccountRequest,
+)
+
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 ROOT_DIR = Path(__file__).parent
 
-# MongoDB connection
-mongo_url = os.environ['MONGO_URL']
-client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ['DB_NAME']]
-
-# JWT Config
-JWT_SECRET = os.environ.get("JWT_SECRET", secrets.token_hex(32))
-JWT_ALGORITHM = "HS256"
-EMERGENT_LLM_KEY = os.environ.get("EMERGENT_LLM_KEY")
-STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY")
-STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET")
-RESEND_API_KEY = os.environ.get("RESEND_API_KEY")
-SENDER_EMAIL = os.environ.get("SENDER_EMAIL", "onboarding@resend.dev")
-FRONTEND_BASE_URL = os.environ.get("FRONTEND_BASE_URL", "https://delivery-cash-flow.preview.emergentagent.com")
-
 app = FastAPI(title="Transporter-Pro API")
 api_router = APIRouter(prefix="/api")
 
-# ==================== MODELS ====================
 
-class UserCreate(BaseModel):
-    email: EmailStr
-    password: str
-    name: str
-    role: Literal["admin", "driver", "client"] = "client"
-
-class UserLogin(BaseModel):
-    email: EmailStr
-    password: str
-
-class UserResponse(BaseModel):
-    id: str
-    email: str
-    name: str
-    role: str
-    created_at: str
-
-class DeliveryCreate(BaseModel):
-    recipient_name: str
-    recipient_address: str
-    recipient_phone: str
-    package_description: str
-    weight_kg: float = 1.0
-    client_id: Optional[str] = None
-    driver_id: Optional[str] = None
-
-class DeliveryUpdate(BaseModel):
-    status: Optional[Literal["pending", "assigned", "in_transit", "delivered", "failed"]] = None
-    driver_id: Optional[str] = None
-    signature_data: Optional[str] = None
-    delivery_notes: Optional[str] = None
-
-class InvoiceCreate(BaseModel):
-    delivery_id: str
-    amount: float
-    client_id: str
-
-class DamageReportCreate(BaseModel):
-    delivery_id: str
-    photo_base64: str
-    description: Optional[str] = None
-
-class EcoScoreUpdate(BaseModel):
-    harsh_braking_count: int = 0
-    harsh_acceleration_count: int = 0
-    distance_km: float = 0
-    fuel_liters: float = 0
-
-class OfflineSyncData(BaseModel):
-    deliveries: List[dict] = []
-    damage_reports: List[dict] = []
-    signatures: List[dict] = []
-
-class ChatMessage(BaseModel):
-    message: str
-    history: List[dict] = []
-
-
-class CompanyOnboarding(BaseModel):
-    company_name: str
-    siret: str
-    tva_intra: str = ""
-    address: str
-
-
-class DriverCreate(BaseModel):
-    email: EmailStr
-    password: str
-    name: str
-    phone: Optional[str] = None
-    vehicle_plate: Optional[str] = None
-
-class SubscriptionUpdate(BaseModel):
-    plan: Literal["solo", "croissance", "flotte_pro"]
-    billing_cycle: Literal["monthly", "yearly"]
-
-class NotificationCreate(BaseModel):
-    user_id: str
-    type: str
-    title: str
-    message: str
-    delivery_id: Optional[str] = None
-
-# ==================== AUTH HELPERS ====================
-
-def hash_password(password: str) -> str:
-    salt = bcrypt.gensalt()
-    return bcrypt.hashpw(password.encode("utf-8"), salt).decode("utf-8")
-
-def verify_password(plain: str, hashed: str) -> bool:
-    return bcrypt.checkpw(plain.encode("utf-8"), hashed.encode("utf-8"))
-
-def create_access_token(user_id: str, email: str, role: str) -> str:
-    payload = {
-        "sub": user_id,
-        "email": email,
-        "role": role,
-        "exp": datetime.now(timezone.utc) + timedelta(minutes=60),
-        "type": "access"
-    }
-    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
-
-def create_refresh_token(user_id: str) -> str:
-    payload = {
-        "sub": user_id,
-        "exp": datetime.now(timezone.utc) + timedelta(days=7),
-        "type": "refresh"
-    }
-    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
-
-async def get_current_user(request: Request) -> dict:
-    token = request.cookies.get("access_token")
-    if not token:
-        auth_header = request.headers.get("Authorization", "")
-        if auth_header.startswith("Bearer "):
-            token = auth_header[7:]
-    if not token:
-        raise HTTPException(status_code=401, detail="Not authenticated")
-    try:
-        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-        if payload.get("type") != "access":
-            raise HTTPException(status_code=401, detail="Invalid token type")
-        user = await db.users.find_one({"_id": ObjectId(payload["sub"])})
-        if not user:
-            raise HTTPException(status_code=401, detail="User not found")
-        if user.get("status") == "deleted":
-            raise HTTPException(status_code=403, detail="Account deleted")
-        return {
-            "id": str(user["_id"]),
-            "email": user["email"],
-            "name": user["name"],
-            "role": user["role"],
-            "company_id": user.get("company_id", str(user["_id"])),
-            "plan": user.get("plan", "solo"),
-            "subscription_status": user.get("subscription_status", "trial"),
-            "trial_ends_at": user.get("trial_ends_at", "").isoformat() if isinstance(user.get("trial_ends_at"), datetime) else str(user.get("trial_ends_at", "")),
-            "onboarding_complete": user.get("onboarding_complete", False),
-            "created_at": user.get("created_at", "").isoformat() if isinstance(user.get("created_at"), datetime) else str(user.get("created_at", "")),
-            "language": user.get("language", "fr"),
-            "logo_base64": user.get("logo_base64", ""),
-            "2fa_enabled": user.get("2fa_enabled", False),
-            "notification_prefs": user.get("notification_prefs", {
-                "new_dispute": True,
-                "weekly_eco": True,
-                "quota_alert": True,
-            }),
-        }
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail="Token expired")
-    except jwt.InvalidTokenError:
-        raise HTTPException(status_code=401, detail="Invalid token")
-
-def require_role(*roles):
-    async def role_checker(user: dict = Depends(get_current_user)):
-        if user["role"] not in roles:
-            raise HTTPException(status_code=403, detail="Insufficient permissions")
-        return user
-    return role_checker
-
-# ==================== AUDIT LOGGING ====================
-
-async def log_action(user_id: str, company_id: str, action: str, entity_type: str, entity_id: str = "", details: str = ""):
-    """Log every significant action for traceability"""
-    await db.audit_logs.insert_one({
-        "user_id": user_id,
-        "company_id": company_id,
-        "action": action,
-        "entity_type": entity_type,
-        "entity_id": entity_id,
-        "details": details,
-        "timestamp": datetime.now(timezone.utc),
-        "ip": ""
-    })
 
 @api_router.get("/audit-logs")
 async def get_audit_logs(user: dict = Depends(require_role("admin")), limit: int = 50):
@@ -404,142 +242,6 @@ async def complete_onboarding(data: CompanyOnboarding, user: dict = Depends(requ
 
 
 
-# ==================== BLOCKCHAIN SIMULATION ====================
-
-def create_blockchain_hash(data: dict) -> dict:
-    timestamp = datetime.now(timezone.utc).isoformat()
-    data_str = str(data) + timestamp
-    hash_value = hashlib.sha256(data_str.encode()).hexdigest()
-    return {
-        "hash": hash_value,
-        "timestamp": timestamp,
-        "previous_hash": hashlib.sha256(timestamp.encode()).hexdigest()[:16],
-        "verified": True
-    }
-
-# ==================== AI DAMAGE DETECTION ====================
-
-def preprocess_image_base64(image_base64: str) -> str:
-    """Compress and convert image to JPEG before sending to Gemini"""
-    import base64 as b64module
-    from io import BytesIO
-    from PIL import Image
-    
-    try:
-        # Strip data URI prefix if present
-        if "," in image_base64[:100]:
-            image_base64 = image_base64.split(",", 1)[1]
-        
-        raw = b64module.b64decode(image_base64)
-        img = Image.open(BytesIO(raw))
-        
-        # Convert RGBA/palette to RGB
-        if img.mode in ("RGBA", "P", "LA"):
-            img = img.convert("RGB")
-        
-        # Resize if too large (max 1280px on longest side)
-        max_dim = 1280
-        if max(img.size) > max_dim:
-            ratio = max_dim / max(img.size)
-            new_size = (int(img.size[0] * ratio), int(img.size[1] * ratio))
-            img = img.resize(new_size, Image.LANCZOS)
-        
-        # Save as JPEG with quality 80
-        buffer = BytesIO()
-        img.save(buffer, format="JPEG", quality=80)
-        return b64module.b64encode(buffer.getvalue()).decode()
-    except Exception as e:
-        logger.warning(f"Image preprocessing failed: {e}")
-        # Return original if preprocessing fails
-        if "," in image_base64[:100]:
-            return image_base64.split(",", 1)[1]
-        return image_base64
-
-
-async def analyze_package_damage(image_base64: str) -> dict:
-    """Analyze package image for damage using Gemini 3 Flash Vision"""
-    try:
-        from emergentintegrations.llm.chat import LlmChat, UserMessage, ImageContent
-        
-        # Preprocess: compress + convert to JPEG
-        processed_image = preprocess_image_base64(image_base64)
-        
-        chat = LlmChat(
-            api_key=EMERGENT_LLM_KEY,
-            session_id=f"damage-{uuid.uuid4()}",
-            system_message="""Tu es un expert en analyse de dommages sur les colis pour la logistique. 
-            Analyse l'image et réponds UNIQUEMENT avec un objet JSON (pas de markdown, pas de backticks):
-            {
-                "is_damaged": boolean,
-                "damage_severity": "none" | "minor" | "moderate" | "severe",
-                "damage_type": string or null,
-                "confidence": 0-100,
-                "description": string en français décrivant ce que tu observes
-            }
-            Sois précis et descriptif dans le champ description."""
-        ).with_model("gemini", "gemini-3-flash-preview")
-        
-        image_content = ImageContent(image_base64=processed_image)
-        
-        user_message = UserMessage(
-            text="Analyse cette photo de colis pour détecter tout dommage visible : bosses, déchirures, écrasement, dommages par l'eau ou tout autre signe de détérioration. Décris en français.",
-            file_contents=[image_content]
-        )
-        
-        response = await chat.send_message(user_message)
-        
-        import json
-        try:
-            response_text = response.strip()
-            # Remove markdown code blocks if present
-            if response_text.startswith("```"):
-                lines = response_text.split("\n")
-                lines = [line for line in lines if not line.strip().startswith("```")]
-                response_text = "\n".join(lines)
-            if response_text.startswith("json"):
-                response_text = response_text[4:].strip()
-            result = json.loads(response_text)
-            # Validate expected fields
-            result.setdefault("is_damaged", False)
-            result.setdefault("damage_severity", "none")
-            result.setdefault("damage_type", None)
-            result.setdefault("confidence", 50)
-            result.setdefault("description", "Analyse terminée")
-            return result
-        except json.JSONDecodeError:
-            logger.warning(f"AI response not valid JSON: {response[:200]}")
-            return {
-                "is_damaged": False,
-                "damage_severity": "none",
-                "damage_type": None,
-                "confidence": 50,
-                "description": response[:300] if response else "Analyse terminée sans résultat structuré"
-            }
-    except Exception as e:
-        logger.error(f"AI Analysis error: {e}")
-        return {
-            "is_damaged": False,
-            "damage_severity": "unknown",
-            "damage_type": None,
-            "confidence": 0,
-            "description": "Analyse automatique impossible - Image non reconnue ou format incompatible"
-        }
-
-# ==================== NOTIFICATIONS ====================
-
-async def create_notification(user_id: str, notif_type: str, title: str, message: str, delivery_id: str = None):
-    """Create a notification for a user"""
-    notification = {
-        "user_id": user_id,
-        "type": notif_type,
-        "title": title,
-        "message": message,
-        "delivery_id": delivery_id,
-        "read": False,
-        "created_at": datetime.now(timezone.utc)
-    }
-    await db.notifications.insert_one(notification)
-    return notification
 
 # ==================== AUTH ENDPOINTS ====================
 
@@ -605,8 +307,11 @@ async def login(data: UserLogin, request: Request):
     attempts = await db.login_attempts.find_one({"identifier": identifier})
     if attempts and attempts.get("count", 0) >= 5:
         lockout_until = attempts.get("lockout_until")
-        if lockout_until and datetime.now(timezone.utc) < lockout_until:
-            raise HTTPException(status_code=429, detail="Too many attempts. Try again in 15 minutes.")
+        if isinstance(lockout_until, datetime):
+            if lockout_until.tzinfo is None:
+                lockout_until = lockout_until.replace(tzinfo=timezone.utc)
+            if datetime.now(timezone.utc) < lockout_until:
+                raise HTTPException(status_code=429, detail="Too many attempts. Try again in 15 minutes.")
     
     user = await db.users.find_one({"email": email})
     if not user or not verify_password(data.password, user["password_hash"]):
@@ -689,18 +394,6 @@ async def get_me(user: dict = Depends(get_current_user)):
 
 # ==================== PASSWORD MANAGEMENT (Forgot / Reset / Change) ====================
 
-class ForgotPasswordRequest(BaseModel):
-    email: EmailStr
-
-
-class ResetPasswordRequest(BaseModel):
-    token: str
-    new_password: str = Field(..., min_length=8, max_length=128)
-
-
-class ChangePasswordRequest(BaseModel):
-    current_password: str
-    new_password: str = Field(..., min_length=8, max_length=128)
 
 
 def _send_reset_email_html(name: str, reset_url: str) -> str:
@@ -939,9 +632,6 @@ async def _send_2fa_email(email: str, name: str, code: str) -> bool:
         return False
 
 
-class TwoFactorVerify(BaseModel):
-    challenge_token: str
-    code: str = Field(..., min_length=6, max_length=6)
 
 
 @api_router.post("/auth/2fa/verify")
@@ -1019,10 +709,6 @@ async def get_company_info(user: dict = Depends(require_role("admin"))):
 
 # ==================== SETTINGS / PREFERENCES ====================
 
-class UserPreferences(BaseModel):
-    language: Optional[Literal["fr", "en", "es"]] = None
-    notification_prefs: Optional[dict] = None
-    two_fa_enabled: Optional[bool] = None
 
 
 @api_router.patch("/settings/preferences")
@@ -1046,8 +732,6 @@ async def update_preferences(data: UserPreferences, user: dict = Depends(get_cur
     return {"message": "Préférences mises à jour", "updated": list(update.keys())}
 
 
-class LogoUpload(BaseModel):
-    logo_base64: str = Field(..., min_length=10, max_length=800_000)  # ~600KB image max
 
 
 @api_router.post("/settings/logo")
@@ -1108,9 +792,6 @@ async def create_billing_portal(user: dict = Depends(require_role("admin"))):
 
 # ==================== DELETE ACCOUNT ====================
 
-class DeleteAccountRequest(BaseModel):
-    password: str
-    confirmation: Literal["SUPPRIMER"]
 
 
 @api_router.delete("/auth/account")
