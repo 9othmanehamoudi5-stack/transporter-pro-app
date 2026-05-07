@@ -66,9 +66,9 @@ const ProfileSection = ({ user, company }) => {
   const planLabel = PLAN_LABELS[user?.plan] || user?.plan || '—';
   const statusBadge =
     user?.subscription_status === 'active'
-      ? { label: 'Actif', cls: 'bg-green-500/10 text-green-400 border-green-500/30' }
+      ? { label: t('settings.statusActive', 'Actif'), cls: 'bg-green-500/10 text-green-400 border-green-500/30' }
       : user?.subscription_status === 'trialing'
-      ? { label: 'Essai en cours', cls: 'bg-blue-500/10 text-blue-400 border-blue-500/30' }
+      ? { label: t('settings.statusTrial', 'Essai en cours'), cls: 'bg-blue-500/10 text-blue-400 border-blue-500/30' }
       : { label: user?.subscription_status || '—', cls: 'bg-zinc-500/10 text-zinc-400 border-zinc-500/30' };
 
   return (
@@ -83,11 +83,11 @@ const ProfileSection = ({ user, company }) => {
         </div>
       </div>
       <div className="p-6 grid sm:grid-cols-2 gap-5">
-        <Field icon={Mail} label="Email" value={user?.email} testid="profile-email" />
-        <Field icon={UserIcon} label="Nom" value={user?.name} testid="profile-name" />
-        <Field icon={Shield} label="Plan" value={planLabel} testid="profile-plan" />
+        <Field icon={Mail} label={t('settings.fieldEmail', 'Email')} value={user?.email} testid="profile-email" />
+        <Field icon={UserIcon} label={t('settings.fieldName', 'Nom')} value={user?.name} testid="profile-name" />
+        <Field icon={Shield} label={t('settings.fieldPlan', 'Plan')} value={planLabel} testid="profile-plan" />
         <div>
-          <p className="text-[11px] uppercase tracking-wider text-zinc-500 mb-1.5">Statut</p>
+          <p className="text-[11px] uppercase tracking-wider text-zinc-500 mb-1.5">{t('settings.fieldStatus', 'Statut')}</p>
           <span
             className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${statusBadge.cls}`}
             data-testid="profile-subscription-status"
@@ -95,12 +95,12 @@ const ProfileSection = ({ user, company }) => {
             <CheckCircle2 className="w-3 h-3" /> {statusBadge.label}
           </span>
         </div>
-        <Field icon={Calendar} label="Date d'inscription" value={formatDate(user?.created_at)} testid="profile-created" />
-        <Field icon={Building2} label="Raison sociale" value={company?.company_name || '—'} testid="company-name" />
-        <Field label="SIRET" value={company?.siret || '—'} mono testid="company-siret" />
-        <Field label="TVA Intra" value={company?.tva_intra || '—'} mono testid="company-tva" />
+        <Field icon={Calendar} label={t('settings.fieldCreated', "Date d'inscription")} value={formatDate(user?.created_at)} testid="profile-created" />
+        <Field icon={Building2} label={t('settings.fieldCompanyName', 'Raison sociale')} value={company?.company_name || '—'} testid="company-name" />
+        <Field label={t('settings.fieldSiret', 'SIRET')} value={company?.siret || '—'} mono testid="company-siret" />
+        <Field label={t('settings.fieldTva', 'TVA Intra')} value={company?.tva_intra || '—'} mono testid="company-tva" />
         <div className="sm:col-span-2">
-          <Field label="Adresse du siège" value={company?.address || '—'} testid="company-address" />
+          <Field label={t('settings.fieldAddress', 'Adresse du siège')} value={company?.address || '—'} testid="company-address" />
         </div>
       </div>
     </div>
@@ -277,7 +277,7 @@ const CustomizationSection = ({ user, refreshUser }) => {
       <div className="p-6 space-y-6">
         {/* Logo */}
         <div>
-          <Label className="text-zinc-300 mb-3 block">Logo entreprise (sidebar + futurs e-CMR PDF)</Label>
+          <Label className="text-zinc-300 mb-3 block">{t('settings.logoLabel', 'Logo entreprise (sidebar + futurs e-CMR PDF)')}</Label>
           <div className="flex items-center gap-4">
             <div className="w-20 h-20 rounded-2xl bg-[#0A0A0B] border border-[#27272A] flex items-center justify-center overflow-hidden">
               {logo ? (
@@ -297,7 +297,7 @@ const CustomizationSection = ({ user, refreshUser }) => {
                 data-testid="upload-logo-btn"
               >
                 <Upload className="w-4 h-4 mr-2" />
-                {uploading ? 'Envoi…' : logo ? 'Changer le logo' : 'Choisir un logo'}
+                {uploading ? t('settings.uploading', 'Envoi…') : logo ? t('settings.changeLogo', 'Changer le logo') : t('settings.uploadLogo', 'Choisir un logo')}
               </Button>
               {logo && (
                 <Button
@@ -307,10 +307,10 @@ const CustomizationSection = ({ user, refreshUser }) => {
                   className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
                   data-testid="remove-logo-btn"
                 >
-                  Supprimer
+                  {t('settings.removeLogo', 'Supprimer')}
                 </Button>
               )}
-              <p className="text-[11px] text-zinc-500">PNG / JPEG / WEBP / SVG · max 500 KB</p>
+              <p className="text-[11px] text-zinc-500">{t('settings.logoHint', 'PNG / JPEG / WEBP / SVG · max 500 Ko')}</p>
             </div>
           </div>
         </div>
@@ -318,13 +318,13 @@ const CustomizationSection = ({ user, refreshUser }) => {
         {/* Notifications */}
         <div className="border-t border-[#27272A] pt-6">
           <p className="text-sm text-zinc-300 font-medium mb-1 flex items-center gap-2">
-            <Bell className="w-4 h-4" /> Préférences de notification
+            <Bell className="w-4 h-4" /> {t('settings.notifications', 'Préférences de notification')}
           </p>
-          <p className="text-xs text-zinc-500 mb-4">Email envoyé pour chaque événement activé.</p>
+          <p className="text-xs text-zinc-500 mb-4">{t('settings.notifSubtitle', 'Email envoyé pour chaque événement activé.')}</p>
           <div className="space-y-3">
-            <PrefRow label="Nouveau litige détecté" desc="Email instantané dès qu'un dommage est signalé" checked={prefs.new_dispute} onChange={() => togglePref('new_dispute')} testid="pref-new-dispute" />
-            <PrefRow label="Rapport hebdomadaire Éco-score" desc="Lundi matin — synthèse de la semaine de vos chauffeurs" checked={prefs.weekly_eco} onChange={() => togglePref('weekly_eco')} testid="pref-weekly-eco" />
-            <PrefRow label="Alerte quota chauffeurs" desc="Quand vous atteignez 80% / 100% de votre quota du plan" checked={prefs.quota_alert} onChange={() => togglePref('quota_alert')} testid="pref-quota-alert" />
+            <PrefRow label={t('settings.notifNewDispute', 'Nouveau litige détecté')} desc={t('settings.notifNewDisputeDesc', "Email instantané dès qu'un dommage est signalé")} checked={prefs.new_dispute} onChange={() => togglePref('new_dispute')} testid="pref-new-dispute" />
+            <PrefRow label={t('settings.notifWeeklyEco', 'Rapport hebdomadaire Éco-score')} desc={t('settings.notifWeeklyEcoDesc', 'Lundi matin — synthèse de la semaine')} checked={prefs.weekly_eco} onChange={() => togglePref('weekly_eco')} testid="pref-weekly-eco" />
+            <PrefRow label={t('settings.notifQuota', 'Alerte quota chauffeurs')} desc={t('settings.notifQuotaDesc', 'Quand vous atteignez 80% / 100% de votre quota')} checked={prefs.quota_alert} onChange={() => togglePref('quota_alert')} testid="pref-quota-alert" />
           </div>
         </div>
       </div>

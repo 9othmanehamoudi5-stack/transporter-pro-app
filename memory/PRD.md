@@ -266,16 +266,29 @@ Application SaaS logistique "Transporter-Pro" pour PME de transport.
 
 ## Backlog P2
 - [ ] Mode hors-ligne (localStorage + file sync)
-- [ ] Refacto `server.py` (~2400 lignes) → routers FastAPI modulaires (`/routes/auth.py`, `/routes/deliveries.py`, `/routes/settings.py`, `/routes/stripe.py`)
-- [ ] Refacto `AdminDashboard.jsx` (~1900 lignes) → extraire modals, EcoScoresTab, DamageReportCard, DeliveriesTab, DriversTab dans des fichiers séparés
 - [ ] Optimisation route OSRM (temps réel)
+- [ ] Future refacto Phase B : déplacer les endpoints de server.py vers `/app/backend/routes/{auth,deliveries,drivers,stripe,eco,disputes,settings}.py` (les helpers sont déjà extraits dans `core/`)
 
 ## Problèmes Connus
 - Firestore writes échouent silencieusement (Permission Denied) - non-bloquant
 - Blockchain timestamping MOCKÉ (SHA256)
 - Resend en mode test : ne peut envoyer qu'à l'email du compte Resend (2FA désactivée par défaut pour cette raison)
 
-### Phase 21 - i18n 100% Couverture (DONE - 7 Mai 2026)
+### Phase 22 - Refacto Code + Header Lang Switcher (DONE - 7 Mai 2026)
+- [x] **Header LanguageSwitcher** : globe + dropdown FR/EN/ES dans `/app/frontend/src/components/LanguageSwitcher.jsx`, intégré au header AdminDashboard à côté de la cloche notifications. Persistance localStorage, fermeture sur outside-click.
+- [x] **Frontend refacto AdminDashboard.jsx** : 1869 → 1067 lignes (-43%). Composants extraits dans `/app/frontend/src/components/admin/` :
+  - `DashboardHelpers.jsx` (StatCard, GatedButton, LockedFeatureOverlay)
+  - `DamageReportCard.jsx` (carte litige + preview photo + retry IA)
+  - `EcoScoresTab.jsx` (podium top 3, AreaChart Recharts, table chauffeurs, export TXT)
+  - `DashboardForms.jsx` (NewDeliveryForm, NewDriverForm, AssignDeliveryForm)
+- [x] **Backend refacto server.py** : 2434 → 2100 lignes (-14%). Helpers extraits dans `/app/backend/core/` :
+  - `db.py` (mongo client, env vars : JWT, EMERGENT_LLM_KEY, STRIPE_*, RESEND_API_KEY, FRONTEND_BASE_URL)
+  - `models.py` (~15 Pydantic models avec validators Field)
+  - `auth.py` (hash_password, verify_password, JWT tokens, get_current_user, require_role, log_action)
+  - `services.py` (create_blockchain_hash, preprocess_image_base64, analyze_package_damage, create_notification)
+- [x] **Bug fix tz-naive datetime** : login_attempts.lockout_until comparison défensive (tz-aware).
+- [x] **i18n SettingsPage.jsx** : 51 clés `settings.*` complètes — fields profil (Email, Nom, Plan, Statut, Date inscription, Raison sociale, SIRET, TVA, Adresse), badges Actif/Trial, logo (Choisir, Changer, Supprimer, hint format), Préférences notification, etc.
+- [x] **Validation iteration_28.json** : Backend 19/19 PASS + Frontend toutes specs PASS, ZÉRO régression. Stripe portal/plans intact, multi-tenant filtré, SIRET INSEE OK.
 - [x] Auto-détection `navigator.language` au 1er chargement, respect du choix manuel sauvegardé en localStorage
 - [x] Suppression du fichier `pl.json` (focus sur FR/EN/ES uniquement)
 - [x] `fr.json`, `en.json`, `es.json` complétés avec sections : `cashflow.*` (détaillé), `drivers.*`, `litiges.*`, `subscription.plans.*`, `eco.*`, `toasts.*`, `modals.assignDriver.*`, `modals.notifications.*`
