@@ -11,6 +11,7 @@
     "pendingSub": "Invoices",
     "monthRevenue": "Revenue this month",
     "monthRevenueSub": "Revenue",
+    "stripeOf": "incl. Stripe",
     "detailedTitle": "Detailed Cash-Flow",
     "weeklyForecast": "Weekly forecast",
     "totalLocked": "Total locked",

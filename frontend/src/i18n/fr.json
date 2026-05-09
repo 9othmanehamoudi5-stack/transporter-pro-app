@@ -11,6 +11,7 @@
     "pendingSub": "Factures",
     "monthRevenue": "CA ce mois",
     "monthRevenueSub": "Chiffre d'affaires",
+    "stripeOf": "dont Stripe",
     "detailedTitle": "Cash-Flow détaillé",
     "weeklyForecast": "Prévision hebdo",
     "totalLocked": "Total bloqué",

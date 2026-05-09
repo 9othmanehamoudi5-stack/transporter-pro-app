@@ -1937,18 +1937,41 @@ async def get_cash_flow(user: dict = Depends(require_role("admin"))):
     # Pending invoices for this company
     pending_invoices = await db.invoices.count_documents({"company_id": cid, "status": "pending"})
     
-    # Total revenue this month
+    # Revenue this month — combines in-app paid invoices + real Stripe charges
     start_of_month = datetime.now(timezone.utc).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     paid_this_month = await db.invoices.aggregate([
         {"$match": {"company_id": cid, "status": "paid", "paid_at": {"$gte": start_of_month}}},
         {"$group": {"_id": None, "total": {"$sum": "$amount"}}}
     ]).to_list(1)
-    
+    invoice_revenue = paid_this_month[0]["total"] if paid_this_month else 0
+
+    # Stripe revenue — successful charges this month for the company's customer
+    stripe_revenue = 0.0
+    user_doc = await db.users.find_one({"_id": ObjectId(user["id"])})
+    customer_id = (user_doc or {}).get("stripe_customer_id", "")
+    if STRIPE_SECRET_KEY and customer_id and not customer_id.startswith("manual_"):
+        try:
+            import stripe
+            stripe.api_key = STRIPE_SECRET_KEY
+            charges = await asyncio.to_thread(
+                stripe.Charge.list,
+                customer=customer_id,
+                created={"gte": int(start_of_month.timestamp())},
+                limit=100,
+            )
+            for ch in charges.auto_paging_iter() if hasattr(charges, "auto_paging_iter") else charges.data:
+                if ch.get("paid") and ch.get("status") == "succeeded" and not ch.get("refunded"):
+                    stripe_revenue += (ch.get("amount") or 0) / 100.0
+        except Exception as e:
+            logger.warning(f"Stripe revenue fetch failed for {user['email']}: {e}")
+
     return {
         "money_blocked_in_trucks": blocked.get("total_blocked", 0),
         "blocked_deliveries_count": blocked.get("count", 0),
         "pending_invoices_count": pending_invoices,
-        "revenue_this_month": paid_this_month[0]["total"] if paid_this_month else 0
+        "revenue_this_month": round(invoice_revenue + stripe_revenue, 2),
+        "stripe_revenue_this_month": round(stripe_revenue, 2),
+        "invoice_revenue_this_month": round(invoice_revenue, 2),
     }
 
 @api_router.get("/dashboard/stats")

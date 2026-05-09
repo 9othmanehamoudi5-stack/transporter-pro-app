@@ -448,11 +448,16 @@ export const AdminDashboard = () => {
                       {cashFlow?.pending_invoices_count || 0}
                     </p>
                   </div>
-                  <div className="p-4 bg-[#1A1A1E] rounded-lg">
+                  <div className="p-4 bg-[#1A1A1E] rounded-lg" data-testid="kpi-month-revenue">
                     <p className="text-sm text-zinc-400 mb-1">{t('cashflow.monthRevenue', 'CA ce mois')}</p>
                     <p className="text-2xl font-bold font-mono text-green-400">
-                      {(cashFlow?.revenue_this_month || 0).toLocaleString('fr-FR')} €
+                      {(cashFlow?.revenue_this_month || 0).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
                     </p>
+                    {cashFlow?.stripe_revenue_this_month > 0 && (
+                      <p className="text-[11px] text-zinc-500 mt-1">
+                        {t('cashflow.stripeOf', 'dont Stripe')} : {cashFlow.stripe_revenue_this_month.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>

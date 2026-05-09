@@ -11,6 +11,7 @@
     "pendingSub": "Facturas",
     "monthRevenue": "Ingresos del mes",
     "monthRevenueSub": "Ingresos",
+    "stripeOf": "incl. Stripe",
     "detailedTitle": "Tesorería detallada",
     "weeklyForecast": "Previsión semanal",
     "totalLocked": "Total bloqueado",
