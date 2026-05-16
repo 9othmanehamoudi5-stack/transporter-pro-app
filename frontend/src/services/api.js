@@ -126,6 +126,20 @@ export const deliveriesApi = {
       throw error;
     }
   },
+
+  // Download operational PDF report
+  downloadReport: async (trackingId) => {
+    const response = await api.get(`/deliveries/${trackingId}/pdf`, { responseType: 'blob' });
+    const blob = new Blob([response.data], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `rapport-${trackingId}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 100);
+    return response;
+  },
   
   // Create - save to backend (primary), sync to Firestore
   create: async (data) => {

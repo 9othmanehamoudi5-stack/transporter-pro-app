@@ -1454,6 +1454,60 @@ async def get_delivery(tracking_id: str):
     
     return delivery
 
+
+@api_router.get("/deliveries/{tracking_id}/pdf")
+async def download_delivery_pdf(tracking_id: str, user: dict = Depends(get_current_user)):
+    """Generate and return an Operational Delivery Report PDF for the given tracking_id.
+    Available once the delivery is in_transit or delivered. Multi-tenant filtered by company_id."""
+    from fastapi.responses import Response
+    from core.pdf_report import generate_delivery_report_pdf
+
+    delivery = await db.deliveries.find_one({"tracking_id": tracking_id})
+    if not delivery:
+        raise HTTPException(status_code=404, detail="Livraison introuvable")
+
+    # Multi-tenant: only the owning company (or its drivers) can download
+    cid = user.get("company_id", "")
+    if delivery.get("company_id") and delivery.get("company_id") != cid:
+        raise HTTPException(status_code=403, detail="Accès refusé")
+
+    # Resolve company + logo (admin's record holds both)
+    admin_id = cid or delivery.get("admin_id") or user["id"]
+    company_doc = await db.companies.find_one({"admin_id": admin_id}) or {}
+    admin_doc = await db.users.find_one({"_id": ObjectId(admin_id)}) or {}
+    logo_b64 = admin_doc.get("logo_base64") or company_doc.get("logo_base64") or ""
+
+    # Resolve driver name
+    driver_name = ""
+    if delivery.get("driver_id"):
+        try:
+            drv = await db.users.find_one({"_id": ObjectId(delivery["driver_id"])})
+            driver_name = (drv or {}).get("name", "")
+        except Exception:
+            driver_name = ""
+
+    pdf_bytes = generate_delivery_report_pdf(
+        delivery=delivery,
+        company={
+            "company_name": company_doc.get("company_name") or admin_doc.get("company_name", ""),
+            "siret": company_doc.get("siret", ""),
+            "tva_intra": company_doc.get("tva_intra", ""),
+            "address": company_doc.get("address", ""),
+        },
+        logo_b64=logo_b64,
+        driver_name=driver_name,
+    )
+
+    await log_action(user["id"], cid, "download_delivery_pdf", "delivery", tracking_id, "PDF rapport opérationnel téléchargé")
+
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'attachment; filename="rapport-{tracking_id}.pdf"',
+        },
+    )
+
 @api_router.patch("/deliveries/{tracking_id}")
 async def update_delivery(tracking_id: str, data: DeliveryUpdate, user: dict = Depends(get_current_user)):
     update_data = {"updated_at": datetime.now(timezone.utc)}

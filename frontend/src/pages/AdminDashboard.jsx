@@ -224,6 +224,15 @@ export const AdminDashboard = () => {
     }
   };
 
+  const handleDownloadDeliveryPdf = async (trackingId) => {
+    try {
+      await deliveriesApi.downloadReport(trackingId);
+      toast.success(`${t('toasts.pdfDownloaded', 'PDF téléchargé')} : ${trackingId}`);
+    } catch (error) {
+      toast.error(`${t('toasts.error', 'Erreur')} : ${error.response?.data?.detail || error.message}`);
+    }
+  };
+
   const sidebarItems = [
     { id: 'overview', label: t('sidebar.overview', "Vue d'ensemble"), icon: TrendingUp },
     { id: 'deliveries', label: t('sidebar.deliveries', 'Livraisons'), icon: Package },
@@ -594,6 +603,19 @@ export const AdminDashboard = () => {
                                 data-testid={`assign-driver-${d.tracking_id}`}
                               >
                                 {t('actions.assign', 'Assigner')}
+                              </Button>
+                            )}
+                            {(d.status === 'delivered' || d.status === 'in_transit') && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleDownloadDeliveryPdf(d.tracking_id)}
+                                className="border-[#27272A] text-zinc-300 hover:text-white hover:bg-[#1A1A1E]"
+                                data-testid={`download-pdf-${d.tracking_id}`}
+                                title={t('actions.downloadReportPdf', 'Télécharger le rapport (PDF)')}
+                              >
+                                <FileText className="w-3.5 h-3.5 mr-1" />
+                                PDF
                               </Button>
                             )}
                             {d.blockchain_proof && (

@@ -37,7 +37,7 @@
     "statusPending": "Pendiente",
     "markPaid": "Marcar pagada"
   },
-  "actions": { "generateCmr": "Generar e-CMR", "gpsMap": "Mapa GPS", "scanBarcode": "Escanear código", "clientPortal": "Portal cliente", "newDelivery": "Nueva entrega", "addDriver": "Añadir conductor", "assign": "Asignar", "delete": "Eliminar", "edit": "Editar", "view": "Ver", "refresh": "Refrescar", "save": "Guardar", "cancel": "Cancelar", "confirm": "Confirmar", "back": "Volver", "create": "Crear" },
+  "actions": { "generateCmr": "Generar e-CMR", "gpsMap": "Mapa GPS", "scanBarcode": "Escanear código", "clientPortal": "Portal cliente", "newDelivery": "Nueva entrega", "addDriver": "Añadir conductor", "assign": "Asignar", "delete": "Eliminar", "edit": "Editar", "view": "Ver", "refresh": "Refrescar", "save": "Guardar", "cancel": "Cancelar", "confirm": "Confirmar", "back": "Volver", "create": "Crear", "downloadReportPdf": "Descargar informe (PDF)" },
   "tabs": { "recentDeliveries": "Últimas entregas", "allDeliveries": "Todas las entregas", "myDrivers": "Mis conductores", "myDisputes": "Mis disputas", "ecoScoresTitle": "Eco-rendimiento de la flota" },
   "status": { "pending": "Pendiente", "assigned": "Asignado", "in_transit": "En tránsito", "delivered": "Entregado", "dispute": "Disputa", "active": "Activo", "trialing": "Prueba en curso", "failed": "Fallido" },
   "modals": {
