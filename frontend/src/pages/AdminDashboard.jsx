@@ -12,6 +12,7 @@ import { StatCard, GatedButton, LockedFeatureOverlay } from '../components/admin
 import { DamageReportCard } from '../components/admin/DamageReportCard';
 import { EcoScoresTab } from '../components/admin/EcoScoresTab';
 import { NewDeliveryForm, NewDriverForm, AssignDeliveryForm } from '../components/admin/DashboardForms';
+import { RevenueSparkline } from '../components/admin/RevenueSparkline';
 import { useI18n } from '../i18n/index';
 import { Button } from '../components/ui/button';
 import { 
@@ -453,6 +454,7 @@ export const AdminDashboard = () => {
                     <p className="text-2xl font-bold font-mono text-green-400">
                       {(cashFlow?.revenue_this_month || 0).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
                     </p>
+                    <RevenueSparkline data={cashFlow?.revenue_sparkline_30d || []} color="#22c55e" height={40} />
                     {cashFlow?.stripe_revenue_this_month > 0 && (
                       <p className="text-[11px] text-zinc-500 mt-1">
                         {t('cashflow.stripeOf', 'dont Stripe')} : {cashFlow.stripe_revenue_this_month.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
