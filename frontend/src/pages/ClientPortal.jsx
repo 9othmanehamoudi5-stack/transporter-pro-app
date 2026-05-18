@@ -1,10 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import { trackingApi } from '../services/api';
 import { 
   Truck, Package, CheckCircle, Clock, MapPin, 
   AlertTriangle, Shield, Loader2 
 } from 'lucide-react';
+
+// Status pin icon for public tracking map
+const trackingPinIcon = L.divIcon({
+  className: 'tracking-pin',
+  html: `<div style="
+    width: 38px; height: 38px;
+    background: #0066FF;
+    border: 3px solid #fff;
+    border-radius: 50% 50% 50% 0;
+    transform: rotate(-45deg);
+    box-shadow: 0 4px 12px rgba(0,102,255,0.5);
+    display:flex; align-items:center; justify-content:center;
+  "><div style="transform: rotate(45deg); color:#fff; font-size:16px;">📦</div></div>`,
+  iconSize: [38, 38],
+  iconAnchor: [19, 38],
+});
 
 const statusSteps = [
   { key: 'pending', label: 'Commande reçue', icon: Package },
@@ -58,7 +77,7 @@ export const ClientPortal = () => {
       <div className="absolute inset-0 bg-black/70" />
 
       {/* Content */}
-      <div className="relative z-10 w-full max-w-md">
+      <div className="relative z-10 w-full max-w-xl">
         {/* Logo */}
         <div className="flex items-center justify-center gap-3 mb-6">
           <div className="w-10 h-10 bg-[#0066FF] rounded-lg flex items-center justify-center">
@@ -119,6 +138,32 @@ export const ClientPortal = () => {
                   </div>
                 </div>
               </div>
+
+              {/* Mini Map */}
+              {delivery.lat && delivery.lng && (
+                <div className="rounded-xl overflow-hidden border border-[#27272A] mb-6" style={{ height: 200 }} data-testid="public-track-map">
+                  <MapContainer
+                    center={[delivery.lat, delivery.lng]}
+                    zoom={14}
+                    scrollWheelZoom={false}
+                    style={{ height: '100%', width: '100%' }}
+                    zoomControl={false}
+                    attributionControl={false}
+                  >
+                    <TileLayer
+                      url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                    />
+                    <Marker position={[delivery.lat, delivery.lng]} icon={trackingPinIcon}>
+                      <Popup>
+                        <div style={{ color: '#fff', background: '#121214', padding: 8, borderRadius: 6, minWidth: 160 }}>
+                          <p style={{ fontWeight: 'bold', marginBottom: 4 }}>{delivery.recipient_name}</p>
+                          <p style={{ fontSize: 11, color: '#a1a1aa' }}>{delivery.recipient_address}</p>
+                        </div>
+                      </Popup>
+                    </Marker>
+                  </MapContainer>
+                </div>
+              )}
 
               {/* Progress Steps */}
               <div className="space-y-3 mb-6">

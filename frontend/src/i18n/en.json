@@ -44,7 +44,7 @@
     "statusPending": "Pending",
     "markPaid": "Mark as paid"
   },
-  "actions": { "generateCmr": "Generate e-CMR", "gpsMap": "GPS Map", "scanBarcode": "Scan barcode", "clientPortal": "Client portal", "newDelivery": "New delivery", "addDriver": "Add driver", "assign": "Assign", "delete": "Delete", "edit": "Edit", "view": "View", "refresh": "Refresh", "save": "Save", "cancel": "Cancel", "confirm": "Confirm", "back": "Back", "create": "Create", "downloadReportPdf": "Download report (PDF)", "optimizeRoute": "Optimize route", "optimizing": "Optimizing…" },
+  "actions": { "generateCmr": "Generate e-CMR", "gpsMap": "GPS Map", "scanBarcode": "Scan barcode", "clientPortal": "Client portal", "newDelivery": "New delivery", "addDriver": "Add driver", "assign": "Assign", "delete": "Delete", "edit": "Edit", "view": "View", "refresh": "Refresh", "save": "Save", "cancel": "Cancel", "confirm": "Confirm", "back": "Back", "create": "Create", "downloadReportPdf": "Download report (PDF)", "optimizeRoute": "Optimize route", "optimizing": "Optimizing…", "copyTrackingLink": "Copy tracking link" },
   "tabs": { "recentDeliveries": "Recent deliveries", "allDeliveries": "All deliveries", "myDrivers": "My drivers", "myDisputes": "My disputes", "ecoScoresTitle": "Fleet Eco-Performance" },
   "status": { "pending": "Pending", "assigned": "Assigned", "in_transit": "In transit", "delivered": "Delivered", "dispute": "Dispute", "active": "Active", "trialing": "Trial in progress", "failed": "Failed" },
   "modals": {
@@ -153,7 +153,8 @@
     "alreadyOnPlan": "You are already on this plan",
     "planActivated": "Plan activated!",
     "planUpdateFailed": "Update not possible",
-    "routeOptimized": "Route optimized: {count} stops · {km} km saved!"
+    "routeOptimized": "Route optimized: {count} stops · {km} km saved!",
+    "linkCopied": "Tracking link copied"
   },
   "drivers": {
     "fleetMgmt": "Fleet Management",

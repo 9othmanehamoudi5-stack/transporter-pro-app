@@ -2250,6 +2250,7 @@ async def sync_offline_data(data: OfflineSyncData, user: dict = Depends(get_curr
 # ==================== CLIENT PORTAL (PUBLIC) ====================
 
 @api_router.get("/track/{tracking_id}")
+@api_router.get("/public/track/{tracking_id}")
 async def public_track(tracking_id: str):
     delivery = await db.deliveries.find_one(
         {"tracking_id": tracking_id},
@@ -2263,6 +2264,20 @@ async def public_track(tracking_id: str):
         if isinstance(delivery.get(field), datetime):
             delivery[field] = delivery[field].isoformat()
     
+    # Geocode if no live GPS yet (fallback to recipient address)
+    lat = lng = None
+    gps = delivery.get("gps_location") or {}
+    if isinstance(gps, dict) and gps.get("lat") and gps.get("lng"):
+        lat, lng = gps["lat"], gps["lng"]
+    else:
+        try:
+            from core.routing import geocode_address
+            coord = await geocode_address(delivery.get("recipient_address", ""))
+            if coord:
+                lng, lat = coord
+        except Exception:
+            pass
+
     return {
         "tracking_id": delivery["tracking_id"],
         "status": delivery["status"],
@@ -2271,6 +2286,8 @@ async def public_track(tracking_id: str):
         "created_at": delivery.get("created_at"),
         "delivered_at": delivery.get("delivered_at"),
         "gps_location": delivery.get("gps_location"),
+        "lat": lat,
+        "lng": lng,
         "has_proof": delivery.get("blockchain_proof") is not None
     }
 

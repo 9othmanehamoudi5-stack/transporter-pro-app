@@ -649,6 +649,24 @@ export const AdminDashboard = () => {
                                 PDF
                               </Button>
                             )}
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={async () => {
+                                const link = `${window.location.origin}/track/${d.tracking_id}`;
+                                try {
+                                  await navigator.clipboard.writeText(link);
+                                  toast.success(t('toasts.linkCopied', 'Lien de suivi copié'));
+                                } catch {
+                                  toast.error(t('toasts.error', 'Erreur'));
+                                }
+                              }}
+                              className="border-[#27272A] text-zinc-300 hover:text-white hover:bg-[#1A1A1E]"
+                              data-testid={`copy-link-${d.tracking_id}`}
+                              title={t('actions.copyTrackingLink', 'Copier le lien de suivi')}
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                            </Button>
                             {d.blockchain_proof && (
                               <Button size="sm" variant="outline" className="border-[#27272A]">
                                 <Shield className="w-4 h-4" />
