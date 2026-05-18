@@ -5,7 +5,9 @@
   "livemap": {
     "hideRoute": "Ocultar ruta",
     "showRoute": "Ver ruta ({count} paradas)",
-    "refresh": "Refrescar"
+    "refresh": "Refrescar",
+    "timelineTitle": "Ruta optimizada",
+    "stops": "paradas"
   },
   "kpi": { "totalDeliveries": "Entregas totales", "inTransit": "En tránsito", "deliveredToday": "Entregadas hoy", "activeDisputes": "Disputas activas", "trackingId": "TRACKING", "recipient": "DESTINATARIO", "address": "DIRECCIÓN", "status": "ESTADO", "driver": "CONDUCTOR", "action": "ACCIÓN" },
   "cashflow": {

@@ -5,7 +5,9 @@
   "livemap": {
     "hideRoute": "Masquer la tournée",
     "showRoute": "Voir la tournée ({count} arrêts)",
-    "refresh": "Rafraîchir"
+    "refresh": "Rafraîchir",
+    "timelineTitle": "Tournée optimisée",
+    "stops": "arrêts"
   },
   "kpi": { "totalDeliveries": "Livraisons totales", "inTransit": "En transit", "deliveredToday": "Livrées aujourd'hui", "activeDisputes": "Litiges actifs", "trackingId": "TRACKING", "recipient": "DESTINATAIRE", "address": "ADRESSE", "status": "STATUT", "driver": "CHAUFFEUR", "action": "ACTION" },
   "cashflow": {

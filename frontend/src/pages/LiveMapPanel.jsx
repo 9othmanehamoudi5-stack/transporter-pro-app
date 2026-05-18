@@ -69,6 +69,15 @@ const FitBounds = ({ locations }) => {
   return null;
 };
 
+// Programmatically fly to a stop when its index changes
+const FlyToStop = ({ stop }) => {
+  const map = useMap();
+  useEffect(() => {
+    if (stop) map.flyTo([stop.lat, stop.lng], 14, { duration: 0.6 });
+  }, [stop, map]);
+  return null;
+};
+
 const LiveMapPanel = () => {
   const { t } = useI18n();
   const [driverLocations, setDriverLocations] = useState([]);
@@ -76,6 +85,16 @@ const LiveMapPanel = () => {
   const [route, setRoute] = useState({ stops: [], geometry: [] });
   const [loadingRoute, setLoadingRoute] = useState(false);
   const [showRoute, setShowRoute] = useState(true);
+  const [selectedStopIdx, setSelectedStopIdx] = useState(null);
+  const stopMarkerRefs = useRef({});
+
+  const handleSelectStop = (idx) => {
+    setSelectedStopIdx(idx);
+    const m = stopMarkerRefs.current[idx];
+    if (m) {
+      setTimeout(() => m.openPopup(), 650);
+    }
+  };
 
   const loadRoute = async () => {
     setLoadingRoute(true);
@@ -212,6 +231,7 @@ const LiveMapPanel = () => {
             {route.stops.length > 0 && allWithCoords.length === 0 && (
               <FitBounds locations={route.stops.map(s => ({ lat: s.lat, lng: s.lng }))} />
             )}
+            <FlyToStop stop={selectedStopIdx !== null ? route.stops[selectedStopIdx] : null} />
 
             {/* Optimized route polyline */}
             {showRoute && route.geometry.length > 1 && (
@@ -227,6 +247,7 @@ const LiveMapPanel = () => {
                 key={`stop-${s.tracking_id}`}
                 position={[s.lat, s.lng]}
                 icon={createStopIcon(idx + 1)}
+                ref={(el) => { if (el) stopMarkerRefs.current[idx] = el; }}
               >
                 <Popup className="dark-popup">
                   <div style={{ color: '#fff', background: '#121214', padding: '8px', borderRadius: '8px', minWidth: '180px' }}>
@@ -312,6 +333,53 @@ const LiveMapPanel = () => {
           </div>
         </div>
       </div>
+
+      {/* ---------------- ROUTE TIMELINE (cliquable) ---------------- */}
+      {route.stops.length > 0 && (
+        <div className="bg-[#121214] border border-[#27272A] rounded-xl p-4" data-testid="route-timeline">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold flex items-center gap-2">
+              <MapIcon className="w-4 h-4 text-[#0066FF]" />
+              {t('livemap.timelineTitle', 'Tournée optimisée')}
+              <span className="text-xs text-zinc-500 font-normal ml-1">· {route.stops.length} {t('livemap.stops', 'arrêts')}</span>
+            </h3>
+            {loadingRoute && <span className="text-[11px] text-zinc-500">{t('common.loading', 'Chargement...')}</span>}
+          </div>
+          <div className="flex items-stretch gap-2 overflow-x-auto pb-2">
+            {route.stops.map((s, idx) => {
+              const active = selectedStopIdx === idx;
+              return (
+                <React.Fragment key={s.tracking_id}>
+                  <button
+                    onClick={() => handleSelectStop(idx)}
+                    className={`flex-shrink-0 min-w-[180px] flex items-center gap-3 px-3 py-2 rounded-lg border transition-all text-left ${
+                      active
+                        ? 'bg-[#0066FF]/10 border-[#0066FF] shadow-[0_0_0_1px_#0066FF]'
+                        : 'bg-[#0A0A0B] border-[#27272A] hover:border-zinc-600'
+                    }`}
+                    data-testid={`timeline-stop-${idx}`}
+                  >
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black flex-shrink-0 ${
+                      active ? 'bg-[#0066FF] text-white shadow-lg shadow-[#0066FF]/40' : 'bg-[#1A1A1E] text-zinc-300 border border-[#27272A]'
+                    }`}>
+                      {idx + 1}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className={`text-sm font-medium truncate ${active ? 'text-white' : 'text-zinc-200'}`}>
+                        {s.recipient_name || s.tracking_id}
+                      </p>
+                      <p className="text-[10px] text-zinc-500 truncate font-mono">{s.tracking_id}</p>
+                    </div>
+                  </button>
+                  {idx < route.stops.length - 1 && (
+                    <div className="flex items-center text-zinc-700 px-0.5 select-none">→</div>
+                  )}
+                </React.Fragment>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

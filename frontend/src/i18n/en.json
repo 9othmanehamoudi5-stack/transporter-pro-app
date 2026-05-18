@@ -5,7 +5,9 @@
   "livemap": {
     "hideRoute": "Hide route",
     "showRoute": "Show route ({count} stops)",
-    "refresh": "Refresh"
+    "refresh": "Refresh",
+    "timelineTitle": "Optimized route",
+    "stops": "stops"
   },
   "kpi": { "totalDeliveries": "Total deliveries", "inTransit": "In transit", "deliveredToday": "Delivered today", "activeDisputes": "Active disputes", "trackingId": "TRACKING", "recipient": "RECIPIENT", "address": "ADDRESS", "status": "STATUS", "driver": "DRIVER", "action": "ACTION" },
   "cashflow": {
