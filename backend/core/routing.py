@@ -13,6 +13,11 @@ OSRM = "https://router.project-osrm.org"
 UA = "Transporter-Pro/1.0 (logistics-saas)"
 
 
+async def geocode_address(address: str) -> tuple[float, float] | None:
+    """Public alias for _geocode."""
+    return await _geocode(address)
+
+
 async def _geocode(address: str) -> tuple[float, float] | None:
     """Return (lng, lat) for an address. Cached in db.geocode_cache."""
     if not address or len(address.strip()) < 4:

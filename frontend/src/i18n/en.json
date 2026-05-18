@@ -2,6 +2,11 @@
   "nav": { "login": "Login", "trial": "Free trial", "problem": "Problem", "features": "Features", "pricing": "Pricing" },
   "auth": { "login": "Login", "register": "Create account", "email": "Email", "password": "Password", "name": "Full name", "submit": "Sign in", "noAccount": "No account yet?", "hasAccount": "Already have an account?", "forgot": "Forgot your password?" },
   "sidebar": { "overview": "Overview", "deliveries": "Deliveries", "livemap": "Live Map", "cashflow": "Cash-Flow", "drivers": "Drivers", "litiges": "Disputes", "eco": "Eco-scores", "subscription": "Subscription", "settings": "Settings", "logout": "Logout" },
+  "livemap": {
+    "hideRoute": "Hide route",
+    "showRoute": "Show route ({count} stops)",
+    "refresh": "Refresh"
+  },
   "kpi": { "totalDeliveries": "Total deliveries", "inTransit": "In transit", "deliveredToday": "Delivered today", "activeDisputes": "Active disputes", "trackingId": "TRACKING", "recipient": "RECIPIENT", "address": "ADDRESS", "status": "STATUS", "driver": "DRIVER", "action": "ACTION" },
   "cashflow": {
     "title": "Instant Cash-Flow",

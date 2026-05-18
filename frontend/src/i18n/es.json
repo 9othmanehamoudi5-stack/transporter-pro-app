@@ -2,6 +2,11 @@
   "nav": { "login": "Iniciar sesión", "trial": "Prueba gratuita", "problem": "Problema", "features": "Funciones", "pricing": "Precios" },
   "auth": { "login": "Iniciar sesión", "register": "Crear cuenta", "email": "Correo", "password": "Contraseña", "name": "Nombre completo", "submit": "Entrar", "noAccount": "¿No tienes cuenta?", "hasAccount": "¿Ya tienes cuenta?", "forgot": "¿Olvidaste tu contraseña?" },
   "sidebar": { "overview": "Resumen", "deliveries": "Entregas", "livemap": "Mapa en vivo", "cashflow": "Tesorería", "drivers": "Conductores", "litiges": "Disputas", "eco": "Eco-puntuación", "subscription": "Suscripción", "settings": "Ajustes", "logout": "Cerrar sesión" },
+  "livemap": {
+    "hideRoute": "Ocultar ruta",
+    "showRoute": "Ver ruta ({count} paradas)",
+    "refresh": "Refrescar"
+  },
   "kpi": { "totalDeliveries": "Entregas totales", "inTransit": "En tránsito", "deliveredToday": "Entregadas hoy", "activeDisputes": "Disputas activas", "trackingId": "TRACKING", "recipient": "DESTINATARIO", "address": "DIRECCIÓN", "status": "ESTADO", "driver": "CONDUCTOR", "action": "ACCIÓN" },
   "cashflow": {
     "title": "Tesorería instantánea",

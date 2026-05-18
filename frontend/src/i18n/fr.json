@@ -2,6 +2,11 @@
   "nav": { "login": "Connexion", "trial": "Essai gratuit", "problem": "Problème", "features": "Fonctionnalités", "pricing": "Tarifs" },
   "auth": { "login": "Connexion", "register": "Créer un compte", "email": "Email", "password": "Mot de passe", "name": "Nom complet", "submit": "Se connecter", "noAccount": "Pas encore de compte ?", "hasAccount": "Déjà un compte ?", "forgot": "Mot de passe oublié ?" },
   "sidebar": { "overview": "Vue d'ensemble", "deliveries": "Livraisons", "livemap": "Carte Live", "cashflow": "Cash-Flow", "drivers": "Chauffeurs", "litiges": "Litiges", "eco": "Éco-scores", "subscription": "Abonnement", "settings": "Paramètres", "logout": "Déconnexion" },
+  "livemap": {
+    "hideRoute": "Masquer la tournée",
+    "showRoute": "Voir la tournée ({count} arrêts)",
+    "refresh": "Rafraîchir"
+  },
   "kpi": { "totalDeliveries": "Livraisons totales", "inTransit": "En transit", "deliveredToday": "Livrées aujourd'hui", "activeDisputes": "Litiges actifs", "trackingId": "TRACKING", "recipient": "DESTINATAIRE", "address": "ADRESSE", "status": "STATUT", "driver": "CHAUFFEUR", "action": "ACTION" },
   "cashflow": {
     "title": "Cash-Flow Instantané",

@@ -1443,6 +1443,47 @@ async def get_deliveries(user: dict = Depends(get_current_user), status: Optiona
     
     return deliveries
 
+@api_router.get("/deliveries/route-preview")
+async def get_route_preview(user: dict = Depends(require_role("admin"))):
+    """Return current optimized sequence + OSRM polyline geometry for Live Map overlay."""
+    import httpx
+    from core.routing import geocode_address, OSRM
+
+    cid = user["company_id"]
+    deliveries = await db.deliveries.find(
+        {"company_id": cid, "status": {"$in": ["pending", "assigned", "in_transit"]}},
+        {"_id": 0}
+    ).sort([("sequence_order", 1), ("created_at", -1)]).to_list(50)
+
+    stops = []
+    for d in deliveries:
+        coord = await geocode_address(d.get("recipient_address", ""))
+        if coord:
+            stops.append({
+                "tracking_id": d["tracking_id"],
+                "recipient_name": d.get("recipient_name", ""),
+                "address": d.get("recipient_address", ""),
+                "lng": coord[0], "lat": coord[1],
+                "order": d.get("sequence_order"),
+            })
+
+    geometry = []
+    if len(stops) >= 2:
+        coords_str = ";".join(f"{s['lng']},{s['lat']}" for s in stops)
+        try:
+            async with httpx.AsyncClient(timeout=15.0) as c:
+                r = await c.get(f"{OSRM}/route/v1/driving/{coords_str}?overview=full&geometries=geojson")
+                if r.status_code == 200:
+                    data = r.json()
+                    if data.get("code") == "Ok" and data.get("routes"):
+                        # GeoJSON coords are [lng, lat] → Leaflet wants [lat, lng]
+                        geometry = [[c[1], c[0]] for c in data["routes"][0]["geometry"]["coordinates"]]
+        except Exception as e:
+            logger.warning(f"OSRM route geometry failed: {e}")
+
+    return {"stops": stops, "geometry": geometry}
+
+
 @api_router.post("/deliveries/optimize")
 async def optimize_deliveries_route(user: dict = Depends(require_role("admin"))):
     """Optimize today's pending/assigned deliveries using OSRM TSP."""
