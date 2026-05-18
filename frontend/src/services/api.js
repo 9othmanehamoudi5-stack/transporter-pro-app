@@ -140,6 +140,9 @@ export const deliveriesApi = {
     setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 100);
     return response;
   },
+
+  // Optimize today's deliveries via OSRM
+  optimizeRoute: () => api.post('/deliveries/optimize'),
   
   // Create - save to backend (primary), sync to Firestore
   create: async (data) => {

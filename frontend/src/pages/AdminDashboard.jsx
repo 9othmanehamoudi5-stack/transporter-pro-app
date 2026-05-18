@@ -233,6 +233,24 @@ export const AdminDashboard = () => {
     }
   };
 
+  const [optimizing, setOptimizing] = useState(false);
+  const handleOptimizeRoute = async () => {
+    setOptimizing(true);
+    try {
+      const res = await deliveriesApi.optimizeRoute();
+      const { optimized_count, saved_km } = res.data;
+      toast.success(
+        t('toasts.routeOptimized', 'Tournée optimisée : {count} arrêts · {km} km économisés !')
+          .replace('{count}', optimized_count)
+          .replace('{km}', saved_km)
+      );
+      fetchData();
+    } catch (error) {
+      toast.error(`${t('toasts.error', 'Erreur')} : ${error.response?.data?.detail || error.message}`);
+    }
+    setOptimizing(false);
+  };
+
   const sidebarItems = [
     { id: 'overview', label: t('sidebar.overview', "Vue d'ensemble"), icon: TrendingUp },
     { id: 'deliveries', label: t('sidebar.deliveries', 'Livraisons'), icon: Package },
@@ -565,7 +583,20 @@ export const AdminDashboard = () => {
 
           {/* Deliveries Tab */}
           {activeTab === 'deliveries' && (
-            <div className="bg-[#121214] border border-[#27272A] rounded-xl overflow-hidden">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-zinc-400">{deliveries.length} {t('kpi.totalDeliveries', 'Livraisons')}</p>
+                <Button
+                  onClick={handleOptimizeRoute}
+                  disabled={optimizing}
+                  className="bg-[#0066FF] hover:bg-[#0052CC] disabled:opacity-50"
+                  data-testid="optimize-route-btn"
+                >
+                  <Map className={`w-4 h-4 mr-2 ${optimizing ? 'animate-pulse' : ''}`} />
+                  {optimizing ? t('actions.optimizing', 'Optimisation…') : t('actions.optimizeRoute', 'Optimiser la tournée')}
+                </Button>
+              </div>
+              <div className="bg-[#121214] border border-[#27272A] rounded-xl overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full" data-testid="deliveries-table">
                   <thead className="bg-[#1A1A1E] text-xs text-zinc-400 uppercase">
@@ -630,6 +661,7 @@ export const AdminDashboard = () => {
                     })}
                   </tbody>
                 </table>
+              </div>
               </div>
             </div>
           )}

@@ -1419,7 +1419,8 @@ async def get_deliveries(user: dict = Depends(get_current_user), status: Optiona
     if status:
         query["status"] = status
     
-    deliveries = await db.deliveries.find(query, {"_id": 0}).sort("created_at", -1).to_list(100)
+    # Sort: optimized (sequence_order ASC) first, then newest. Falls back to created_at when no order.
+    deliveries = await db.deliveries.find(query, {"_id": 0}).sort([("sequence_order", 1), ("created_at", -1)]).to_list(100)
     
     # Enrich with driver names
     driver_cache = {}
@@ -1441,6 +1442,51 @@ async def get_deliveries(user: dict = Depends(get_current_user), status: Optiona
                 d[field] = d[field].isoformat()
     
     return deliveries
+
+@api_router.post("/deliveries/optimize")
+async def optimize_deliveries_route(user: dict = Depends(require_role("admin"))):
+    """Optimize today's pending/assigned deliveries using OSRM TSP."""
+    from core.routing import optimize_route
+
+    cid = user["company_id"]
+    today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+    deliveries = await db.deliveries.find({
+        "company_id": cid,
+        "status": {"$in": ["pending", "assigned"]},
+        "created_at": {"$gte": today_start},
+    }, {"_id": 0}).to_list(100)
+
+    if not deliveries:
+        # Fallback: any pending/assigned (not just today) so demo flows still work
+        deliveries = await db.deliveries.find({
+            "company_id": cid,
+            "status": {"$in": ["pending", "assigned"]},
+        }, {"_id": 0}).to_list(100)
+
+    if len(deliveries) < 2:
+        raise HTTPException(status_code=400, detail="Au moins 2 livraisons actives requises pour optimiser une tournée")
+
+    result = await optimize_route(deliveries)
+    if not result.get("sequence"):
+        raise HTTPException(status_code=502, detail=result.get("error") or "Optimisation impossible (adresses non géocodables)")
+
+    # Persist sequence_order in DB
+    for item in result["sequence"]:
+        await db.deliveries.update_one(
+            {"tracking_id": item["tracking_id"], "company_id": cid},
+            {"$set": {"sequence_order": item["order"], "optimized_at": datetime.now(timezone.utc)}},
+        )
+
+    await log_action(user["id"], cid, "optimize_route", "delivery", "", f"{len(result['sequence'])} stops · {result['saved_km']} km saved")
+
+    return {
+        "optimized_count": len(result["sequence"]),
+        "skipped": result.get("skipped", 0),
+        "distance_original_km": result["distance_original_km"],
+        "distance_optimized_km": result["distance_optimized_km"],
+        "saved_km": result["saved_km"],
+    }
+
 
 @api_router.get("/deliveries/{tracking_id}")
 async def get_delivery(tracking_id: str):
