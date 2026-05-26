@@ -25,6 +25,7 @@ from core.db import (
     JWT_SECRET, JWT_ALGORITHM,
     EMERGENT_LLM_KEY, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET,
     RESEND_API_KEY, SENDER_EMAIL, FRONTEND_BASE_URL,
+    STRIPE_PRICE_IDS, PLAN_DRIVER_LIMITS, get_max_drivers,
 )
 from core.auth import (
     hash_password, verify_password,
@@ -865,12 +866,14 @@ async def get_account_activity(user: dict = Depends(get_current_user), limit: in
 
 @api_router.get("/auth/company-quota")
 async def get_company_quota(user: dict = Depends(require_role("admin"))):
-    """Get current driver count vs plan limit"""
+    """Get current driver count vs plan limit.
+    Strict rules: solo=3, croissance=15, flotte_pro=unlimited(-1).
+    Reads `plan` directly from DB (via get_current_user) so it always reflects the
+    latest webhook-confirmed state."""
     company_id = user["company_id"]
     driver_count = await db.users.count_documents({"role": "driver", "company_id": company_id, "status": {"$ne": "inactive"}})
     plan = user.get("plan", "solo")
-    limits = {"solo": 3, "croissance": 15, "flotte_pro": -1}
-    max_drivers = limits.get(plan, 3)
+    max_drivers = get_max_drivers(plan)
     return {
         "driver_count": driver_count,
         "max_drivers": max_drivers,
@@ -920,10 +923,9 @@ async def create_driver(data: DriverCreate, user: dict = Depends(require_role("a
     """Admin creates a new driver account"""
     company_id = user["company_id"]
 
-    # Check plan quota
+    # Check plan quota (strict: solo=3, croissance=15, flotte_pro=unlimited)
     plan = user.get("plan", "solo")
-    limits = {"solo": 3, "croissance": 15, "flotte_pro": -1}
-    max_drivers = limits.get(plan, 3)
+    max_drivers = get_max_drivers(plan)
     if max_drivers != -1:
         current_count = await db.users.count_documents({"role": "driver", "company_id": company_id, "status": {"$ne": "inactive"}})
         if current_count >= max_drivers:
@@ -1166,24 +1168,81 @@ async def get_payment_links():
 
 @api_router.post("/stripe/create-checkout")
 async def create_stripe_checkout(plan: str, billing: str = "monthly", user: dict = Depends(require_role("admin"))):
-    """Generate a Stripe payment link with prefilled email + client_reference_id (so webhook can match)."""
-    links = STRIPE_PAYMENT_LINKS.get(plan)
-    if not links:
-        raise HTTPException(status_code=400, detail="Plan invalide")
-    base_url = links.get(billing, links["monthly"])
-    # client_reference_id lets the webhook map the Stripe session back to our user immediately
-    checkout_url = f"{base_url}?prefilled_email={user['email']}&client_reference_id={user['id']}"
-    await log_action(user["id"], user["company_id"], "stripe_checkout_started", "subscription", plan, f"billing={billing}")
-    return {"url": checkout_url, "plan": plan, "billing": billing}
+    """Create a real Stripe Checkout Session using Price IDs loaded from environment variables.
+    Requires STRIPE_PRICE_SOLO / STRIPE_PRICE_CROISSANCE / STRIPE_PRICE_FLOTTE (and *_YEARLY variants)
+    to be set in backend/.env. The webhook activates `user.plan` on completion — this endpoint
+    only generates the URL and never mutates the user's plan."""
+    import stripe
+    stripe.api_key = STRIPE_SECRET_KEY
+
+    if not STRIPE_SECRET_KEY:
+        raise HTTPException(status_code=500, detail="Stripe non configuré (clé secrète manquante)")
+
+    # Validate plan
+    if plan not in STRIPE_PRICE_IDS:
+        raise HTTPException(status_code=400, detail=f"Plan invalide : {plan}")
+    if billing not in ("monthly", "yearly"):
+        billing = "monthly"
+
+    price_id = STRIPE_PRICE_IDS[plan].get(billing) or STRIPE_PRICE_IDS[plan].get("monthly")
+    if not price_id:
+        env_var_map = {
+            ("solo", "monthly"): "STRIPE_PRICE_SOLO",
+            ("solo", "yearly"): "STRIPE_PRICE_SOLO_YEARLY",
+            ("croissance", "monthly"): "STRIPE_PRICE_CROISSANCE",
+            ("croissance", "yearly"): "STRIPE_PRICE_CROISSANCE_YEARLY",
+            ("flotte_pro", "monthly"): "STRIPE_PRICE_FLOTTE",
+            ("flotte_pro", "yearly"): "STRIPE_PRICE_FLOTTE_YEARLY",
+        }
+        expected_var = env_var_map.get((plan, billing), f"STRIPE_PRICE_{plan.upper()}")
+        raise HTTPException(
+            status_code=500,
+            detail=(
+                f"Price ID Stripe manquant pour le plan « {plan} » ({billing}). "
+                f"Ajoutez {expected_var} dans backend/.env."
+            ),
+        )
+
+    try:
+        session = stripe.checkout.Session.create(
+            mode="subscription",
+            line_items=[{"price": price_id, "quantity": 1}],
+            customer_email=user["email"],
+            client_reference_id=user["id"],
+            success_url=f"{FRONTEND_BASE_URL}/admin?stripe=success&session_id={{CHECKOUT_SESSION_ID}}",
+            cancel_url=f"{FRONTEND_BASE_URL}/admin/subscription?stripe=cancel",
+            metadata={
+                "user_id": user["id"],
+                "company_id": user.get("company_id", user["id"]),
+                "plan": plan,
+                "billing": billing,
+            },
+            subscription_data={
+                "metadata": {
+                    "user_id": user["id"],
+                    "plan": plan,
+                    "billing": billing,
+                }
+            },
+            allow_promotion_codes=True,
+        )
+    except stripe.error.InvalidRequestError as e:
+        logger.error(f"Stripe checkout creation failed (plan={plan}, billing={billing}, price_id={price_id}): {e}")
+        raise HTTPException(status_code=400, detail=f"Erreur Stripe : {str(e)}")
+    except Exception as e:
+        logger.error(f"Stripe checkout creation failed (plan={plan}, billing={billing}): {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur Stripe : {str(e)}")
+
+    await log_action(user["id"], user["company_id"], "stripe_checkout_started", "subscription", plan, f"billing={billing}, price_id={price_id}, session={session.id}")
+    return {"url": session.url, "session_id": session.id, "plan": plan, "billing": billing}
 
 
 # ==================== STRIPE WEBHOOK ====================
 
 def _detect_plan_from_amount(amount: float) -> tuple:
-    """Map a Stripe amount (in main currency unit, e.g. EUR) → (plan_type, billing_cycle).
-    Trial sessions can have amount=0 — we default to 'croissance'/'monthly' (Plan Growth)
-    so every new customer lands directly on the recommended business tier (15 chauffeurs).
-    Higher amounts auto-detect upgrades (Flotte Pro, yearly, etc.)."""
+    """Fallback only — used when the Stripe session has no metadata.plan
+    (e.g. legacy Payment Link sessions). For new flows we read metadata.plan
+    directly (set when creating the Checkout Session)."""
     if amount >= 4000:
         return "flotte_pro", "yearly"
     if amount >= 1500:
@@ -1192,23 +1251,30 @@ def _detect_plan_from_amount(amount: float) -> tuple:
         return "flotte_pro", "monthly"
     if amount >= 150:
         return "croissance", "monthly"
-    if amount >= 300:
+    if amount >= 100:
         return "solo", "yearly"
-    if amount > 0 and amount < 50:
+    if amount > 0:
         return "solo", "monthly"
-    # Trial / zero-amount session → default Plan Growth (Croissance)
-    return "croissance", "monthly"
+    return "solo", "monthly"
 
 
 async def _activate_admin_subscription(admin: dict, session: dict, source: str = "webhook") -> dict:
     """Shared activation logic used by both the Stripe webhook and the /verify-payment fallback.
-    Flips the admin to subscription_status='active', stamps Stripe IDs, upserts subscription record + audit log.
-    """
+    Reads plan from session.metadata (preferred) and falls back to amount-based detection."""
     admin_id = str(admin["_id"])
     company_id = admin.get("company_id", admin_id)
 
-    amount = (session.get("amount_total") or 0) / 100
-    plan_type, billing_cycle = _detect_plan_from_amount(amount)
+    metadata = session.get("metadata") or {}
+    plan_type = metadata.get("plan")
+    billing_cycle = metadata.get("billing")
+
+    # Validate plan from metadata; if missing/invalid, fall back to amount-based detection
+    if plan_type not in PLAN_DRIVER_LIMITS:
+        amount = (session.get("amount_total") or 0) / 100
+        plan_type, billing_cycle = _detect_plan_from_amount(amount)
+
+    if billing_cycle not in ("monthly", "yearly"):
+        billing_cycle = "monthly"
 
     await db.users.update_one(
         {"_id": admin["_id"]},
