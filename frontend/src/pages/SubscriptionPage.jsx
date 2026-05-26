@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useSubscription } from '../contexts/SubscriptionContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useI18n } from '../i18n/index';
+import { subscriptionApi } from '../services/api';
 import { Button } from '../components/ui/button';
 import { Switch } from '../components/ui/switch';
 import { 
@@ -81,7 +82,7 @@ export const SubscriptionPage = () => {
   const { t } = useI18n();
   const [isYearly, setIsYearly] = useState(false);
   const [updating, setUpdating] = useState(false);
-  const { plan: currentPlan, loading, updatePlan } = useSubscription();
+  const { plan: currentPlan, loading } = useSubscription();
   const { user } = useAuth();
   const PLANS = buildPlans(t);
 
@@ -98,17 +99,17 @@ export const SubscriptionPage = () => {
 
     setUpdating(true);
     try {
-      const result = await updatePlan(planId, isYearly ? 'yearly' : 'monthly');
-      if (result.success) {
-        toast.success(`${PLANS.find(p => p.id === planId)?.name} — ${t('toasts.planActivated', 'Plan activé !')}`);
-      } else {
-        toast.error(`${t('toasts.error', 'Erreur')} : ${result.error || t('toasts.planUpdateFailed', 'Mise à jour impossible')}`);
-      }
+      // Redirect to Stripe Checkout — plan is only persisted after webhook confirms payment
+      const res = await subscriptionApi.createCheckout(planId, isYearly ? 'yearly' : 'monthly');
+      const url = res?.data?.url;
+      if (!url) throw new Error('Checkout URL missing');
+      toast.success(t('toasts.redirectingStripe', 'Redirection vers le paiement sécurisé Stripe…'));
+      window.location.href = url;
     } catch (error) {
-      console.error('Plan update error:', error);
+      console.error('Checkout error:', error);
       toast.error(`${t('toasts.error', 'Erreur')} : ${error.response?.data?.detail || error.message}`);
+      setUpdating(false);
     }
-    setUpdating(false);
   };
 
   const savings = (monthly, yearly) => {

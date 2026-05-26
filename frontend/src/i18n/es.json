@@ -44,7 +44,7 @@
     "statusPending": "Pendiente",
     "markPaid": "Marcar pagada"
   },
-  "actions": { "generateCmr": "Generar e-CMR", "gpsMap": "Mapa GPS", "scanBarcode": "Escanear código", "clientPortal": "Portal cliente", "newDelivery": "Nueva entrega", "addDriver": "Añadir conductor", "assign": "Asignar", "delete": "Eliminar", "edit": "Editar", "view": "Ver", "refresh": "Refrescar", "save": "Guardar", "cancel": "Cancelar", "confirm": "Confirmar", "back": "Volver", "create": "Crear", "downloadReportPdf": "Descargar informe (PDF)", "optimizeRoute": "Optimizar ruta", "optimizing": "Optimizando…", "copyTrackingLink": "Copiar enlace de seguimiento" },
+  "actions": { "generateCmr": "Generar e-CMR", "gpsMap": "Mapa GPS", "scanBarcode": "Escanear código", "clientPortal": "Portal cliente", "newDelivery": "Nueva entrega", "addDriver": "Añadir conductor", "assign": "Asignar", "delete": "Eliminar", "edit": "Editar", "view": "Ver", "refresh": "Refrescar", "save": "Guardar", "saving": "Guardando…", "cancel": "Cancelar", "confirm": "Confirmar", "back": "Volver", "create": "Crear", "downloadReportPdf": "Descargar informe (PDF)", "optimizeRoute": "Optimizar ruta", "optimizing": "Optimizando…", "copyTrackingLink": "Copiar enlace de seguimiento" },
   "tabs": { "recentDeliveries": "Últimas entregas", "allDeliveries": "Todas las entregas", "myDrivers": "Mis conductores", "myDisputes": "Mis disputas", "ecoScoresTitle": "Eco-rendimiento de la flota" },
   "status": { "pending": "Pendiente", "assigned": "Asignado", "in_transit": "En tránsito", "delivered": "Entregado", "dispute": "Disputa", "active": "Activo", "trialing": "Prueba en curso", "failed": "Fallido" },
   "modals": {
@@ -65,7 +65,8 @@
       "driver": "Conductor asignado",
       "noDriver": "Sin asignar",
       "create": "Crear entrega",
-      "creating": "Creando..."
+      "creating": "Creando...",
+      "verifying": "Verificando…"
     },
     "addDriver": {
       "title": "Nuevo conductor",
@@ -86,6 +87,10 @@
       "warning": "¿Eliminar este conductor? Esta acción es irreversible.",
       "confirm": "Sí, eliminar",
       "cancel": "Cancelar"
+    },
+    "editDriver": {
+      "title": "Editar conductor",
+      "subtitle": "Actualiza la información. Correo y contraseña no editables aquí."
     },
     "assignDriver": {
       "title": "Asignar una entrega",
@@ -154,7 +159,11 @@
     "planActivated": "¡Plan activado!",
     "planUpdateFailed": "Actualización imposible",
     "routeOptimized": "Ruta optimizada: {count} paradas · {km} km ahorrados!",
-    "linkCopied": "Enlace de seguimiento copiado"
+    "linkCopied": "Enlace de seguimiento copiado",
+    "addressInvalid": "Dirección no encontrada o inválida. Verifica la ortografía y el código postal.",
+    "emailRequired": "Correo requerido",
+    "driverUpdated": "Conductor actualizado",
+    "redirectingStripe": "Redirigiendo al pago seguro Stripe…"
   },
   "drivers": {
     "fleetMgmt": "Gestión de flota",

@@ -11,7 +11,7 @@ import SettingsPage from './SettingsPage';
 import { StatCard, GatedButton, LockedFeatureOverlay } from '../components/admin/DashboardHelpers';
 import { DamageReportCard } from '../components/admin/DamageReportCard';
 import { EcoScoresTab } from '../components/admin/EcoScoresTab';
-import { NewDeliveryForm, NewDriverForm, AssignDeliveryForm } from '../components/admin/DashboardForms';
+import { NewDeliveryForm, NewDriverForm, EditDriverForm, AssignDeliveryForm } from '../components/admin/DashboardForms';
 import { RevenueSparkline } from '../components/admin/RevenueSparkline';
 import { useI18n } from '../i18n/index';
 import { Button } from '../components/ui/button';
@@ -19,7 +19,7 @@ import {
   Truck, Package, DollarSign, AlertTriangle, Leaf, Users, 
   Clock, CheckCircle, TrendingUp, LogOut, Menu, X,
   Plus, Eye, MapPin, FileText, Shield, RefreshCw, Bell,
-  CreditCard, UserPlus, Trash2, Lock, Crown, Map, Settings as SettingsIcon
+  CreditCard, UserPlus, Trash2, Lock, Crown, Map, Settings as SettingsIcon, Pencil
 } from 'lucide-react';
 import {
   Dialog,
@@ -70,10 +70,19 @@ export const AdminDashboard = () => {
   const [showNewDelivery, setShowNewDelivery] = useState(false);
   const [showAssignDriver, setShowAssignDriver] = useState(null);
   const [showNewDriver, setShowNewDriver] = useState(false);
+  const [editingDriver, setEditingDriver] = useState(null);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
   const [firestoreDriversList, setFirestoreDriversList] = useState([]);
-  const [driverQuota, setDriverQuota] = useState({ driver_count: 0, max_drivers: 3, can_add: true, plan: 'solo' });
+  // Quota: use the authenticated user's plan as initial seed so the UI never flashes the wrong "PLAN SOLO" label.
+  const PLAN_MAX = { solo: 3, croissance: 15, flotte_pro: -1 };
+  const initialPlan = user?.plan || 'solo';
+  const [driverQuota, setDriverQuota] = useState({
+    driver_count: 0,
+    max_drivers: PLAN_MAX[initialPlan] ?? 3,
+    can_add: true,
+    plan: initialPlan,
+  });
 
   // Fetch Firestore drivers
   useEffect(() => {
@@ -200,6 +209,18 @@ export const AdminDashboard = () => {
       await adminDriversApi.delete(driverId);
       setDrivers(prev => prev.filter(d => d.id !== driverId));
       toast.success(t('toasts.driverDeleted', 'Chauffeur supprimé'));
+      fetchData();
+    } catch (error) {
+      toast.error(`${t('toasts.error', 'Erreur')} : ${error.response?.data?.detail || error.message}`);
+    }
+  };
+
+  const handleUpdateDriver = async (formData) => {
+    if (!editingDriver) return;
+    try {
+      await adminDriversApi.update(editingDriver.id, formData);
+      toast.success(t('toasts.driverUpdated', 'Chauffeur mis à jour'));
+      setEditingDriver(null);
       fetchData();
     } catch (error) {
       toast.error(`${t('toasts.error', 'Erreur')} : ${error.response?.data?.detail || error.message}`);
@@ -922,16 +943,28 @@ export const AdminDashboard = () => {
                           <p className="text-sm text-zinc-400">{driver.email}</p>
                         </div>
                       </div>
-                      <Button 
-                        size="icon" 
-                        variant="ghost" 
-                        onClick={() => handleDeleteDriver(driver.id)}
-                        onTouchEnd={(e) => { e.preventDefault(); handleDeleteDriver(driver.id); }}
-                        className="text-zinc-400 hover:text-red-400 touch-manipulation"
-                        data-testid={`delete-driver-${driver.id}`}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                      <div className="flex gap-1">
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => setEditingDriver(driver)}
+                          className="text-zinc-400 hover:text-[#0066FF]"
+                          data-testid={`edit-driver-${driver.id}`}
+                          title={t('actions.edit', 'Modifier')}
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => handleDeleteDriver(driver.id)}
+                          onTouchEnd={(e) => { e.preventDefault(); handleDeleteDriver(driver.id); }}
+                          className="text-zinc-400 hover:text-red-400 touch-manipulation"
+                          data-testid={`delete-driver-${driver.id}`}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
                     
                     {driver.vehicle_plate && (
@@ -1090,6 +1123,23 @@ export const AdminDashboard = () => {
             <DialogTitle>{t('modals.addDriver.title', 'Nouveau chauffeur')}</DialogTitle>
           </DialogHeader>
           <NewDriverForm onSubmit={handleCreateDriver} onCancel={() => setShowNewDriver(false)} />
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Driver Dialog */}
+      <Dialog open={!!editingDriver} onOpenChange={(o) => !o && setEditingDriver(null)}>
+        <DialogContent className="bg-[#121214] border border-[#27272A] text-white">
+          <DialogHeader>
+            <DialogTitle>{t('modals.editDriver.title', 'Modifier le chauffeur')}</DialogTitle>
+            <DialogDescription>{t('modals.editDriver.subtitle', 'Mettez à jour les informations. Email et mot de passe non modifiables ici.')}</DialogDescription>
+          </DialogHeader>
+          {editingDriver && (
+            <EditDriverForm
+              driver={editingDriver}
+              onSubmit={handleUpdateDriver}
+              onCancel={() => setEditingDriver(null)}
+            />
+          )}
         </DialogContent>
       </Dialog>
 

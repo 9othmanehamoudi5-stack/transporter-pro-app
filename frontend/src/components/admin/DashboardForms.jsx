@@ -11,6 +11,13 @@ import {
   SelectValue,
 } from '../ui/select';
 import { toast } from 'sonner';
+import {
+  sanitizeName,
+  sanitizePhone,
+  sanitizeEmailLocal,
+  sanitizePlate,
+  verifyAddressOSM,
+} from '../../utils/inputValidators';
 
 export const NewDeliveryForm = ({ drivers, onSubmit, onCancel }) => {
   const { t } = useI18n();
@@ -22,9 +29,19 @@ export const NewDeliveryForm = ({ drivers, onSubmit, onCancel }) => {
     weight_kg: 1,
     driver_id: ''
   });
+  const [addressError, setAddressError] = useState('');
+  const [verifying, setVerifying] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setAddressError('');
+    setVerifying(true);
+    const result = await verifyAddressOSM(formData.recipient_address);
+    setVerifying(false);
+    if (!result.ok) {
+      setAddressError(t('toasts.addressInvalid', 'Adresse introuvable ou invalide. Vérifiez l\'orthographe et le code postal.'));
+      return;
+    }
     onSubmit(formData);
   };
 
@@ -48,7 +65,7 @@ export const NewDeliveryForm = ({ drivers, onSubmit, onCancel }) => {
         <Label>{t('modals.newDelivery.recipientName', 'Nom du destinataire')}</Label>
         <Input
           value={formData.recipient_name}
-          onChange={(e) => setFormData({ ...formData, recipient_name: e.target.value })}
+          onChange={(e) => setFormData({ ...formData, recipient_name: sanitizeName(e.target.value) })}
           required
           placeholder={t('modals.newDelivery.recipientNamePh', 'Jean Dupont')}
           className="bg-[#0A0A0B] border-[#27272A]"
@@ -59,20 +76,22 @@ export const NewDeliveryForm = ({ drivers, onSubmit, onCancel }) => {
         <Label>{t('modals.newDelivery.address', 'Adresse')}</Label>
         <Input
           value={formData.recipient_address}
-          onChange={(e) => setFormData({ ...formData, recipient_address: e.target.value })}
+          onChange={(e) => { setFormData({ ...formData, recipient_address: e.target.value }); if (addressError) setAddressError(''); }}
           required
           placeholder={t('modals.newDelivery.addressPh', '12 Rue de la Paix, 75002 Paris')}
-          className="bg-[#0A0A0B] border-[#27272A]"
+          className={`bg-[#0A0A0B] ${addressError ? 'border-red-500 ring-1 ring-red-500/60' : 'border-[#27272A]'}`}
           data-testid="delivery-address"
         />
+        {addressError && <p className="text-xs text-red-400 mt-1" data-testid="delivery-address-error">{addressError}</p>}
       </div>
       <div className="space-y-2">
         <Label>{t('modals.newDelivery.recipientPhone', 'Téléphone')}</Label>
         <Input
           value={formData.recipient_phone}
-          onChange={(e) => setFormData({ ...formData, recipient_phone: e.target.value })}
+          onChange={(e) => setFormData({ ...formData, recipient_phone: sanitizePhone(e.target.value) })}
           required
-          placeholder={t('modals.newDelivery.recipientPhonePh', '+33 6 12 34 56 78')}
+          inputMode="numeric"
+          placeholder="+33 6 12 34 56 78"
           className="bg-[#0A0A0B] border-[#27272A]"
         />
       </div>
@@ -101,19 +120,21 @@ export const NewDeliveryForm = ({ drivers, onSubmit, onCancel }) => {
         <Button type="button" variant="outline" onClick={onCancel} className="flex-1 border-[#27272A]">
           {t('actions.cancel', 'Annuler')}
         </Button>
-        <Button type="submit" className="flex-1 bg-[#0066FF] hover:bg-[#0052CC]" data-testid="delivery-submit-btn">
-          {t('actions.create', 'Créer')}
+        <Button type="submit" disabled={verifying} className="flex-1 bg-[#0066FF] hover:bg-[#0052CC] disabled:opacity-50" data-testid="delivery-submit-btn">
+          {verifying ? t('modals.newDelivery.verifying', 'Vérification…') : t('actions.create', 'Créer')}
         </Button>
       </div>
     </form>
   );
 };
 
+const GMAIL_DOMAIN = '@gmail.com';
+
 export const NewDriverForm = ({ onSubmit, onCancel }) => {
   const { t } = useI18n();
   const [formData, setFormData] = useState({
     name: '',
-    email: '',
+    emailLocal: '',
     password: '',
     phone: '',
     vehicle_plate: ''
@@ -121,7 +142,17 @@ export const NewDriverForm = ({ onSubmit, onCancel }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit(formData);
+    if (!formData.emailLocal) {
+      toast.error(t('toasts.emailRequired', 'Email requis'));
+      return;
+    }
+    onSubmit({
+      name: formData.name,
+      email: `${formData.emailLocal}${GMAIL_DOMAIN}`,
+      password: formData.password,
+      phone: formData.phone,
+      vehicle_plate: formData.vehicle_plate,
+    });
   };
 
   return (
@@ -130,22 +161,29 @@ export const NewDriverForm = ({ onSubmit, onCancel }) => {
         <Label>{t('modals.addDriver.name', 'Nom complet')}</Label>
         <Input
           value={formData.name}
-          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          onChange={(e) => setFormData({ ...formData, name: sanitizeName(e.target.value) })}
           required
           placeholder={t('modals.addDriver.namePh', 'Jean Dupont')}
           className="bg-[#0A0A0B] border-[#27272A]"
+          data-testid="driver-name-input"
         />
       </div>
       <div className="space-y-2">
         <Label>{t('modals.addDriver.email', 'Email')}</Label>
-        <Input
-          type="email"
-          value={formData.email}
-          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-          required
-          placeholder={t('modals.addDriver.emailPh', 'jean@example.com')}
-          className="bg-[#0A0A0B] border-[#27272A]"
-        />
+        <div className="flex items-stretch rounded-lg border border-[#27272A] focus-within:border-[#0066FF] bg-[#0A0A0B] overflow-hidden">
+          <input
+            type="text"
+            value={formData.emailLocal}
+            onChange={(e) => setFormData({ ...formData, emailLocal: sanitizeEmailLocal(e.target.value) })}
+            required
+            placeholder={t('modals.addDriver.emailLocalPh', 'jeandupont')}
+            className="flex-1 bg-transparent px-3 py-2 text-white text-sm outline-none"
+            data-testid="driver-email-local"
+          />
+          <span className="px-3 flex items-center text-sm text-zinc-400 bg-[#1A1A1E] border-l border-[#27272A] select-none" data-testid="email-suffix">
+            {GMAIL_DOMAIN}
+          </span>
+        </div>
       </div>
       <div className="space-y-2">
         <Label>{t('modals.addDriver.password', 'Mot de passe')}</Label>
@@ -154,6 +192,7 @@ export const NewDriverForm = ({ onSubmit, onCancel }) => {
           value={formData.password}
           onChange={(e) => setFormData({ ...formData, password: e.target.value })}
           required
+          minLength={8}
           placeholder="••••••••"
           className="bg-[#0A0A0B] border-[#27272A]"
         />
@@ -162,18 +201,21 @@ export const NewDriverForm = ({ onSubmit, onCancel }) => {
         <Label>{t('modals.addDriver.phone', 'Téléphone')}</Label>
         <Input
           value={formData.phone}
-          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-          placeholder="06 12 34 56 78"
+          onChange={(e) => setFormData({ ...formData, phone: sanitizePhone(e.target.value) })}
+          inputMode="numeric"
+          placeholder="0612345678"
           className="bg-[#0A0A0B] border-[#27272A]"
+          data-testid="driver-phone-input"
         />
       </div>
       <div className="space-y-2">
         <Label>{t('modals.addDriver.vehiclePlate', 'Immatriculation véhicule')}</Label>
         <Input
           value={formData.vehicle_plate}
-          onChange={(e) => setFormData({ ...formData, vehicle_plate: e.target.value })}
+          onChange={(e) => setFormData({ ...formData, vehicle_plate: sanitizePlate(e.target.value) })}
           placeholder="AB-123-CD"
-          className="bg-[#0A0A0B] border-[#27272A]"
+          className="bg-[#0A0A0B] border-[#27272A] uppercase"
+          data-testid="driver-plate-input"
         />
       </div>
       <div className="flex gap-3">
@@ -182,6 +224,70 @@ export const NewDriverForm = ({ onSubmit, onCancel }) => {
         </Button>
         <Button type="submit" className="flex-1 bg-[#0066FF] hover:bg-[#0052CC]">
           {t('modals.addDriver.submit', 'Ajouter le chauffeur')}
+        </Button>
+      </div>
+    </form>
+  );
+};
+
+export const EditDriverForm = ({ driver, onSubmit, onCancel }) => {
+  const { t } = useI18n();
+  const [formData, setFormData] = useState({
+    name: driver?.name || '',
+    phone: driver?.phone || '',
+    vehicle_plate: driver?.vehicle_plate || '',
+  });
+  const [saving, setSaving] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    await onSubmit(formData);
+    setSaving(false);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="p-3 bg-[#1A1A1E] rounded-lg">
+        <p className="text-xs text-zinc-400">Email</p>
+        <p className="font-mono text-sm text-zinc-300" data-testid="edit-driver-email">{driver?.email || '—'}</p>
+      </div>
+      <div className="space-y-2">
+        <Label>{t('modals.addDriver.name', 'Nom complet')}</Label>
+        <Input
+          value={formData.name}
+          onChange={(e) => setFormData({ ...formData, name: sanitizeName(e.target.value) })}
+          required
+          className="bg-[#0A0A0B] border-[#27272A]"
+          data-testid="edit-driver-name"
+        />
+      </div>
+      <div className="space-y-2">
+        <Label>{t('modals.addDriver.phone', 'Téléphone')}</Label>
+        <Input
+          value={formData.phone}
+          onChange={(e) => setFormData({ ...formData, phone: sanitizePhone(e.target.value) })}
+          inputMode="numeric"
+          className="bg-[#0A0A0B] border-[#27272A]"
+          data-testid="edit-driver-phone"
+        />
+      </div>
+      <div className="space-y-2">
+        <Label>{t('modals.addDriver.vehiclePlate', 'Immatriculation véhicule')}</Label>
+        <Input
+          value={formData.vehicle_plate}
+          onChange={(e) => setFormData({ ...formData, vehicle_plate: sanitizePlate(e.target.value) })}
+          placeholder="AB-123-CD"
+          className="bg-[#0A0A0B] border-[#27272A] uppercase"
+          data-testid="edit-driver-plate"
+        />
+      </div>
+      <div className="flex gap-3">
+        <Button type="button" variant="outline" onClick={onCancel} className="flex-1 border-[#27272A]">
+          {t('actions.cancel', 'Annuler')}
+        </Button>
+        <Button type="submit" disabled={saving} className="flex-1 bg-[#0066FF] hover:bg-[#0052CC] disabled:opacity-50" data-testid="edit-driver-submit">
+          {saving ? t('actions.saving', 'Enregistrement…') : t('actions.save', 'Enregistrer')}
         </Button>
       </div>
     </form>
@@ -220,7 +326,7 @@ export const AssignDeliveryForm = ({ trackingId, delivery, drivers, onSubmit, on
         <Input
           id="client_name"
           value={formData.client_name}
-          onChange={(e) => setFormData({ ...formData, client_name: e.target.value })}
+          onChange={(e) => setFormData({ ...formData, client_name: sanitizeName(e.target.value) })}
           placeholder={t('modals.assignDriver.clientNamePh', 'Entrez le nom du client')}
           className="h-12 bg-[#0A0A0B] border border-[#27272A] focus:border-[#0066FF]"
           data-testid="client-name-input"
@@ -241,11 +347,11 @@ export const AssignDeliveryForm = ({ trackingId, delivery, drivers, onSubmit, on
 
       <div className="space-y-2">
         <Label htmlFor="driver">{t('modals.assignDriver.driver', 'Chauffeur')}</Label>
-        <Select 
-          value={formData.driver_id} 
+        <Select
+          value={formData.driver_id}
           onValueChange={(value) => setFormData({ ...formData, driver_id: value })}
         >
-          <SelectTrigger 
+          <SelectTrigger
             className="h-12 bg-[#0A0A0B] border border-[#27272A] focus:border-[#0066FF]"
             data-testid="driver-select"
           >
@@ -256,8 +362,8 @@ export const AssignDeliveryForm = ({ trackingId, delivery, drivers, onSubmit, on
               <SelectItem value="none" disabled>{t('modals.assignDriver.noDrivers', 'Aucun chauffeur disponible')}</SelectItem>
             ) : (
               drivers.map((driver) => (
-                <SelectItem 
-                  key={driver.id} 
+                <SelectItem
+                  key={driver.id}
                   value={driver.id}
                   className="hover:bg-[#27272A] cursor-pointer"
                 >
@@ -275,16 +381,16 @@ export const AssignDeliveryForm = ({ trackingId, delivery, drivers, onSubmit, on
       </div>
 
       <div className="flex gap-3 pt-2">
-        <Button 
-          type="button" 
-          variant="outline" 
-          onClick={onCancel} 
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onCancel}
           className="flex-1 h-12 border border-[#27272A] hover:bg-[#1A1A1E]"
         >
           {t('actions.cancel', 'Annuler')}
         </Button>
-        <Button 
-          type="submit" 
+        <Button
+          type="submit"
           disabled={isSubmitting || !formData.driver_id}
           className="flex-1 h-12 bg-[#0066FF] hover:bg-[#0052CC] disabled:opacity-50"
           data-testid="confirm-assign-btn"

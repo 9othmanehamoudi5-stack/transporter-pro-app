@@ -214,6 +214,7 @@ export const invoicesApi = {
 export const adminDriversApi = {
   getAll: () => api.get('/admin/drivers'),
   create: (data) => api.post('/admin/drivers', data),
+  update: (driverId, data) => api.put(`/admin/drivers/${driverId}`, data),
   delete: (driverId) => api.delete(`/admin/drivers/${driverId}`),
   getQuota: () => api.get('/auth/company-quota')
 };
@@ -222,7 +223,9 @@ export const adminDriversApi = {
 export const subscriptionApi = {
   getPlans: () => api.get('/subscription/plans'),
   getCurrent: () => api.get('/subscription/current'),
-  update: (data) => api.post('/subscription/update', data)
+  update: (data) => api.post('/subscription/update', data),
+  createCheckout: (plan, billing = 'monthly') =>
+    api.post(`/stripe/create-checkout?plan=${encodeURIComponent(plan)}&billing=${encodeURIComponent(billing)}`)
 };
 
 // ==================== NOTIFICATIONS ====================

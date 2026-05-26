@@ -1009,6 +1009,46 @@ async def delete_driver(driver_id: str, user: dict = Depends(require_role("admin
     await log_action(user["id"], company_id, "delete_driver", "driver", driver_id, "Chauffeur supprimé")
     return {"message": "Chauffeur supprimé"}
 
+
+class DriverUpdatePayload(BaseModel):
+    name: Optional[str] = None
+    phone: Optional[str] = None
+    vehicle_plate: Optional[str] = None
+
+
+@api_router.put("/admin/drivers/{driver_id}")
+async def update_driver(driver_id: str, payload: DriverUpdatePayload, user: dict = Depends(require_role("admin"))):
+    """Update driver info (name, phone, vehicle_plate). Email/password not editable here."""
+    import re as _re
+    company_id = user["company_id"]
+    updates = {}
+    if payload.name is not None:
+        clean = payload.name.strip()
+        if not _re.fullmatch(r"[A-Za-zÀ-ÿ\s\-]+", clean):
+            raise HTTPException(status_code=400, detail="Nom invalide (lettres, espaces, tirets uniquement)")
+        updates["name"] = clean
+    if payload.phone is not None:
+        clean = _re.sub(r"\D", "", payload.phone)
+        updates["phone"] = clean
+    if payload.vehicle_plate is not None:
+        clean = payload.vehicle_plate.upper().strip()
+        if clean and not _re.fullmatch(r"[A-Z0-9\-]+", clean):
+            raise HTTPException(status_code=400, detail="Immatriculation invalide (lettres, chiffres, tirets uniquement)")
+        updates["vehicle_plate"] = clean
+    if not updates:
+        raise HTTPException(status_code=400, detail="Aucune modification fournie")
+
+    result = await db.users.update_one(
+        {"_id": ObjectId(driver_id), "role": "driver", "company_id": company_id},
+        {"$set": {**updates, "updated_at": datetime.now(timezone.utc)}},
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Chauffeur non trouvé")
+
+    await log_action(user["id"], company_id, "update_driver", "driver", driver_id, f"Champs: {','.join(updates.keys())}")
+    driver = await db.users.find_one({"_id": ObjectId(driver_id)}, {"_id": 0, "password_hash": 0})
+    return {"message": "Chauffeur mis à jour", "driver": driver}
+
 # ==================== SUBSCRIPTION MANAGEMENT ====================
 
 SUBSCRIPTION_PLANS = {
@@ -1126,13 +1166,15 @@ async def get_payment_links():
 
 @api_router.post("/stripe/create-checkout")
 async def create_stripe_checkout(plan: str, billing: str = "monthly", user: dict = Depends(require_role("admin"))):
-    """Generate a Stripe payment link with prefilled email"""
+    """Generate a Stripe payment link with prefilled email + client_reference_id (so webhook can match)."""
     links = STRIPE_PAYMENT_LINKS.get(plan)
     if not links:
         raise HTTPException(status_code=400, detail="Plan invalide")
     base_url = links.get(billing, links["monthly"])
-    checkout_url = f"{base_url}?prefilled_email={user['email']}"
-    return {"url": checkout_url}
+    # client_reference_id lets the webhook map the Stripe session back to our user immediately
+    checkout_url = f"{base_url}?prefilled_email={user['email']}&client_reference_id={user['id']}"
+    await log_action(user["id"], user["company_id"], "stripe_checkout_started", "subscription", plan, f"billing={billing}")
+    return {"url": checkout_url, "plan": plan, "billing": billing}
 
 
 # ==================== STRIPE WEBHOOK ====================
