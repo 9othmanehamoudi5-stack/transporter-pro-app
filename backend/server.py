@@ -25,7 +25,7 @@ from core.db import (
     JWT_SECRET, JWT_ALGORITHM,
     EMERGENT_LLM_KEY, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET,
     RESEND_API_KEY, SENDER_EMAIL, FRONTEND_BASE_URL,
-    STRIPE_PRICE_IDS, PLAN_DRIVER_LIMITS, get_max_drivers,
+    PLAN_DRIVER_LIMITS, get_max_drivers,
 )
 from core.auth import (
     hash_password, verify_password,
@@ -1147,16 +1147,16 @@ async def update_subscription(data: SubscriptionUpdate, user: dict = Depends(req
 
 STRIPE_PAYMENT_LINKS = {
     "solo": {
-        "monthly": "https://buy.stripe.com/test_00wbJ29ckgDSc0v70C7IY02",
-        "yearly": "https://buy.stripe.com/test_8x2dRa60887m5C7acO7IY03"
+        "monthly": "https://buy.stripe.com/test/test_00wbJ29ckgDSC0v70C7IY02",
+        "yearly": "https://buy.stripe.com/test/test_8x2dRa60887m5C7acO7IY03"
     },
     "croissance": {
-        "monthly": "https://buy.stripe.com/test_eVq9AUfAI9bq11R4Su7IY04",
-        "yearly": "https://buy.stripe.com/test_3cIeVe4W4cnCd4z2Km7IY05"
+        "monthly": "https://buy.stripe.com/test/test_eVq9AUfAI9bq1lR4Su7IY04",
+        "yearly": "https://buy.stripe.com/test/test_3cIeVe4W4cnCd4z2Km7IY05"
     },
     "flotte_pro": {
-        "monthly": "https://buy.stripe.com/test_3cI8wQ4W4drG9SnckW7IY01",
-        "yearly": "https://buy.stripe.com/test_cNi5kE2NWgDSd4zbgS7IY0O"
+        "monthly": "https://buy.stripe.com/test/test_3cl8wQ4W4drG9SnckW7IY01",
+        "yearly": "https://buy.stripe.com/test/test_cNi5kE2NWgDSd4zbgS7IY0O"
     }
 }
 
@@ -1168,73 +1168,21 @@ async def get_payment_links():
 
 @api_router.post("/stripe/create-checkout")
 async def create_stripe_checkout(plan: str, billing: str = "monthly", user: dict = Depends(require_role("admin"))):
-    """Create a real Stripe Checkout Session using Price IDs loaded from environment variables.
-    Requires STRIPE_PRICE_SOLO / STRIPE_PRICE_CROISSANCE / STRIPE_PRICE_FLOTTE (and *_YEARLY variants)
-    to be set in backend/.env. The webhook activates `user.plan` on completion — this endpoint
-    only generates the URL and never mutates the user's plan."""
-    import stripe
-    stripe.api_key = STRIPE_SECRET_KEY
-
-    if not STRIPE_SECRET_KEY:
-        raise HTTPException(status_code=500, detail="Stripe non configuré (clé secrète manquante)")
-
-    # Validate plan
-    if plan not in STRIPE_PRICE_IDS:
+    """Redirect the admin to a Stripe Payment Link.
+    The link is enriched with `prefilled_email` (so Stripe shows their email) and
+    `client_reference_id` (so the webhook can map the Stripe session back to our user).
+    The plan is NOT persisted here — it is only activated via the Stripe webhook
+    (`checkout.session.completed`)."""
+    if plan not in STRIPE_PAYMENT_LINKS:
         raise HTTPException(status_code=400, detail=f"Plan invalide : {plan}")
     if billing not in ("monthly", "yearly"):
         billing = "monthly"
 
-    price_id = STRIPE_PRICE_IDS[plan].get(billing) or STRIPE_PRICE_IDS[plan].get("monthly")
-    if not price_id:
-        env_var_map = {
-            ("solo", "monthly"): "STRIPE_PRICE_SOLO",
-            ("solo", "yearly"): "STRIPE_PRICE_SOLO_YEARLY",
-            ("croissance", "monthly"): "STRIPE_PRICE_CROISSANCE",
-            ("croissance", "yearly"): "STRIPE_PRICE_CROISSANCE_YEARLY",
-            ("flotte_pro", "monthly"): "STRIPE_PRICE_FLOTTE",
-            ("flotte_pro", "yearly"): "STRIPE_PRICE_FLOTTE_YEARLY",
-        }
-        expected_var = env_var_map.get((plan, billing), f"STRIPE_PRICE_{plan.upper()}")
-        raise HTTPException(
-            status_code=500,
-            detail=(
-                f"Price ID Stripe manquant pour le plan « {plan} » ({billing}). "
-                f"Ajoutez {expected_var} dans backend/.env."
-            ),
-        )
-
-    try:
-        session = stripe.checkout.Session.create(
-            mode="subscription",
-            line_items=[{"price": price_id, "quantity": 1}],
-            customer_email=user["email"],
-            client_reference_id=user["id"],
-            success_url=f"{FRONTEND_BASE_URL}/admin?stripe=success&session_id={{CHECKOUT_SESSION_ID}}",
-            cancel_url=f"{FRONTEND_BASE_URL}/admin/subscription?stripe=cancel",
-            metadata={
-                "user_id": user["id"],
-                "company_id": user.get("company_id", user["id"]),
-                "plan": plan,
-                "billing": billing,
-            },
-            subscription_data={
-                "metadata": {
-                    "user_id": user["id"],
-                    "plan": plan,
-                    "billing": billing,
-                }
-            },
-            allow_promotion_codes=True,
-        )
-    except stripe.error.InvalidRequestError as e:
-        logger.error(f"Stripe checkout creation failed (plan={plan}, billing={billing}, price_id={price_id}): {e}")
-        raise HTTPException(status_code=400, detail=f"Erreur Stripe : {str(e)}")
-    except Exception as e:
-        logger.error(f"Stripe checkout creation failed (plan={plan}, billing={billing}): {e}")
-        raise HTTPException(status_code=500, detail=f"Erreur Stripe : {str(e)}")
-
-    await log_action(user["id"], user["company_id"], "stripe_checkout_started", "subscription", plan, f"billing={billing}, price_id={price_id}, session={session.id}")
-    return {"url": session.url, "session_id": session.id, "plan": plan, "billing": billing}
+    base_url = STRIPE_PAYMENT_LINKS[plan].get(billing) or STRIPE_PAYMENT_LINKS[plan]["monthly"]
+    # client_reference_id lets the webhook map the Stripe session back to our user immediately.
+    checkout_url = f"{base_url}?prefilled_email={user['email']}&client_reference_id={user['id']}"
+    await log_action(user["id"], user["company_id"], "stripe_checkout_started", "subscription", plan, f"billing={billing}")
+    return {"url": checkout_url, "plan": plan, "billing": billing}
 
 
 # ==================== STRIPE WEBHOOK ====================

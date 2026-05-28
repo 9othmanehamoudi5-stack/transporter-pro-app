@@ -297,23 +297,8 @@ Application SaaS logistique "Transporter-Pro" pour PME de transport.
 - [x] Validé visuellement : FR/EN/ES rendent correctement sur Dashboard + Subscription + Sidebar + Settings
 
 
-### Phase 23 - Fix Stripe Price IDs & Quotas stricts (DONE - 26 Mai 2026)
-- [x] **Bug Stripe "No such price" résolu** : remplacement des Payment Links hardcodés par de vraies Stripe Checkout Sessions (`stripe.checkout.Session.create`) avec `line_items` référençant des Price IDs chargés depuis `.env`. Variables : `STRIPE_PRICE_SOLO`, `STRIPE_PRICE_CROISSANCE`, `STRIPE_PRICE_FLOTTE` (+ variantes `_YEARLY`).
-- [x] **Quotas chauffeurs stricts** : centralisation dans `core/db.py` → `PLAN_DRIVER_LIMITS = {"solo":3, "croissance":15, "flotte_pro":-1}` + helper `get_max_drivers(plan)`. Utilisé dans `/api/auth/company-quota` et `POST /api/admin/drivers` (création).
-- [x] **Webhook exclusivité** : `user.plan` est UNIQUEMENT modifié par `_activate_admin_subscription`, appelé par le webhook `checkout.session.completed` ou le fallback `/api/stripe/verify-payment`. Aucun code-path frontend ne peut promouvoir un plan sans paiement Stripe confirmé.
-- [x] **Plan detection via metadata** : `_activate_admin_subscription` lit `session.metadata.plan` (envoyé lors du create-checkout) au lieu de deviner via `_detect_plan_from_amount` (fallback uniquement pour sessions legacy).
-- [x] **Validation** : `/api/auth/company-quota` retourne `max_drivers=15` pour plan "croissance", `-1` pour "flotte_pro", `3` pour "solo". Messages d'erreur explicites quand un Price ID est manquant (ex : "Ajoutez STRIPE_PRICE_FLOTTE_YEARLY dans backend/.env").
-
-### Action requise utilisateur (Phase 23)
-- Récupérer les Price IDs Stripe (Dashboard → Products → Pricing) : 3 mensuels + 3 annuels.
-- Les coller dans `/app/backend/.env` :
-  ```
-  STRIPE_PRICE_SOLO=price_xxx
-  STRIPE_PRICE_CROISSANCE=price_xxx
-  STRIPE_PRICE_FLOTTE=price_xxx
-  STRIPE_PRICE_SOLO_YEARLY=price_xxx
-  STRIPE_PRICE_CROISSANCE_YEARLY=price_xxx
-  STRIPE_PRICE_FLOTTE_YEARLY=price_xxx
-  ```
-- Redémarrer le backend (auto via hot-reload sur .env).
+### Phase 23 - Stripe Payment Links + Quotas stricts (DONE - 26 Mai 2026)
+- [x] **Bug quotas chauffeurs** : centralisé dans `core/db.py` → `PLAN_DRIVER_LIMITS = {"solo":3, "croissance":15, "flotte_pro":-1}` + helper `get_max_drivers(plan)`. Utilisé dans `/api/auth/company-quota` et `POST /api/admin/drivers`. Vérifié via curl : compte `plan=croissance` retourne `max_drivers=15, can_add=true`.
+- [x] **Stripe Payment Links** : URLs réelles fournies par l'utilisateur intégrées dans `STRIPE_PAYMENT_LINKS` (3 mensuels + 3 annuels, corrigeant les typos précédents). `POST /api/stripe/create-checkout` renvoie l'URL enrichie avec `prefilled_email` + `client_reference_id` pour que le webhook puisse mapper le paiement à l'utilisateur.
+- [x] **Webhook exclusivité** : `user.plan` est UNIQUEMENT mis à jour via `_activate_admin_subscription` (appelé par `/api/webhook/stripe` ou le fallback `/api/stripe/verify-payment`). Lit `session.metadata.plan` en priorité, fallback `_detect_plan_from_amount` pour les Payment Links.
 
