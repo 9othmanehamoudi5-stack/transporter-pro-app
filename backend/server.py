@@ -1146,18 +1146,12 @@ async def update_subscription(data: SubscriptionUpdate, user: dict = Depends(req
 # ==================== STRIPE PAYMENT LINKS ====================
 
 STRIPE_PAYMENT_LINKS = {
-    "solo": {
-        "monthly": "https://buy.stripe.com/test/00wbJ29ckgDSC0v70C7IY02",
-        "yearly": "https://buy.stripe.com/test/8x2dRa60887m5C7acO7IY03"
-    },
-    "croissance": {
-        "monthly": "https://buy.stripe.com/test/eVq9AUfAI9bq1lR4Su7IY04",
-        "yearly": "https://buy.stripe.com/test/3cIeVe4W4cnCd4z2Km7IY05"
-    },
-    "flotte_pro": {
-        "monthly": "https://buy.stripe.com/test/3cl8wQ4W4drG9SnckW7IY01",
-        "yearly": "https://buy.stripe.com/test/cNi5kE2NWgDSd4zbgS7IY0O"
-    }
+    "solo_monthly": "https://buy.stripe.com/test_00wbJ29ckgDSC0v70C7IY02",
+    "croissance_monthly": "https://buy.stripe.com/test_eVq9AUfAI9bq1lR4Su7IY04",
+    "flotte_pro_monthly": "https://buy.stripe.com/test_3cl8wQ4W4drG9SnckW7IY01",
+    "solo_yearly": "https://buy.stripe.com/test_8x2dRa60887m5C7acO7IY03",
+    "croissance_yearly": "https://buy.stripe.com/test_3cIeVe4W4cnCd4z2Km7IY05",
+    "flotte_pro_yearly": "https://buy.stripe.com/test_cNi5kE2NWgDSd4zbgS7IY0O",
 }
 
 @api_router.get("/stripe/payment-links")
@@ -1168,18 +1162,18 @@ async def get_payment_links():
 
 @api_router.post("/stripe/create-checkout")
 async def create_stripe_checkout(plan: str, billing: str = "monthly", user: dict = Depends(require_role("admin"))):
-    """Redirect the admin to a Stripe Payment Link.
-    The link is enriched with `prefilled_email` (so Stripe shows their email) and
-    `client_reference_id` (so the webhook can map the Stripe session back to our user).
-    The plan is NOT persisted here — it is only activated via the Stripe webhook
-    (`checkout.session.completed`)."""
-    if plan not in STRIPE_PAYMENT_LINKS:
-        raise HTTPException(status_code=400, detail=f"Plan invalide : {plan}")
+    """Redirect the admin to the raw Stripe Payment Link (used as-is, no path manipulation).
+    `prefilled_email` + `client_reference_id` are appended as query params so the webhook
+    can map the Stripe session back to our user. The plan is NOT persisted here — it is
+    only activated via the Stripe webhook (`checkout.session.completed`)."""
     if billing not in ("monthly", "yearly"):
         billing = "monthly"
 
-    base_url = STRIPE_PAYMENT_LINKS[plan].get(billing) or STRIPE_PAYMENT_LINKS[plan]["monthly"]
-    # client_reference_id lets the webhook map the Stripe session back to our user immediately.
+    key = f"{plan}_{billing}"
+    base_url = STRIPE_PAYMENT_LINKS.get(key)
+    if not base_url:
+        raise HTTPException(status_code=400, detail=f"Plan invalide : {plan} ({billing})")
+
     checkout_url = f"{base_url}?prefilled_email={user['email']}&client_reference_id={user['id']}"
     await log_action(user["id"], user["company_id"], "stripe_checkout_started", "subscription", plan, f"billing={billing}")
     return {"url": checkout_url, "plan": plan, "billing": billing}
