@@ -1147,16 +1147,16 @@ async def update_subscription(data: SubscriptionUpdate, user: dict = Depends(req
 
 STRIPE_PAYMENT_LINKS = {
     "solo": {
-        "monthly": "https://buy.stripe.com/test/00wbJ29ckgDSC0v70C7IY02",
-        "yearly": "https://buy.stripe.com/test/8x2dRa60887m5C7acO7IY03"
+        "monthly": "https://buy.stripe.com/test_00wbJ29ckgDSC0v70C7IY02",
+        "yearly": "https://buy.stripe.com/test_8x2dRa60887m5C7acO7IY03"
     },
     "croissance": {
-        "monthly": "https://buy.stripe.com/test/eVq9AUfAI9bq1lR4Su7IY04",
-        "yearly": "https://buy.stripe.com/test/3cIeVe4W4cnCd4z2Km7IY05"
+        "monthly": "https://buy.stripe.com/test_eVq9AUfAI9bq1lR4Su7IY04",
+        "yearly": "https://buy.stripe.com/test_3cIeVe4W4cnCd4z2Km7IY05"
     },
     "flotte_pro": {
-        "monthly": "https://buy.stripe.com/test/3cl8wQ4W4drG9SnckW7IY01",
-        "yearly": "https://buy.stripe.com/test/cNi5kE2NWgDSd4zbgS7IY0O"
+        "monthly": "https://buy.stripe.com/test_3cl8wQ4W4drG9SnckW7IY01",
+        "yearly": "https://buy.stripe.com/test_cNi5kE2NWgDSd4zbgS7IY0O"
     }
 }
 
