@@ -22,18 +22,19 @@ STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET")
 # Keys MUST match the plan slugs stored in the users collection (set by the Stripe webhook).
 PLAN_DRIVER_LIMITS = {
     "solo":        3,    # Plan SOLO       — jusqu'à 3 chauffeurs
-    "croissance":  10,   # Plan CROISSANCE — jusqu'à 10 chauffeurs
-    "flotte_pro":  -1,   # Plan FLOTTE PRO — illimité
+    "croissance":  15,   # Plan CROISSANCE — jusqu'à 15 chauffeurs
+    "flotte_pro":  -1,   # Plan FLOTTE PRO — illimité (pas de limite)
 }
 
 def get_max_drivers(plan: str) -> int:
-    """Return the max driver count for a given plan slug (as stored in MongoDB).
-    If the plan slug is unrecognised (None, empty, or unexpected value coming from DB),
-    we return -1 (unlimited) rather than capping at 3, so that a paid user is NEVER
-    wrongly blocked. The quota check in server.py treats -1 as 'no limit'.
+    """Retourne la limite de chauffeurs pour un slug de plan (tel que stocké en MongoDB).
+    - "solo"       → 3
+    - "croissance" → 15
+    - "flotte_pro" → -1 (illimité)
+    - Valeur absente/inconnue → -1 (fail-open : un utilisateur payant n'est jamais bloqué)
     """
     if not plan or plan not in PLAN_DRIVER_LIMITS:
-        return -1   # fail-open: unknown plan = no cap (prevents wrongly blocking paid users)
+        return -1   # plan absent ou inconnu = pas de limite (protection anti-blocage)
     return PLAN_DRIVER_LIMITS[plan]
 
 RESEND_API_KEY = os.environ.get("RESEND_API_KEY")
