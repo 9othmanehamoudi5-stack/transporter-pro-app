@@ -867,12 +867,13 @@ async def get_account_activity(user: dict = Depends(get_current_user), limit: in
 @api_router.get("/auth/company-quota")
 async def get_company_quota(user: dict = Depends(require_role("admin"))):
     """Get current driver count vs plan limit.
-    Strict rules: solo=3, croissance=15, flotte_pro=unlimited(-1).
     Reads `plan` directly from DB (via get_current_user) so it always reflects the
-    latest webhook-confirmed state."""
+    latest webhook-confirmed state.
+    Solo=3 | Croissance=10 | Flotte Pro=illimité(-1).
+    If plan is absent/unknown in DB, returns -1 (no cap) to never wrongly block a paid user."""
     company_id = user["company_id"]
     driver_count = await db.users.count_documents({"role": "driver", "company_id": company_id, "status": {"$ne": "inactive"}})
-    plan = user.get("plan", "solo")
+    plan = user.get("plan")          # None si absent en DB — get_max_drivers gère ce cas
     max_drivers = get_max_drivers(plan)
     return {
         "driver_count": driver_count,
@@ -923,8 +924,9 @@ async def create_driver(data: DriverCreate, user: dict = Depends(require_role("a
     """Admin creates a new driver account"""
     company_id = user["company_id"]
 
-    # Check plan quota (strict: solo=3, croissance=15, flotte_pro=unlimited)
-    plan = user.get("plan", "solo")
+    # Check plan quota — lit le plan réel depuis le token JWT/DB
+    # Valeurs: solo=3, croissance=10, flotte_pro=-1 (illimité), inconnu=-1 (fail-open)
+    plan = user.get("plan")          # None si absent — get_max_drivers retourne -1
     max_drivers = get_max_drivers(plan)
     if max_drivers != -1:
         current_count = await db.users.count_documents({"role": "driver", "company_id": company_id, "status": {"$ne": "inactive"}})
