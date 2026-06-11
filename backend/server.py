@@ -1172,17 +1172,31 @@ async def create_stripe_checkout(plan: str, billing: str = "monthly", user: dict
     The link is enriched with `prefilled_email` (so Stripe shows their email) and
     `client_reference_id` (so the webhook can map the Stripe session back to our user).
     The plan is NOT persisted here — it is only activated via the Stripe webhook
-    (`checkout.session.completed`)."""
+    (`checkout.session.completed`).
+
+    IMPORTANT: base_url is used AS-IS from STRIPE_PAYMENT_LINKS — no prefix is ever added.
+    The email is URL-encoded with quote_plus to prevent AccessDenied errors from Stripe
+    when the email contains special characters (+, &, etc.).
+    """
+    from urllib.parse import quote_plus
+
     if plan not in STRIPE_PAYMENT_LINKS:
         raise HTTPException(status_code=400, detail=f"Plan invalide : {plan}")
     if billing not in ("monthly", "yearly"):
         billing = "monthly"
 
+    # URL brute Stripe — jamais modifiée, jamais préfixée
     base_url = STRIPE_PAYMENT_LINKS[plan].get(billing) or STRIPE_PAYMENT_LINKS[plan]["monthly"]
-    # client_reference_id lets the webhook map the Stripe session back to our user immediately.
-    checkout_url = f"{base_url}?prefilled_email={user['email']}&client_reference_id={user['id']}"
+
+    # Encodage sécurisé de l'email (évite AccessDenied si l'email contient +, & ou @)
+    encoded_email = quote_plus(user["email"])
+
+    # Concaténation stricte : {URL_BRUTE}?prefilled_email={email_encodé}&client_reference_id={user_id}
+    checkout_url = f"{base_url}?prefilled_email={encoded_email}&client_reference_id={user['id']}"
+
     await log_action(user["id"], user["company_id"], "stripe_checkout_started", "subscription", plan, f"billing={billing}")
     return {"url": checkout_url, "plan": plan, "billing": billing}
+
 
 
 # ==================== STRIPE WEBHOOK ====================
