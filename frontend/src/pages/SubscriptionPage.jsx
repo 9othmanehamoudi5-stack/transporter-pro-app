@@ -16,8 +16,8 @@ const buildPlans = (t) => [
     id: 'solo',
     name: t('subscription.plans.solo.name', 'SOLO'),
     description: t('subscription.plans.solo.description', 'Parfait pour démarrer'),
-    monthlyPrice: 19,
-    yearlyPrice: 190,
+    monthlyPrice: 29,
+    yearlyPrice: 290,
     features: [
       t('subscription.plans.solo.f1', "Jusqu'à 3 camions"),
       t('subscription.plans.solo.f2', 'Livraisons illimitées'),

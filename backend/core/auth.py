@@ -60,7 +60,7 @@ async def get_current_user(request: Request) -> dict:
             "name": user["name"],
             "role": user["role"],
             "company_id": user.get("company_id", str(user["_id"])),
-            "plan": user.get("plan", "solo"),
+            "plan": user.get("plan") or "solo",  # lit le VRAI plan depuis MongoDB — jamais de default trompeur
             "subscription_status": user.get("subscription_status", "trial"),
             "trial_ends_at": user.get("trial_ends_at", "").isoformat() if isinstance(user.get("trial_ends_at"), datetime) else str(user.get("trial_ends_at", "")),
             "onboarding_complete": user.get("onboarding_complete", False),

@@ -1058,8 +1058,8 @@ async def update_driver(driver_id: str, payload: DriverUpdatePayload, user: dict
 SUBSCRIPTION_PLANS = {
     "solo": {
         "name": "SOLO",
-        "monthly_price": 19,
-        "yearly_price": 190,
+        "monthly_price": 29,
+        "yearly_price": 290,
         "max_trucks": 3,
         "features": ["e-CMR illimitées", "Support email", "Dashboard basique", "3 chauffeurs max"]
     },
@@ -1410,7 +1410,50 @@ async def stripe_verify_payment(user: dict = Depends(require_role("admin"))):
     }
 
 
-# ==================== NOTIFICATIONS ====================
+# ==================== STRIPE PLAN SYNC (fix d\u00e9synchronisation subscriptions \u2194 users) ====================
+
+@api_router.post("/stripe/sync-plan")
+async def sync_plan_from_subscription(user: dict = Depends(require_role("admin"))):
+    """Resynchronise le champ 'plan' dans la collection users depuis la collection subscriptions.
+    \u00c0 appeler si le webhook Stripe a mis \u00e0 jour subscriptions mais pas users
+    (sympt\u00f4me : la page Abonnement montre le bon plan mais l'app bride encore l'utilisateur).
+    """
+    admin_id = user["id"]
+
+    # Lire le plan confirm\u00e9 dans subscriptions (source de v\u00e9rit\u00e9 Stripe)
+    sub = await db.subscriptions.find_one({"admin_id": admin_id})
+    if not sub:
+        raise HTTPException(status_code=404, detail="Aucun abonnement Stripe trouv\u00e9 pour ce compte.")
+
+    plan_type     = sub.get("plan", "solo")
+    billing_cycle = sub.get("billing_cycle", "monthly")
+    status        = sub.get("status", "active")
+
+    if plan_type not in PLAN_DRIVER_LIMITS:
+        raise HTTPException(status_code=400, detail=f"Plan inconnu dans subscriptions : {plan_type}")
+
+    # Mettre \u00e0 jour users avec le vrai plan
+    await db.users.update_one(
+        {"_id": ObjectId(admin_id)},
+        {"$set": {
+            "plan":                  plan_type,
+            "subscription_status":   status,
+        }}
+    )
+
+    max_drivers = get_max_drivers(plan_type)
+    await log_action(admin_id, user["company_id"], "plan_synced", "subscription", plan_type,
+                     f"Sync subscriptions\u2192users : {plan_type}/{billing_cycle}")
+
+    return {
+        "synced":       True,
+        "plan":         plan_type,
+        "billing_cycle": billing_cycle,
+        "max_drivers":  max_drivers if max_drivers != -1 else "illimit\u00e9",
+        "message":      f"Plan mis \u00e0 jour : {plan_type} ({billing_cycle}). Reconnectez-vous pour voir les changements."
+    }
+
+
 
 @api_router.get("/notifications")
 async def get_notifications(user: dict = Depends(get_current_user)):
