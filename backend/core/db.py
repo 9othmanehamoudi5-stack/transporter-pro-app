@@ -21,21 +21,25 @@ STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET")
 # Centralized driver quotas per plan. -1 = unlimited.
 # Keys MUST match the plan slugs stored in the users collection (set by the Stripe webhook).
 PLAN_DRIVER_LIMITS = {
-    "solo":        3,    # Plan SOLO       — jusqu'à 3 chauffeurs
-    "croissance":  15,   # Plan CROISSANCE — jusqu'à 15 chauffeurs
-    "flotte_pro":  -1,   # Plan FLOTTE PRO — illimité (pas de limite)
+    "solo":       3,   # Plan SOLO       - jusqu'a 3 chauffeurs
+    "croissance": 15,  # Plan CROISSANCE - jusqu'a 15 chauffeurs
+    "flotte_pro": -1,  # Plan FLOTTE PRO - illimite (pas de limite)
 }
 
+
 def get_max_drivers(plan: str) -> int:
-    """Retourne la limite de chauffeurs pour un slug de plan (tel que stocké en MongoDB).
-    - "solo"       → 3
-    - "croissance" → 15
-    - "flotte_pro" → -1 (illimité)
-    - Valeur absente/inconnue → -1 (fail-open : un utilisateur payant n'est jamais bloqué)
+    """Retourne la limite de chauffeurs pour un plan donne (slug stocke en MongoDB).
+
+    Valeurs :
+      - "solo"       -> 3
+      - "croissance" -> 15
+      - "flotte_pro" -> -1 (illimite)
+      - Valeur absente ou inconnue -> -1 (fail-open : un utilisateur payant n'est jamais bloque)
     """
     if not plan or plan not in PLAN_DRIVER_LIMITS:
-        return -1   # plan absent ou inconnu = pas de limite (protection anti-blocage)
+        return -1  # plan absent ou inconnu = pas de limite
     return PLAN_DRIVER_LIMITS[plan]
+
 
 RESEND_API_KEY = os.environ.get("RESEND_API_KEY")
 SENDER_EMAIL = os.environ.get("SENDER_EMAIL", "onboarding@resend.dev")
