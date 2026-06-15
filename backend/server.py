@@ -1136,7 +1136,7 @@ async def update_subscription(data: SubscriptionUpdate, user: dict = Depends(req
 # ==================== STRIPE PAYMENT LINKS ====================
 
 STRIPE_PAYMENT_LINKS = {
-    "solo_monthly": "https://buy.stripe.com/test_00wbJ29ckgDSC0v70C7IY02",
+    "solo_monthly": "https://buy.stripe.com/test_00wbJ29ckgDSc0v70C7IY02",
     "croissance_monthly": "https://buy.stripe.com/test_eVq9AUfAI9bq1lR4Su7IY04",
     "flotte_pro_monthly": "https://buy.stripe.com/test_3cl8wQ4W4drG9SnckW7IY01",
     "solo_yearly": "https://buy.stripe.com/test_8x2dRa60887m5C7acO7IY03",
