@@ -1084,63 +1084,53 @@ async def get_subscription_plans():
 
 @api_router.get("/subscription/current")
 async def get_current_subscription(user: dict = Depends(require_role("admin"))):
-    """Get current subscription for admin's company"""
+    """Get current subscription for admin's company.
+    SOURCE OF TRUTH: `users.plan` (only mutated by Stripe webhook). The `subscriptions`
+    collection is a historical journal — it must NEVER override `user.plan` to avoid
+    UI desync (e.g. Dashboard/Settings showing SOLO while SubscriptionPage shows FLOTTE PRO)."""
+    canonical_plan = user.get("plan", "solo")
+    canonical_max = get_max_drivers(canonical_plan)
+
     subscription = await db.subscriptions.find_one({"admin_id": user["id"]}, {"_id": 0})
     if not subscription:
-        # Check trial from user record
+        # No subscription record → trial. Build a minimal response from the user record.
         admin_user = await db.users.find_one({"_id": ObjectId(user["id"])})
-        trial_ends = admin_user.get("trial_ends_at")
+        trial_ends = admin_user.get("trial_ends_at") if admin_user else None
         if not trial_ends:
             trial_ends = datetime.now(timezone.utc) + timedelta(days=30)
         is_expired = isinstance(trial_ends, datetime) and trial_ends < datetime.now(timezone.utc)
         return {
-            "plan": user.get("plan", "solo"),
+            "plan": canonical_plan,
             "billing_cycle": "monthly",
             "status": "expired" if is_expired else "trial",
             "current_trucks": 0,
-            "max_trucks": 3,
+            "max_trucks": canonical_max,
             "trial_ends": trial_ends.isoformat() if isinstance(trial_ends, datetime) else str(trial_ends)
         }
-    
+
     for field in ["created_at", "expires_at"]:
         if isinstance(subscription.get(field), datetime):
             subscription[field] = subscription[field].isoformat()
-    
+
+    # Force-sync the response with the canonical `user.plan` to guarantee single source of truth.
+    subscription["plan"] = canonical_plan
+    subscription["max_trucks"] = canonical_max
+    plan_info = SUBSCRIPTION_PLANS.get(canonical_plan, {})
+    if plan_info:
+        subscription["plan_name"] = plan_info.get("name", canonical_plan)
+
     return subscription
 
 @api_router.post("/subscription/update")
 async def update_subscription(data: SubscriptionUpdate, user: dict = Depends(require_role("admin"))):
-    """Update subscription plan"""
-    plan_info = SUBSCRIPTION_PLANS.get(data.plan)
-    if not plan_info:
-        raise HTTPException(status_code=400, detail="Plan invalide")
-    
-    price = plan_info["yearly_price"] if data.billing_cycle == "yearly" else plan_info["monthly_price"]
-    
-    subscription = {
-        "admin_id": user["id"],
-        "plan": data.plan,
-        "plan_name": plan_info["name"],
-        "billing_cycle": data.billing_cycle,
-        "price": price,
-        "max_trucks": plan_info["max_trucks"],
-        "features": plan_info["features"],
-        "status": "active",
-        "created_at": datetime.now(timezone.utc),
-        "expires_at": datetime.now(timezone.utc) + timedelta(days=365 if data.billing_cycle == "yearly" else 30)
-    }
-    
-    await db.subscriptions.update_one(
-        {"admin_id": user["id"]},
-        {"$set": subscription},
-        upsert=True
+    """DEPRECATED: plan upgrades MUST go through Stripe (`/api/stripe/create-checkout`)
+    so the webhook can persist `user.plan` only after a confirmed payment.
+    This endpoint is kept disabled to prevent the desync that previously allowed the
+    SubscriptionPage to show one plan and the Dashboard/Settings another."""
+    raise HTTPException(
+        status_code=400,
+        detail="Cette route est désactivée. Pour changer de plan, utilisez le bouton « Choisir ce plan » qui passe par Stripe. Le plan est appliqué automatiquement après paiement confirmé.",
     )
-    
-    subscription["created_at"] = subscription["created_at"].isoformat()
-    subscription["expires_at"] = subscription["expires_at"].isoformat()
-    
-    await log_action(user["id"], user.get("company_id", ""), "update_subscription", "subscription", data.plan, f"Plan: {data.plan}, Cycle: {data.billing_cycle}")
-    return subscription
 
 
 # ==================== STRIPE PAYMENT LINKS ====================
