@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useSubscription } from '../contexts/SubscriptionContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useI18n } from '../i18n/index';
-import { subscriptionApi } from '../services/api';
 import { Button } from '../components/ui/button';
 import { Switch } from '../components/ui/switch';
 import { 
@@ -10,6 +9,17 @@ import {
   ChevronRight, Sparkles, Building2, Lock
 } from 'lucide-react';
 import { toast } from 'sonner';
+
+// Stripe Payment Links — APP version (NO free trial, prevents abuse).
+// Keys are `{planId}_{billing}`. Source of truth lives in the user's Stripe Dashboard.
+const STRIPE_PAYMENT_LINKS = {
+  solo_monthly: 'https://buy.stripe.com/test_14A14o2NW5Ze8Oj1Gi7IY08',
+  solo_yearly: 'https://buy.stripe.com/test_6oU28sewE3R60hNgBc7IY0a',
+  croissance_monthly: 'https://buy.stripe.com/test_aFa6ol3soevKe8D3Oq7IY0b',
+  croissance_yearly: 'https://buy.stripe.com/test_9B64gA9ck5Ze7Kfet47IY0c',
+  flotte_pro_monthly: 'https://buy.stripe.com/test_6oU00k74c5Ze4y384G7IY0d',
+  flotte_pro_yearly: 'https://buy.stripe.com/test_14A28s74cgDS4y3acO7IY0e',
+};
 
 const buildPlans = (t) => [
   {
@@ -81,12 +91,11 @@ const buildPlans = (t) => [
 export const SubscriptionPage = () => {
   const { t } = useI18n();
   const [isYearly, setIsYearly] = useState(false);
-  const [updating, setUpdating] = useState(false);
   const { plan: currentPlan, loading } = useSubscription();
   const { user } = useAuth();
   const PLANS = buildPlans(t);
 
-  const handleSelectPlan = async (planId) => {
+  const handleSelectPlan = (planId) => {
     if (!user) {
       toast.error(t('toasts.loginRequired', 'Veuillez vous connecter pour changer de plan'));
       return;
@@ -97,19 +106,21 @@ export const SubscriptionPage = () => {
       return;
     }
 
-    setUpdating(true);
-    try {
-      // Redirect to Stripe Checkout — plan is only persisted after webhook confirms payment
-      const res = await subscriptionApi.createCheckout(planId, isYearly ? 'yearly' : 'monthly');
-      const url = res?.data?.url;
-      if (!url) throw new Error('Checkout URL missing');
-      toast.success(t('toasts.redirectingStripe', 'Redirection vers le paiement sécurisé Stripe…'));
-      window.location.href = url;
-    } catch (error) {
-      console.error('Checkout error:', error);
-      toast.error(`${t('toasts.error', 'Erreur')} : ${error.response?.data?.detail || error.message}`);
-      setUpdating(false);
+    const key = `${planId}_${isYearly ? 'yearly' : 'monthly'}`;
+    const baseUrl = STRIPE_PAYMENT_LINKS[key];
+    if (!baseUrl) {
+      toast.error(`${t('toasts.error', 'Erreur')} : lien Stripe introuvable (${key})`);
+      return;
     }
+    // Append prefilled_email + client_reference_id so the backend webhook can map
+    // the Stripe session back to this user and activate the plan after payment.
+    const params = new URLSearchParams({
+      prefilled_email: user.email || '',
+      client_reference_id: user.id || '',
+    });
+    const url = `${baseUrl}?${params.toString()}`;
+    toast.success(t('toasts.redirectingStripe', 'Redirection vers le paiement sécurisé Stripe…'));
+    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   const savings = (monthly, yearly) => {
@@ -254,7 +265,7 @@ export const SubscriptionPage = () => {
               {/* CTA Button */}
               <Button
                 onClick={() => handleSelectPlan(plan.id)}
-                disabled={updating || loading}
+                disabled={loading}
                 className={`w-full h-12 font-semibold ${
                   isCurrentPlan
                     ? 'bg-green-600 hover:bg-green-700'
