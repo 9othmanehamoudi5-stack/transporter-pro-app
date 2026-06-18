@@ -112,13 +112,13 @@ export const SubscriptionPage = () => {
       toast.error(`${t('toasts.error', 'Erreur')} : lien Stripe introuvable (${key})`);
       return;
     }
-    // Append prefilled_email + client_reference_id so the backend webhook can map
-    // the Stripe session back to this user and activate the plan after payment.
-    const params = new URLSearchParams({
-      prefilled_email: user.email || '',
-      client_reference_id: user.id || '',
-    });
-    const url = `${baseUrl}?${params.toString()}`;
+    // Build the final URL by simple concatenation — Stripe Payment Links accept
+    // `prefilled_email` and `client_reference_id` as query params. We only append
+    // params that have a value (empty ones can make Stripe reject the link).
+    const parts = [];
+    if (user.email) parts.push(`prefilled_email=${encodeURIComponent(user.email)}`);
+    if (user.id) parts.push(`client_reference_id=${encodeURIComponent(user.id)}`);
+    const url = parts.length > 0 ? `${baseUrl}?${parts.join('&')}` : baseUrl;
     toast.success(t('toasts.redirectingStripe', 'Redirection vers le paiement sécurisé Stripe…'));
     window.open(url, '_blank', 'noopener,noreferrer');
   };
