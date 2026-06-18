@@ -368,8 +368,8 @@ const plans = [
     features: ['Tout de Solo +', 'IA Anti-litige (Gemini)', 'Cash-Flow Dashboard', 'Tracking GPS Live', 'Support prioritaire', '15 chauffeurs max'],
     popular: true,
     links: {
-      monthly: 'https://buy.stripe.com/test_eVq9AUfAI9bq11R4Su7IY04',
-      yearly: 'https://buy.stripe.com/test_3cIeVe4W4cnCd4z2Km7IY05'
+      monthly: 'https://buy.stripe.com/test_eVq9AUfAl9bq1lR4Su7IY04',
+      yearly: 'https://buy.stripe.com/test_3cleVe4W4cnCd4z2Km7IY05'
     }
   },
   {
@@ -383,8 +383,8 @@ const plans = [
     features: ['Tout de Croissance +', 'Éco-Score complet', 'API Access', 'Support 24/7 dédié', 'Chauffeurs illimités', 'White-label'],
     popular: false,
     links: {
-      monthly: 'https://buy.stripe.com/test_3cI8wQ4W4drG9SnckW7IY01',
-      yearly: 'https://buy.stripe.com/test_cNi5kE2NWgDSd4zbgS7IY0O'
+      monthly: 'https://buy.stripe.com/test_3cl8wQ4W4drG9SnckW7IY01',
+      yearly: 'https://buy.stripe.com/test_cNi5kE2NWgDSd4zbgS7IY00'
     }
   },
 ];

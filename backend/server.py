@@ -1135,13 +1135,15 @@ async def update_subscription(data: SubscriptionUpdate, user: dict = Depends(req
 
 # ==================== STRIPE PAYMENT LINKS ====================
 
+# Stripe Payment Links — APP version (logged-in users, NO free trial to prevent abuse).
+# Vitrine/landing-page uses a separate dictionary in LandingPage.jsx (with 30d free trial).
 STRIPE_PAYMENT_LINKS = {
-    "solo_monthly": "https://buy.stripe.com/test_00wbJ29ckgDSc0v70C7IY02",
-    "croissance_monthly": "https://buy.stripe.com/test_eVq9AUfAI9bq1lR4Su7IY04",
-    "flotte_pro_monthly": "https://buy.stripe.com/test_3cI8wQ4W4drG9SnckW7IY01",
-    "solo_yearly": "https://buy.stripe.com/test_8x2dRa60887m5C7acO7IY03",
-    "croissance_yearly": "https://buy.stripe.com/test_3cIeVe4W4cnCd4z2Km7IY05",
-    "flotte_pro_yearly": "https://buy.stripe.com/test_cNi5kE2NWgDSd4zbgS7IY00",
+    "solo_monthly": "https://buy.stripe.com/test_14A14o2NW5Ze8Oj1Gi7IY08",
+    "solo_yearly": "https://buy.stripe.com/test_6oU28sewE3R60hNgBc7IY0a",
+    "croissance_monthly": "https://buy.stripe.com/test_aFa6ol3soevKe8D3Oq7IY0b",
+    "croissance_yearly": "https://buy.stripe.com/test_9B64gA9ck5Ze7Kfet47IY0c",
+    "flotte_pro_monthly": "https://buy.stripe.com/test_6oU00k74c5Ze4y384G7IY0d",
+    "flotte_pro_yearly": "https://buy.stripe.com/test_14A28s74cgDS4y3acO7IY0e",
 }
 
 @api_router.get("/stripe/payment-links")
