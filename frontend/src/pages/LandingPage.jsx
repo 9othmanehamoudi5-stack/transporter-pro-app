@@ -347,13 +347,13 @@ const plans = [
     name: 'SOLO',
     tagline: 'Pour les artisans du transport.',
     trucks: "Jusqu'à 3 camions",
-    monthly: 19,
-    yearlyTotal: 190,
-    yearlyMonthly: 16,
+    monthly: 29,
+    yearlyTotal: 290,
+    yearlyMonthly: 24,
     features: ['e-CMR illimitées', 'Support email', 'Dashboard basique', '3 chauffeurs max'],
     popular: false,
     links: {
-      monthly: 'https://buy.stripe.com/test_00wbJ29ckgDSc0v70C7IY02',
+      monthly: 'https://buy.stripe.com/test_00wbJ29ckgDSC0v70C7IY02',
       yearly: 'https://buy.stripe.com/test_8x2dRa60887m5C7acO7IY03'
     }
   },
@@ -368,7 +368,7 @@ const plans = [
     features: ['Tout de Solo +', 'IA Anti-litige (Gemini)', 'Cash-Flow Dashboard', 'Tracking GPS Live', 'Support prioritaire', '15 chauffeurs max'],
     popular: true,
     links: {
-      monthly: 'https://buy.stripe.com/test_eVq9AUfAl9bq1lR4Su7IY04',
+      monthly: 'https://buy.stripe.com/test_eVq9AUfAI9bq1lR4Su7IY04',
       yearly: 'https://buy.stripe.com/test_3cleVe4W4cnCd4z2Km7IY05'
     }
   },
