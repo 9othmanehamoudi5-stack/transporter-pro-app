@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useOfflineSync } from '../hooks/useOfflineSync';
-import { deliveriesApi, damageReportsApi, ecoScoresApi, dashboardApi, syncApi } from '../services/api';
+import { deliveriesApi, damageReportsApi, ecoScoresApi, dashboardApi, syncApi, compressPhoto } from '../services/api';
 import { firestoreGPS } from '../services/firebase';
 import { Button } from '../components/ui/button';
 import { 
@@ -203,11 +203,11 @@ export const DriverDashboard = () => {
           toast.success('Colis en bon état - Confiance: ' + (analysis?.confidence || 0) + '%');
         }
       } else {
-        // Offline: keep the damage report in the queue for AI analysis when back online,
-        // AND enqueue the same photo as a proof-of-delivery photo so it shows the "En attente de sync"
-        // badge on the delivery card and hits `/api/deliveries/{id}/photos` on reconnect.
-        addToQueue('damage_report', data);
-        addToQueue('delivery_photo', { tracking_id, photo_base64: photoBase64 });
+        // Offline: compress the photo (canvas 800px / q=0.7) BEFORE enqueuing so
+        // localStorage (~5MB budget) doesn't fill up after a handful of shots.
+        const compressed = await compressPhoto(photoBase64);
+        addToQueue('damage_report', { ...data, photo_base64: compressed });
+        addToQueue('delivery_photo', { tracking_id, photo_base64: compressed });
         toast.info('Photo enregistrée (sync au retour)');
       }
       setShowCamera(false);
