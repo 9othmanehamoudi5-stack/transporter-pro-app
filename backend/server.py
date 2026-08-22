@@ -329,7 +329,7 @@ async def login(data: UserLogin, request: Request):
             if lockout_until.tzinfo is None:
                 lockout_until = lockout_until.replace(tzinfo=timezone.utc)
             if datetime.now(timezone.utc) < lockout_until:
-                raise HTTPException(status_code=429, detail="Too many attempts. Try again in 15 minutes.")
+                raise HTTPException(status_code=429, detail="Trop de tentatives — réessayez dans 15 minutes.")
     
     user = await db.users.find_one({"email": email})
     if not user or not verify_password(data.password, user["password_hash"]):
