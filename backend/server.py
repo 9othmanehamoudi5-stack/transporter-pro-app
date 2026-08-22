@@ -255,7 +255,8 @@ async def complete_onboarding(data: CompanyOnboarding, user: dict = Depends(requ
 # ==================== AUTH ENDPOINTS ====================
 
 @api_router.post("/auth/register")
-async def register(data: UserCreate):
+@limiter.limit("5/minute")
+async def register(data: UserCreate, request: Request):
     # Block public driver registration — drivers must be created by admin
     if data.role == "driver":
         raise HTTPException(status_code=403, detail="Les comptes chauffeurs sont créés par l'administrateur de l'entreprise.")
@@ -928,7 +929,8 @@ async def refresh_token(request: Request):
 # ==================== ADMIN: DRIVER MANAGEMENT ====================
 
 @api_router.post("/admin/drivers")
-async def create_driver(data: DriverCreate, user: dict = Depends(require_role("admin"))):
+@limiter.limit("20/minute")
+async def create_driver(data: DriverCreate, request: Request, user: dict = Depends(require_role("admin"))):
     """Admin creates a new driver account"""
     company_id = user["company_id"]
 
@@ -1181,7 +1183,8 @@ async def get_payment_links():
 
 
 @api_router.post("/stripe/create-checkout")
-async def create_stripe_checkout(plan: str, billing: str = "monthly", user: dict = Depends(require_role("admin"))):
+@limiter.limit("5/minute")
+async def create_stripe_checkout(request: Request, plan: str, billing: str = "monthly", user: dict = Depends(require_role("admin"))):
     """Redirect the admin to the raw Stripe Payment Link (in-app version: no free trial).
     The Payment Link URL is used as-is, only enriched with `prefilled_email` +
     `client_reference_id` query params so the webhook can map the Stripe session
