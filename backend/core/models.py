@@ -86,7 +86,7 @@ class DriverCreate(BaseModel):
 
 
 class SubscriptionUpdate(BaseModel):
-    plan: Literal["solo", "croissance", "flotte_pro"]
+    plan: Literal["starter", "pme", "flotte", "solo", "croissance", "flotte_pro"]
     billing_cycle: Literal["monthly", "yearly"]
 
 

@@ -10,77 +10,81 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-// Stripe Payment Links — APP version (NO free trial, prevents abuse).
+// Stripe Payment Links — in-app version (NO free trial, prevents abuse).
 // Keys are `{planId}_{billing}`. Source of truth lives in the user's Stripe Dashboard.
 const STRIPE_PAYMENT_LINKS = {
-  solo_monthly: 'https://buy.stripe.com/test_14A14o2NW5Ze8Oj1Gi7IY08',
-  solo_yearly: 'https://buy.stripe.com/test_6oU28sewE3R60hNgBc7IY0a',
-  croissance_monthly: 'https://buy.stripe.com/test_aFa6ol3soevKe8D3Oq7IY0b',
-  croissance_yearly: 'https://buy.stripe.com/test_9B64gA9ck5Ze7Kfet47IY0c',
-  flotte_pro_monthly: 'https://buy.stripe.com/test_6oU00k74c5Ze4y384G7IY0d',
-  flotte_pro_yearly: 'https://buy.stripe.com/test_14A28s74cgDS4y3acO7IY0e',
+  starter_monthly: 'https://buy.stripe.com/test_cNibJ3b7Jejn8yQgIwenS06',
+  starter_yearly:  'https://buy.stripe.com/test_00w28t2Bda3702kdwkenS07',
+  pme_monthly:     'https://buy.stripe.com/test_fZu28tb7J3EJ7uM1NCenS08',
+  pme_yearly:      'https://buy.stripe.com/test_6oU5kFcbNfnr16o77WenS09',
+  flotte_monthly:  'https://buy.stripe.com/test_6oU7sNejVb7bcP69g4enS0a',
+  flotte_yearly:   'https://buy.stripe.com/test_eVqeVfcbNa37cP6bocenS0b',
 };
+
+// Legacy → new plan id mapping. Existing users still see the correct card highlighted.
+const LEGACY_PLAN_MAP = { solo: 'starter', croissance: 'pme', flotte_pro: 'flotte' };
+const normalizePlanId = (p) => LEGACY_PLAN_MAP[p] || p;
 
 const buildPlans = (t) => [
   {
-    id: 'solo',
-    name: t('subscription.plans.solo.name', 'SOLO'),
-    description: t('subscription.plans.solo.description', 'Parfait pour démarrer'),
-    monthlyPrice: 19,
-    yearlyPrice: 190,
+    id: 'starter',
+    name: t('subscription.plans.starter.name', 'STARTER'),
+    description: t('subscription.plans.starter.description', 'Parfait pour démarrer'),
+    monthlyPrice: 79,
+    yearlyPrice: 759,
     features: [
-      t('subscription.plans.solo.f1', "Jusqu'à 3 camions"),
-      t('subscription.plans.solo.f2', 'Livraisons illimitées'),
-      t('subscription.plans.solo.f3', 'Tracking client basique'),
-      t('subscription.plans.solo.f4', 'Support email'),
+      t('subscription.plans.starter.f1', "Jusqu'à 3 camions"),
+      t('subscription.plans.starter.f2', 'Livraisons illimitées'),
+      t('subscription.plans.starter.f3', 'Tracking client basique'),
+      t('subscription.plans.starter.f4', 'Support email'),
     ],
     lockedFeatures: [
-      t('subscription.plans.solo.lf1', 'Génération PDF e-CMR'),
-      t('subscription.plans.solo.lf2', 'Carte GPS temps réel'),
-      t('subscription.plans.solo.lf3', 'Dashboard Cash-Flow'),
-      t('subscription.plans.solo.lf4', 'Scan Code-barre'),
+      t('subscription.plans.starter.lf1', 'Génération PDF e-CMR'),
+      t('subscription.plans.starter.lf2', 'Carte GPS temps réel'),
+      t('subscription.plans.starter.lf3', 'Dashboard Cash-Flow'),
+      t('subscription.plans.starter.lf4', 'Scan Code-barre'),
     ],
     icon: Truck,
     popular: false,
   },
   {
-    id: 'croissance',
-    name: t('subscription.plans.croissance.name', 'CROISSANCE'),
-    description: t('subscription.plans.croissance.description', 'Pour les PME en expansion'),
-    monthlyPrice: 189,
-    yearlyPrice: 1890,
+    id: 'pme',
+    name: t('subscription.plans.pme.name', 'PME'),
+    description: t('subscription.plans.pme.description', 'Pour les PME en expansion'),
+    monthlyPrice: 249,
+    yearlyPrice: 2390,
     features: [
-      t('subscription.plans.croissance.f1', "Jusqu'à 15 camions"),
-      t('subscription.plans.croissance.f2', 'e-CMR PDF illimitées'),
-      t('subscription.plans.croissance.f3', 'Carte GPS temps réel'),
-      t('subscription.plans.croissance.f4', 'IA Anti-litige'),
-      t('subscription.plans.croissance.f5', 'Cash-Flow Dashboard'),
-      t('subscription.plans.croissance.f6', 'Score Éco-conduite'),
-      t('subscription.plans.croissance.f7', 'Support prioritaire'),
+      t('subscription.plans.pme.f1', "Jusqu'à 15 camions"),
+      t('subscription.plans.pme.f2', 'e-CMR PDF illimitées'),
+      t('subscription.plans.pme.f3', 'Carte GPS temps réel'),
+      t('subscription.plans.pme.f4', 'IA Anti-litige'),
+      t('subscription.plans.pme.f5', 'Cash-Flow Dashboard'),
+      t('subscription.plans.pme.f6', 'Score Éco-conduite'),
+      t('subscription.plans.pme.f7', 'Support prioritaire'),
     ],
     lockedFeatures: [
-      t('subscription.plans.croissance.lf1', 'Scan Code-barre'),
-      t('subscription.plans.croissance.lf2', 'Portail Client avancé'),
-      t('subscription.plans.croissance.lf3', 'API Access'),
+      t('subscription.plans.pme.lf1', 'Scan Code-barre'),
+      t('subscription.plans.pme.lf2', 'Portail Client avancé'),
+      t('subscription.plans.pme.lf3', 'API Access'),
     ],
     icon: Zap,
     popular: true,
   },
   {
-    id: 'flotte_pro',
-    name: t('subscription.plans.flotte_pro.name', 'FLOTTE PRO'),
-    description: t('subscription.plans.flotte_pro.description', 'Solution entreprise complète'),
-    monthlyPrice: 489,
-    yearlyPrice: 4890,
+    id: 'flotte',
+    name: t('subscription.plans.flotte.name', 'FLOTTE'),
+    description: t('subscription.plans.flotte.description', 'Solution entreprise complète'),
+    monthlyPrice: 690,
+    yearlyPrice: 6624,
     features: [
-      t('subscription.plans.flotte_pro.f1', 'Camions illimités'),
-      t('subscription.plans.flotte_pro.f2', 'Toutes fonctionnalités'),
-      t('subscription.plans.flotte_pro.f3', 'Scan Code-barre'),
-      t('subscription.plans.flotte_pro.f4', 'Portail Client avancé'),
-      t('subscription.plans.flotte_pro.f5', 'API Access complet'),
-      t('subscription.plans.flotte_pro.f6', 'Carte Temps Réel'),
-      t('subscription.plans.flotte_pro.f7', 'Support 24/7'),
-      t('subscription.plans.flotte_pro.f8', 'Manager dédié'),
+      t('subscription.plans.flotte.f1', 'Camions illimités'),
+      t('subscription.plans.flotte.f2', 'Toutes fonctionnalités'),
+      t('subscription.plans.flotte.f3', 'Scan Code-barre'),
+      t('subscription.plans.flotte.f4', 'Portail Client avancé'),
+      t('subscription.plans.flotte.f5', 'API Access complet'),
+      t('subscription.plans.flotte.f6', 'Carte Temps Réel'),
+      t('subscription.plans.flotte.f7', 'Support 24/7'),
+      t('subscription.plans.flotte.f8', 'Manager dédié'),
     ],
     lockedFeatures: [],
     icon: Building2,
@@ -94,6 +98,8 @@ export const SubscriptionPage = () => {
   const { plan: currentPlan, loading } = useSubscription();
   const { user } = useAuth();
   const PLANS = buildPlans(t);
+  // Normalize legacy plan ids (solo/croissance/flotte_pro) so existing users still see the right card highlighted.
+  const currentPlanId = normalizePlanId(currentPlan);
 
   const handleSelectPlan = (planId) => {
     if (!user) {
@@ -101,7 +107,7 @@ export const SubscriptionPage = () => {
       return;
     }
 
-    if (currentPlan === planId) {
+    if (currentPlanId === planId) {
       toast.info(t('toasts.alreadyOnPlan', 'Vous êtes déjà sur ce plan'));
       return;
     }
@@ -129,10 +135,10 @@ export const SubscriptionPage = () => {
   };
 
   const getPlanBadgeColor = (planId) => {
-    switch(planId) {
-      case 'solo': return 'bg-zinc-600';
-      case 'croissance': return 'bg-[#0066FF]';
-      case 'flotte_pro': return 'bg-gradient-to-r from-yellow-500 to-orange-500';
+    switch(normalizePlanId(planId)) {
+      case 'starter': return 'bg-zinc-600';
+      case 'pme': return 'bg-[#0066FF]';
+      case 'flotte': return 'bg-gradient-to-r from-yellow-500 to-orange-500';
       default: return 'bg-zinc-600';
     }
   };
@@ -153,7 +159,7 @@ export const SubscriptionPage = () => {
               <Crown className="w-6 h-6 text-[#0066FF]" />
               <div>
                 <p className="font-semibold">
-                  {t('subscription.currentPlan', 'Plan actuel')} : {PLANS.find(p => p.id === currentPlan)?.name || currentPlan}
+                  {t('subscription.currentPlan', 'Plan actuel')} : {PLANS.find(p => p.id === currentPlanId)?.name || currentPlanId}
                 </p>
                 <p className="text-sm text-zinc-400">
                   {t('subscription.billingCycle', 'Facturation')} {isYearly ? t('subscription.billingYearly', 'annuelle') : t('subscription.billingMonthly', 'mensuelle')}
@@ -189,7 +195,7 @@ export const SubscriptionPage = () => {
       {/* Plans Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {PLANS.map((plan) => {
-          const isCurrentPlan = currentPlan === plan.id;
+          const isCurrentPlan = currentPlanId === plan.id;
           const price = isYearly ? plan.yearlyPrice : plan.monthlyPrice;
           const Icon = plan.icon;
 

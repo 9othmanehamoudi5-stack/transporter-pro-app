@@ -343,48 +343,48 @@ const LandingPage = () => {
 
 const plans = [
   {
-    id: 'solo',
-    name: 'SOLO',
+    id: 'starter',
+    name: 'STARTER',
     tagline: 'Pour les artisans du transport.',
     trucks: "Jusqu'à 3 camions",
-    monthly: 29,
-    yearlyTotal: 290,
-    yearlyMonthly: 24,
+    monthly: 79,
+    yearlyTotal: 759,
+    yearlyMonthly: 63,
     features: ['e-CMR illimitées', 'Support email', 'Dashboard basique', '3 chauffeurs max'],
     popular: false,
     links: {
-      monthly: 'https://buy.stripe.com/test_00wbJ29ckgDSC0v70C7IY02',
-      yearly: 'https://buy.stripe.com/test_8x2dRa60887m5C7acO7IY03'
+      monthly: 'https://buy.stripe.com/test_4gM14p7VxcbfaGY4ZOenS00',
+      yearly: 'https://buy.stripe.com/test_aFa3cxa3Ffnr3ewfEsenS0e'
     }
   },
   {
-    id: 'croissance',
-    name: 'CROISSANCE',
+    id: 'pme',
+    name: 'PME',
     tagline: 'Le standard pour les PME en expansion.',
     trucks: "Jusqu'à 15 camions",
-    monthly: 189,
-    yearlyTotal: 1890,
-    yearlyMonthly: 157,
-    features: ['Tout de Solo +', 'IA Anti-litige (Gemini)', 'Cash-Flow Dashboard', 'Tracking GPS Live', 'Support prioritaire', '15 chauffeurs max'],
+    monthly: 249,
+    yearlyTotal: 2390,
+    yearlyMonthly: 199,
+    features: ['Tout de Starter +', 'IA Anti-litige (Gemini)', 'Cash-Flow Dashboard', 'Tracking GPS Live', 'Support prioritaire', '15 chauffeurs max'],
     popular: true,
     links: {
-      monthly: 'https://buy.stripe.com/test_eVq9AUfAI9bq1lR4Su7IY04',
-      yearly: 'https://buy.stripe.com/test_3cleVe4W4cnCd4z2Km7IY05'
+      monthly: 'https://buy.stripe.com/test_28E00l8ZBfnrdTa8c0enS01',
+      yearly: 'https://buy.stripe.com/test_dRm14p0t5ejn9CU1NCenS03'
     }
   },
   {
-    id: 'flotte_pro',
-    name: 'FLOTTE PRO',
+    id: 'flotte',
+    name: 'FLOTTE',
     tagline: 'La puissance brute pour les empires logistiques.',
     trucks: 'Camions illimités',
-    monthly: 489,
-    yearlyTotal: 4890,
-    yearlyMonthly: 407,
-    features: ['Tout de Croissance +', 'Éco-Score complet', 'API Access', 'Support 24/7 dédié', 'Chauffeurs illimités', 'White-label'],
+    monthly: 690,
+    yearlyTotal: 6624,
+    yearlyMonthly: 552,
+    features: ['Tout de PME +', 'Éco-Score complet', 'API Access', 'Support 24/7 dédié', 'Chauffeurs illimités', 'White-label'],
     popular: false,
     links: {
-      monthly: 'https://buy.stripe.com/test_3cl8wQ4W4drG9SnckW7IY01',
-      yearly: 'https://buy.stripe.com/test_cNi5kE2NWgDSd4zbgS7IY00'
+      monthly: 'https://buy.stripe.com/test_dRmbJ37Vx6QVcP69g4enS04',
+      yearly: 'https://buy.stripe.com/test_6oU28tgs3fnr3ewfEsenS05'
     }
   },
 ];

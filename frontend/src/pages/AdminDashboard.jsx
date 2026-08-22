@@ -74,9 +74,10 @@ export const AdminDashboard = () => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
   const [firestoreDriversList, setFirestoreDriversList] = useState([]);
-  // Quota: use the authenticated user's plan as initial seed so the UI never flashes the wrong "PLAN SOLO" label.
-  const PLAN_MAX = { solo: 3, croissance: 15, flotte_pro: -1 };
-  const initialPlan = user?.plan || 'solo';
+  // Quota: use the authenticated user's plan as initial seed so the UI never flashes the wrong plan label.
+  // Legacy plan ids (solo/croissance/flotte_pro) are kept so existing users still resolve.
+  const PLAN_MAX = { starter: 3, pme: 15, flotte: -1, solo: 3, croissance: 15, flotte_pro: -1 };
+  const initialPlan = user?.plan || 'starter';
   const [driverQuota, setDriverQuota] = useState({
     driver_count: 0,
     max_drivers: PLAN_MAX[initialPlan] ?? 3,

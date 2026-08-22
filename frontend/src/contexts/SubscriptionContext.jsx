@@ -81,7 +81,7 @@ export const useSubscription = () => {
 export const SubscriptionProvider = ({ children }) => {
   const { user } = useAuth();
   const [subscription, setSubscription] = useState({
-    plan: 'solo',
+    plan: 'starter',
     loading: true,
     error: null
   });
@@ -89,18 +89,18 @@ export const SubscriptionProvider = ({ children }) => {
   // Load subscription from MongoDB backend (primary source of truth)
   useEffect(() => {
     if (!user?.id || user?.role !== 'admin') {
-      setSubscription({ plan: 'solo', loading: false, error: null });
+      setSubscription({ plan: 'starter', loading: false, error: null });
       return;
     }
 
     const loadPlan = async () => {
       try {
         const res = await subscriptionApi.getCurrent();
-        const plan = res.data?.plan || 'solo';
+        const plan = res.data?.plan || 'starter';
         setSubscription({ plan, loading: false, error: null });
       } catch (err) {
         console.warn('Failed to load subscription from backend:', err.message);
-        setSubscription({ plan: 'solo', loading: false, error: null });
+        setSubscription({ plan: 'starter', loading: false, error: null });
       }
     };
 

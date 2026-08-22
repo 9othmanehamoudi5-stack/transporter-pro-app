@@ -262,7 +262,7 @@ async def register(data: UserCreate):
         "password_hash": hash_password(data.password),
         "name": data.name,
         "role": data.role,
-        "plan": "croissance",
+        "plan": "starter",
         "created_at": datetime.now(timezone.utc)
     }
     result = await db.users.insert_one(user_doc)
@@ -289,7 +289,7 @@ async def register(data: UserCreate):
         "role": data.role,
         "onboarding_complete": False,
         "company_id": user_id if data.role == "admin" else "",
-        "plan": "croissance",
+        "plan": "starter",
         "subscription_status": "incomplete" if data.role == "admin" else "n/a",
         "access_token": access_token,
         "refresh_token": refresh_token
@@ -369,7 +369,7 @@ async def login(data: UserLogin, request: Request):
         "name": user["name"],
         "role": user["role"],
         "company_id": user.get("company_id", user_id),
-        "plan": user.get("plan", "solo"),
+        "plan": user.get("plan", "starter"),
         "onboarding_complete": user.get("onboarding_complete", False),
         "subscription_status": user.get("subscription_status", "incomplete" if user["role"] == "admin" else "n/a"),
         "trial_ends_at": user.get("trial_ends_at", "").isoformat() if isinstance(user.get("trial_ends_at"), datetime) else str(user.get("trial_ends_at", "")),
@@ -677,7 +677,7 @@ async def verify_2fa(data: TwoFactorVerify):
         "name": user["name"],
         "role": user["role"],
         "company_id": user.get("company_id", user_id),
-        "plan": user.get("plan", "solo"),
+        "plan": user.get("plan", "starter"),
         "onboarding_complete": user.get("onboarding_complete", False),
         "subscription_status": user.get("subscription_status", "incomplete"),
         "access_token": access_token,
@@ -867,12 +867,12 @@ async def get_account_activity(user: dict = Depends(get_current_user), limit: in
 @api_router.get("/auth/company-quota")
 async def get_company_quota(user: dict = Depends(require_role("admin"))):
     """Get current driver count vs plan limit.
-    Strict rules: solo=3, croissance=15, flotte_pro=unlimited(-1).
+    Strict rules: starter=3, pme=15, flotte=unlimited(-1). Legacy plan names (solo/croissance/flotte_pro) still resolve.
     Reads `plan` directly from DB (via get_current_user) so it always reflects the
     latest webhook-confirmed state."""
     company_id = user["company_id"]
     driver_count = await db.users.count_documents({"role": "driver", "company_id": company_id, "status": {"$ne": "inactive"}})
-    plan = user.get("plan", "solo")
+    plan = user.get("plan", "starter")
     max_drivers = get_max_drivers(plan)
     return {
         "driver_count": driver_count,
@@ -923,8 +923,8 @@ async def create_driver(data: DriverCreate, user: dict = Depends(require_role("a
     """Admin creates a new driver account"""
     company_id = user["company_id"]
 
-    # Check plan quota (strict: solo=3, croissance=15, flotte_pro=unlimited)
-    plan = user.get("plan", "solo")
+    # Check plan quota (strict: starter=3, pme=15, flotte=unlimited; legacy names still resolve)
+    plan = user.get("plan", "starter")
     max_drivers = get_max_drivers(plan)
     if max_drivers != -1:
         current_count = await db.users.count_documents({"role": "driver", "company_id": company_id, "status": {"$ne": "inactive"}})
@@ -1054,27 +1054,31 @@ async def update_driver(driver_id: str, payload: DriverUpdatePayload, user: dict
 # ==================== SUBSCRIPTION MANAGEMENT ====================
 
 SUBSCRIPTION_PLANS = {
-    "solo": {
-        "name": "SOLO",
-        "monthly_price": 19,
-        "yearly_price": 190,
+    "starter": {
+        "name": "STARTER",
+        "monthly_price": 79,
+        "yearly_price": 759,
         "max_trucks": 3,
         "features": ["e-CMR illimitées", "Support email", "Dashboard basique", "3 chauffeurs max"]
     },
-    "croissance": {
-        "name": "CROISSANCE",
-        "monthly_price": 189,
-        "yearly_price": 1890,
+    "pme": {
+        "name": "PME",
+        "monthly_price": 249,
+        "yearly_price": 2390,
         "max_trucks": 15,
         "features": ["e-CMR illimitées", "IA Anti-litige", "Cash-Flow Dashboard", "Tracking GPS Live", "Support prioritaire", "15 chauffeurs max"]
     },
-    "flotte_pro": {
-        "name": "FLOTTE PRO",
-        "monthly_price": 489,
-        "yearly_price": 4890,
+    "flotte": {
+        "name": "FLOTTE",
+        "monthly_price": 690,
+        "yearly_price": 6624,
         "max_trucks": -1,  # unlimited
         "features": ["Camions illimités", "IA Anti-litige", "Cash-Flow Dashboard", "Éco-Score complet", "Support 24/7 dédié", "API Access", "White-label"]
-    }
+    },
+    # Legacy aliases so existing subscription docs still resolve.
+    "solo": {"name": "STARTER", "monthly_price": 79, "yearly_price": 759, "max_trucks": 3, "features": []},
+    "croissance": {"name": "PME", "monthly_price": 249, "yearly_price": 2390, "max_trucks": 15, "features": []},
+    "flotte_pro": {"name": "FLOTTE", "monthly_price": 690, "yearly_price": 6624, "max_trucks": -1, "features": []},
 }
 
 @api_router.get("/subscription/plans")
@@ -1088,7 +1092,7 @@ async def get_current_subscription(user: dict = Depends(require_role("admin"))):
     SOURCE OF TRUTH: `users.plan` (only mutated by Stripe webhook). The `subscriptions`
     collection is a historical journal — it must NEVER override `user.plan` to avoid
     UI desync (e.g. Dashboard/Settings showing SOLO while SubscriptionPage shows FLOTTE PRO)."""
-    canonical_plan = user.get("plan", "solo")
+    canonical_plan = user.get("plan", "starter")
     canonical_max = get_max_drivers(canonical_plan)
 
     subscription = await db.subscriptions.find_one({"admin_id": user["id"]}, {"_id": 0})
@@ -1135,15 +1139,30 @@ async def update_subscription(data: SubscriptionUpdate, user: dict = Depends(req
 
 # ==================== STRIPE PAYMENT LINKS ====================
 
-# Stripe Payment Links — APP version (logged-in users, NO free trial to prevent abuse).
-# Vitrine/landing-page uses a separate dictionary in LandingPage.jsx (with 30d free trial).
+# Stripe Payment Links.
+# Nested: {plan_id: {billing: url, "{billing}_no_trial": url}}.
+# - `monthly` / `yearly` include 30 days free trial (used on the public LandingPage).
+# - `monthly_no_trial` / `yearly_no_trial` skip the trial (used on the in-app SubscriptionPage
+#   to prevent already-registered users from stacking free periods).
 STRIPE_PAYMENT_LINKS = {
-    "solo_monthly": "https://buy.stripe.com/test_14A14o2NW5Ze8Oj1Gi7IY08",
-    "solo_yearly": "https://buy.stripe.com/test_6oU28sewE3R60hNgBc7IY0a",
-    "croissance_monthly": "https://buy.stripe.com/test_aFa6ol3soevKe8D3Oq7IY0b",
-    "croissance_yearly": "https://buy.stripe.com/test_9B64gA9ck5Ze7Kfet47IY0c",
-    "flotte_pro_monthly": "https://buy.stripe.com/test_6oU00k74c5Ze4y384G7IY0d",
-    "flotte_pro_yearly": "https://buy.stripe.com/test_14A28s74cgDS4y3acO7IY0e",
+    "starter": {
+        "monthly":          "https://buy.stripe.com/test_4gM14p7VxcbfaGY4ZOenS00",
+        "yearly":           "https://buy.stripe.com/test_aFa3cxa3Ffnr3ewfEsenS0e",
+        "monthly_no_trial": "https://buy.stripe.com/test_cNibJ3b7Jejn8yQgIwenS06",
+        "yearly_no_trial":  "https://buy.stripe.com/test_00w28t2Bda3702kdwkenS07",
+    },
+    "pme": {
+        "monthly":          "https://buy.stripe.com/test_28E00l8ZBfnrdTa8c0enS01",
+        "yearly":           "https://buy.stripe.com/test_dRm14p0t5ejn9CU1NCenS03",
+        "monthly_no_trial": "https://buy.stripe.com/test_fZu28tb7J3EJ7uM1NCenS08",
+        "yearly_no_trial":  "https://buy.stripe.com/test_6oU5kFcbNfnr16o77WenS09",
+    },
+    "flotte": {
+        "monthly":          "https://buy.stripe.com/test_dRmbJ37Vx6QVcP69g4enS04",
+        "yearly":           "https://buy.stripe.com/test_6oU28tgs3fnr3ewfEsenS05",
+        "monthly_no_trial": "https://buy.stripe.com/test_6oU7sNejVb7bcP69g4enS0a",
+        "yearly_no_trial":  "https://buy.stripe.com/test_eVqeVfcbNa37cP6bocenS0b",
+    },
 }
 
 @api_router.get("/stripe/payment-links")
@@ -1154,17 +1173,22 @@ async def get_payment_links():
 
 @api_router.post("/stripe/create-checkout")
 async def create_stripe_checkout(plan: str, billing: str = "monthly", user: dict = Depends(require_role("admin"))):
-    """Redirect the admin to the raw Stripe Payment Link (used as-is, no path manipulation).
-    `prefilled_email` + `client_reference_id` are appended as query params so the webhook
-    can map the Stripe session back to our user. The plan is NOT persisted here — it is
-    only activated via the Stripe webhook (`checkout.session.completed`)."""
+    """Redirect the admin to the raw Stripe Payment Link (in-app version: no free trial).
+    The Payment Link URL is used as-is, only enriched with `prefilled_email` +
+    `client_reference_id` query params so the webhook can map the Stripe session
+    back to our user."""
     if billing not in ("monthly", "yearly"):
         billing = "monthly"
 
-    key = f"{plan}_{billing}"
-    base_url = STRIPE_PAYMENT_LINKS.get(key)
+    plan_links = STRIPE_PAYMENT_LINKS.get(plan)
+    if not plan_links:
+        raise HTTPException(status_code=400, detail=f"Plan invalide : {plan}")
+
+    # In-app checkout uses the *_no_trial variant. Fallback to the with-trial link
+    # only if the no-trial variant isn't configured for that plan.
+    base_url = plan_links.get(f"{billing}_no_trial") or plan_links.get(billing)
     if not base_url:
-        raise HTTPException(status_code=400, detail=f"Plan invalide : {plan} ({billing})")
+        raise HTTPException(status_code=400, detail=f"Cycle invalide pour {plan} : {billing}")
 
     checkout_url = f"{base_url}?prefilled_email={user['email']}&client_reference_id={user['id']}"
     await log_action(user["id"], user["company_id"], "stripe_checkout_started", "subscription", plan, f"billing={billing}")
@@ -1176,20 +1200,21 @@ async def create_stripe_checkout(plan: str, billing: str = "monthly", user: dict
 def _detect_plan_from_amount(amount: float) -> tuple:
     """Fallback only — used when the Stripe session has no metadata.plan
     (e.g. legacy Payment Link sessions). For new flows we read metadata.plan
-    directly (set when creating the Checkout Session)."""
-    if amount >= 4000:
-        return "flotte_pro", "yearly"
-    if amount >= 1500:
-        return "croissance", "yearly"
-    if amount >= 400:
-        return "flotte_pro", "monthly"
-    if amount >= 150:
-        return "croissance", "monthly"
-    if amount >= 100:
-        return "solo", "yearly"
+    directly (set when creating the Checkout Session).
+    Amount thresholds (EUR): starter 79/759, pme 249/2390, flotte 690/6624."""
+    if amount >= 6000:
+        return "flotte", "yearly"
+    if amount >= 2000:
+        return "pme", "yearly"
+    if amount >= 600:
+        return "flotte", "monthly"
+    if amount >= 200:
+        return "pme", "monthly"
+    if amount >= 500:
+        return "starter", "yearly"
     if amount > 0:
-        return "solo", "monthly"
-    return "solo", "monthly"
+        return "starter", "monthly"
+    return "starter", "monthly"
 
 
 async def _activate_admin_subscription(admin: dict, session: dict, source: str = "webhook") -> dict:
