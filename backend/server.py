@@ -55,14 +55,21 @@ logger = logging.getLogger(__name__)
 ROOT_DIR = Path(__file__).parent
 
 # Rate limiting: 10 login attempts per minute per IP to slow down brute-force.
-from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi import Limiter
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
+from starlette.responses import JSONResponse
 limiter = Limiter(key_func=get_remote_address)
+
+def _rate_limit_handler(request: Request, exc: RateLimitExceeded):
+    return JSONResponse(
+        status_code=429,
+        content={"detail": "Trop de tentatives — réessayez dans 1 minute."},
+    )
 
 app = FastAPI(title="Transporter-Pro API")
 app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_exception_handler(RateLimitExceeded, _rate_limit_handler)
 api_router = APIRouter(prefix="/api")
 
 
