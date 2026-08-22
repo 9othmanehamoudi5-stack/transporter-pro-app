@@ -1782,6 +1782,48 @@ async def update_gps(tracking_id: str, lat: float = Form(...), lng: float = Form
     )
     return {"message": "GPS updated"}
 
+
+class DeliveryPhotoUpload(BaseModel):
+    photo_base64: str
+
+
+@api_router.post("/deliveries/{tracking_id}/photos")
+async def upload_delivery_photo(tracking_id: str, data: DeliveryPhotoUpload, user: dict = Depends(get_current_user)):
+    """Append a proof-of-delivery photo (base64) to a delivery.
+    Used both by the online flow and the offline sync when the driver's device
+    comes back online. Photos are capped at ~500KB base64 to keep the document
+    small; larger uploads are truncated. Multi-tenant: driver must be assigned
+    OR admin must own the company."""
+    delivery = await db.deliveries.find_one({"tracking_id": tracking_id})
+    if not delivery:
+        raise HTTPException(status_code=404, detail="Delivery not found")
+
+    # Access control: driver must be assigned, admin must own the company
+    if user["role"] == "driver" and delivery.get("driver_id") != user["id"]:
+        raise HTTPException(status_code=403, detail="Not your delivery")
+    if user["role"] == "admin" and delivery.get("company_id") != user.get("company_id"):
+        raise HTTPException(status_code=403, detail="Not your company's delivery")
+
+    photo = data.photo_base64 or ""
+    if not photo:
+        raise HTTPException(status_code=400, detail="photo_base64 required")
+    if len(photo) > 500_000:
+        photo = photo[:500_000]
+
+    photo_entry = {
+        "photo_base64": photo,
+        "uploaded_by": user["id"],
+        "uploaded_at": datetime.now(timezone.utc).isoformat(),
+    }
+    result = await db.deliveries.update_one(
+        {"tracking_id": tracking_id},
+        {"$push": {"photos": photo_entry}},
+    )
+    photos_count = len(delivery.get("photos", [])) + (1 if result.modified_count else 0)
+    await log_action(user["id"], user.get("company_id", ""), "upload_delivery_photo", "delivery", tracking_id, f"total_photos={photos_count}")
+    return {"success": True, "tracking_id": tracking_id, "photos_count": photos_count}
+
+
 # ==================== INVOICE ENDPOINTS ====================
 
 @api_router.post("/invoices")

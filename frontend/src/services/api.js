@@ -92,6 +92,9 @@ export const authApi = {
 
 // ==================== DELIVERIES (Hybrid: Backend + Firestore) ====================
 export const deliveriesApi = {
+  // Upload a proof-of-delivery photo (used online + by the offline queue on reconnect)
+  uploadPhoto: (trackingId, photoBase64) => api.post(`/deliveries/${trackingId}/photos`, { photo_base64: photoBase64 }),
+
   // Get all - from backend (primary), sync to Firestore
   getAll: async (status) => {
     try {
