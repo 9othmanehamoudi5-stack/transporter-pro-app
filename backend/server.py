@@ -54,7 +54,15 @@ logger = logging.getLogger(__name__)
 
 ROOT_DIR = Path(__file__).parent
 
+# Rate limiting: 10 login attempts per minute per IP to slow down brute-force.
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+limiter = Limiter(key_func=get_remote_address)
+
 app = FastAPI(title="Transporter-Pro API")
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 api_router = APIRouter(prefix="/api")
 
 
@@ -299,6 +307,7 @@ async def register(data: UserCreate):
     return response
 
 @api_router.post("/auth/login")
+@limiter.limit("10/minute")
 async def login(data: UserLogin, request: Request):
     email = data.email.lower()
     ip = request.client.host if request.client else "unknown"
