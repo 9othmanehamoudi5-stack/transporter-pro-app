@@ -407,7 +407,6 @@ const PricingSection = ({ onNavigate }) => {
         <h2 className="text-2xl sm:text-3xl font-bold text-center mb-4" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>
           Un plan pour chaque ambition.
         </h2>
-        <p className="text-zinc-400 text-center max-w-lg mx-auto mb-2 text-sm">Essai gratuit de 30 jours inclus sur tous les plans. Annulable en un clic.</p>
         <p className="text-center mb-10">
           <span className="inline-flex items-center gap-1.5 text-xs text-amber-400 bg-amber-400/10 border border-amber-400/20 px-3 py-1 rounded-full" data-testid="founder-badge">Tarif garanti à vie pour les Membres Fondateurs</span>
         </p>
@@ -470,7 +469,7 @@ const PricingSection = ({ onNavigate }) => {
                 }`}
                 data-testid={`plan-cta-${plan.id}`}
               >
-                Démarrer l'essai gratuit — 30 jours
+                Choisir ce plan
               </button>
 
               <ul className="mt-6 space-y-2.5">
