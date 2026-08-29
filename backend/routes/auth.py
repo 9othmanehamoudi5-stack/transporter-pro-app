@@ -29,8 +29,7 @@ router = APIRouter(prefix="/api")
 
 
 @router.post("/auth/register")
-@limiter.limit("5/minute")
-async def register(data: UserCreate, request: Request):
+async def register(request: Request, data: UserCreate):
     # Block public driver registration — drivers must be created by admin
     if data.role == "driver":
         raise HTTPException(status_code=403, detail="Les comptes chauffeurs sont créés par l'administrateur de l'entreprise.")
@@ -84,8 +83,7 @@ async def register(data: UserCreate, request: Request):
 
 
 @router.post("/auth/login")
-@limiter.limit("10/minute")
-async def login(data: UserLogin, request: Request):
+async def login(request: Request, data: UserLogin):
     email = data.email.lower()
     ip = request.client.host if request.client else "unknown"
     identifier = f"{ip}:{email}"
