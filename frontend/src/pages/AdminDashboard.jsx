@@ -609,6 +609,7 @@ export const AdminDashboard = () => {
               <div className="flex items-center justify-between">
                 <p className="text-sm text-zinc-400">{deliveries.length} {t('kpi.totalDeliveries', 'Livraisons')}</p>
                 <Button
+              {plan !== 'starter' && plan !== 'solo' && (
                   onClick={handleOptimizeRoute}
                   disabled={optimizing}
                   className="bg-[#0066FF] hover:bg-[#0052CC] disabled:opacity-50"
@@ -617,6 +618,7 @@ export const AdminDashboard = () => {
                   <Map className={`w-4 h-4 mr-2 ${optimizing ? 'animate-pulse' : ''}`} />
                   {optimizing ? t('actions.optimizing', 'Optimisation…') : t('actions.optimizeRoute', 'Optimiser la tournée')}
                 </Button>
+              )}
               </div>
               <div className="bg-[#121214] border border-[#27272A] rounded-xl overflow-hidden">
               <div className="overflow-x-auto">
