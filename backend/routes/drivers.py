@@ -16,8 +16,7 @@ router = APIRouter(prefix="/api")
 
 
 @router.post("/admin/drivers")
-@limiter.limit("20/minute")
-async def create_driver(data: DriverCreate, request: Request, user: dict = Depends(require_role("admin"))):
+async def create_driver(request: Request, data: DriverCreate, user: dict = Depends(require_role("admin"))):
     """Admin creates a new driver account"""
     company_id = user["company_id"]
 
