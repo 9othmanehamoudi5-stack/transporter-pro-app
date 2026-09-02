@@ -31,6 +31,8 @@ export const NewDeliveryForm = ({ drivers, onSubmit, onCancel }) => {
   });
   const [addressError, setAddressError] = useState('');
   const [verifying, setVerifying] = useState(false);
+  const [addressSuggestions, setAddressSuggestions] = useState([]);
+  const [showAddrSuggestions, setShowAddrSuggestions] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -72,18 +74,53 @@ export const NewDeliveryForm = ({ drivers, onSubmit, onCancel }) => {
           data-testid="delivery-recipient-name"
         />
       </div>
-      <div className="space-y-2">
+      <div className="space-y-2 relative">
         <Label>{t('modals.newDelivery.address', 'Adresse')}</Label>
         <Input
           value={formData.recipient_address}
-          onChange={(e) => { setFormData({ ...formData, recipient_address: e.target.value }); if (addressError) setAddressError(''); }}
+          onChange={(e) => {
+            const val = e.target.value;
+            setFormData({ ...formData, recipient_address: val });
+            if (addressError) setAddressError('');
+            if (val.length >= 3) {
+              clearTimeout(window.__addrDebounce);
+              window.__addrDebounce = setTimeout(async () => {
+                try {
+                  const res = await fetch(`https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(val)}&limit=6`);
+                  const json = await res.json();
+                  setAddressSuggestions(json.features?.map(f => f.properties.label) || []);
+                  setShowAddrSuggestions(true);
+                } catch(err) { setAddressSuggestions([]); }
+              }, 300);
+            } else {
+              setAddressSuggestions([]); setShowAddrSuggestions(false);
+            }
+          }}
+          onBlur={() => setTimeout(() => setShowAddrSuggestions(false), 200)}
           required
           placeholder={t('modals.newDelivery.addressPh', '12 Rue de la Paix, 75002 Paris')}
           className={`bg-[#0A0A0B] ${addressError ? 'border-red-500 ring-1 ring-red-500/60' : 'border-[#27272A]'}`}
           data-testid="delivery-address"
+          autoComplete="off"
         />
+        {showAddrSuggestions && addressSuggestions.length > 0 && (
+          <ul className="absolute z-50 top-full left-0 right-0 bg-[#1A1A1E] border border-[#27272A] rounded-lg mt-1 shadow-xl max-h-48 overflow-y-auto">
+            {addressSuggestions.map((s, idx) => (
+              <li key={idx}
+                className="px-3 py-2 text-sm text-white hover:bg-[#27272A] cursor-pointer"
+                onMouseDown={() => {
+                  setFormData(f => ({ ...f, recipient_address: s }));
+                  setAddressSuggestions([]);
+                  setShowAddrSuggestions(false);
+                  setAddressError('');
+                }}
+              >{s}</li>
+            ))}
+          </ul>
+        )}
         {addressError && <p className="text-xs text-red-400 mt-1" data-testid="delivery-address-error">{addressError}</p>}
       </div>
+
       <div className="space-y-2">
         <Label>{t('modals.newDelivery.recipientPhone', 'Téléphone')}</Label>
         <Input
