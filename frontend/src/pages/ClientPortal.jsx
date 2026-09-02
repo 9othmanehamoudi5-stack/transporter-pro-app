@@ -37,6 +37,7 @@ const statusOrder = ['pending', 'assigned', 'in_transit', 'delivered'];
 export const ClientPortal = () => {
   const { trackingId } = useParams();
   const [delivery, setDelivery] = useState(null);
+  const [mapExpanded, setMapExpanded] = React.useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -141,13 +142,14 @@ export const ClientPortal = () => {
 
               {/* Mini Map */}
               {delivery.lat && delivery.lng && (
-                <div className="rounded-xl overflow-hidden border border-[#27272A] mb-6" style={{ height: 200 }} data-testid="public-track-map">
+              <div className="relative">
+                <div className="rounded-xl overflow-hidden border border-[#27272A] mb-6" style={{ height: mapExpanded ? 420 : 280 }} data-testid="public-track-map">
                   <MapContainer
                     center={[delivery.lat, delivery.lng]}
                     zoom={14}
-                    scrollWheelZoom={false}
+                    scrollWheelZoom={mapExpanded}
                     style={{ height: '100%', width: '100%' }}
-                    zoomControl={false}
+                    zoomControl={mapExpanded}
                     attributionControl={false}
                   >
                     <TileLayer
@@ -163,6 +165,13 @@ export const ClientPortal = () => {
                     </Marker>
                   </MapContainer>
                 </div>
+                <button
+                  onClick={() => setMapExpanded(x => !x)}
+                  className="absolute top-2 right-2 bg-black/70 border border-[#27272A] text-white text-xs px-2 py-1 rounded z-[1000] hover:bg-[#1A1A1E]"
+                >
+                  {mapExpanded ? "Reduire" : "Agrandir"}
+                </button>
+              </div>
               )}
 
               {/* Progress Steps */}
