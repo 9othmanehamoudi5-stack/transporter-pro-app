@@ -315,13 +315,13 @@ async def chat_with_bot(data: ChatMessage, request: Request):
             api_key=EMERGENT_LLM_KEY,
             session_id=session_id,
             system_message=SYSTEM_PROMPT
-        ).with_model("gemini", "gemini-3-flash-preview")
+        )
 
         # Add conversation history (last 10 messages max)
         for msg in data.history[-10:]:
             chat.add_message(UserMessage(message=f"[{msg.get('role','user').upper()}]: {msg['content']}"))
 
-        response = await chat.send_message(UserMessage(text=data.message))
+        response = await chat.send_message(UserMessage(message=data.message))
 
         return {"reply": response}
     except Exception as e:
