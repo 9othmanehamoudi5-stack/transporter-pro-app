@@ -9,48 +9,87 @@ import { useAuth } from '../contexts/AuthContext';
 
 const STRIPE_CHECKOUT_URL = 'https://buy.stripe.com/test_3cIeVebks9bqggLacO7IY07';
 
+const COUNTRIES = [
+  { code: 'FR', name: 'France (SIRET)', type: 'SIRET', regex: /^\d{14}$/, placeholder: '123 456 789 00012' },
+  { code: 'DE', name: 'Allemagne (USt-IdNr)', type: 'USt-IdNr', regex: /^DE\d{9}$/, placeholder: 'DE123456789' },
+  { code: 'ES', name: 'Espagne (NIF/CIF)', type: 'NIF/CIF', regex: /^[A-Z0-9]{9}$/, placeholder: 'B12345678' },
+  { code: 'IT', name: 'Italie (Partita IVA)', type: 'Partita IVA', regex: /^IT\d{11}$/, placeholder: 'IT12345678901' },
+  { code: 'BE', name: 'Belgique (BCE)', type: 'BCE', regex: /^BE\d{10}$/, placeholder: 'BE0123456789' },
+  { code: 'PL', name: 'Pologne (NIP)', type: 'NIP', regex: /^\d{10}$/, placeholder: '1234567890' },
+  { code: 'MA', name: 'Maroc (ICE)', type: 'ICE', regex: /^\d{15}$/, placeholder: '123456789012345' },
+];
+
 const OnboardingForm = () => {
   const { user } = useAuth();
   const [companyName, setCompanyName] = useState('');
-  const [siret, setSiret] = useState('');
-  const [tvaIntra, setTvaIntra] = useState('');
   const [address, setAddress] = useState('');
   const [loading, setLoading] = useState(false);
-  const [siretLoading, setSiretLoading] = useState(false);
-  const [siretValid, setSiretValid] = useState(null);
-  const [siretError, setSiretError] = useState('');
+  
+  const [countryCode, setCountryCode] = useState('FR');
+  const [identifierValue, setIdentifierValue] = useState('');
+  
+  // Validation states
+  const [idLoading, setIdLoading] = useState(false);
+  const [idValid, setIdValid] = useState(null);
+  const [idError, setIdError] = useState('');
 
-  const handleVerifySiret = async () => {
-    const cleaned = siret.replace(/\s/g, '');
-    if (cleaned.length !== 14) {
-      setSiretError('Le SIRET doit contenir 14 chiffres');
-      setSiretValid(false);
-      return;
-    }
-    setSiretLoading(true);
-    setSiretError('');
-    try {
-      const { data } = await api.get(`/verify-siret/${cleaned}`);
-      if (data.valid) {
-        setSiretValid(true);
-        if (data.company_name) setCompanyName(data.company_name);
-        if (data.address) setAddress(data.address);
-      } else {
-        setSiretValid(false);
-        setSiretError(data.error || 'SIRET invalide');
+  const currentCountry = COUNTRIES.find(c => c.code === countryCode);
+
+  const handleVerify = async () => {
+    const cleaned = identifierValue.replace(/\s/g, '');
+    
+    if (countryCode === 'FR') {
+      if (cleaned.length !== 14) {
+        setIdError('Le SIRET doit contenir 14 chiffres');
+        setIdValid(false);
+        return;
       }
-    } catch (err) {
-      setSiretValid(false);
-      setSiretError(err.response?.data?.detail || 'Impossible de vérifier le SIRET');
+      setIdLoading(true);
+      setIdError('');
+      try {
+        const { data } = await api.get(`/verify-siret/${cleaned}`);
+        if (data.valid) {
+          setIdValid(true);
+          if (data.company_name) setCompanyName(data.company_name);
+          if (data.address) setAddress(data.address);
+        } else {
+          setIdValid(false);
+          setIdError(data.error || 'SIRET invalide');
+        }
+      } catch (err) {
+        setIdValid(false);
+        setIdError(err.response?.data?.detail || 'Impossible de vérifier le SIRET');
+      }
+      setIdLoading(false);
+    } else {
+      // Regex validation for other countries
+      if (currentCountry.regex.test(cleaned.toUpperCase())) {
+        setIdValid(true);
+        setIdError('');
+      } else {
+        setIdValid(false);
+        setIdError(`Format invalide. Attendu : ${currentCountry.placeholder}`);
+      }
     }
-    setSiretLoading(false);
+  };
+
+  const handleIdChange = (e) => {
+    setIdentifierValue(e.target.value);
+    setIdValid(null);
+    setIdError('');
+  };
+
+  const handleCountryChange = (e) => {
+    setCountryCode(e.target.value);
+    setIdentifierValue('');
+    setIdValid(null);
+    setIdError('');
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // Hard gate: no submission unless SIRET is positively verified by backend
-    if (siretValid !== true) {
-      toast.error('Veuillez vérifier votre SIRET avant de continuer');
+    if (idValid !== true) {
+      toast.error(`Veuillez vérifier votre ${currentCountry.type} avant de continuer`);
       return;
     }
     if (!companyName || !address) {
@@ -59,14 +98,22 @@ const OnboardingForm = () => {
     }
     setLoading(true);
     try {
-      await api.post('/onboarding/complete', {
+      const payload = {
         company_name: companyName,
-        siret: siret.replace(/\s/g, ''),
-        tva_intra: tvaIntra,
+        country_code: countryCode,
+        identifier_type: currentCountry.type,
+        identifier_value: identifierValue.replace(/\s/g, '').toUpperCase(),
         address,
-      });
-      toast.success('Entreprise enregistrée — redirection vers Stripe…');
-      // Redirect EXCLUSIVELY to Stripe — user never sees dashboard before payment
+      };
+      
+      // Keeping legacy field for backend compatibility if it specifically expects siret
+      if (countryCode === 'FR') {
+          payload.siret = payload.identifier_value;
+      }
+
+      await api.post('/onboarding/complete', payload);
+      toast.success('Entreprise enregistrée - redirection vers Stripe.');
+      
       const email = user?.email || '';
       const userId = user?.id || '';
       const params = new URLSearchParams();
@@ -76,16 +123,13 @@ const OnboardingForm = () => {
     } catch (error) {
       const msg = error.response?.data?.detail || "Erreur lors de l'enregistrement";
       toast.error(msg);
-      // If backend rejects SIRET (e.g. spoofed from devtools), reset the gate
-      if (msg.toLowerCase().includes('siret')) {
-        setSiretValid(false);
-        setSiretError(msg);
-      }
+      setIdValid(false);
+      setIdError(msg);
       setLoading(false);
     }
   };
 
-  const canSubmit = siretValid === true && companyName.trim() && address.trim() && !loading;
+  const canSubmit = idValid === true && companyName.trim() && address.trim() && !loading;
 
   return (
     <div className="min-h-screen bg-[#0A0A0B] flex items-center justify-center px-6 py-10" data-testid="onboarding-form">
@@ -104,45 +148,54 @@ const OnboardingForm = () => {
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="space-y-2">
-            <Label className="text-zinc-300">Numéro de SIRET *</Label>
+            <Label className="text-zinc-300">Pays *</Label>
+            <select
+              value={countryCode}
+              onChange={handleCountryChange}
+              className="w-full h-10 px-3 bg-[#121214] border border-[#27272A] rounded-md text-white focus:outline-none focus:border-[#0066FF]"
+            >
+              {COUNTRIES.map(c => (
+                <option key={c.code} value={c.code}>{c.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-zinc-300">{currentCountry.type} *</Label>
             <div className="flex gap-2">
               <Input
-                value={siret}
-                onChange={(e) => {
-                  setSiret(e.target.value);
-                  setSiretValid(null);
-                  setSiretError('');
-                }}
-                placeholder="123 456 789 00012"
+                value={identifierValue}
+                onChange={handleIdChange}
+                placeholder={currentCountry.placeholder}
                 className={`bg-[#121214] text-white flex-1 ${
-                  siretValid === true
+                  idValid === true
                     ? 'border-green-500'
-                    : siretValid === false
+                    : idValid === false
                     ? 'border-red-500'
                     : 'border-[#27272A]'
                 }`}
-                data-testid="onboarding-siret"
+                data-testid="onboarding-id-value"
                 required
               />
               <Button
                 type="button"
-                onClick={handleVerifySiret}
-                disabled={siretLoading || siret.replace(/\s/g, '').length < 14}
+                onClick={handleVerify}
+                disabled={idLoading || identifierValue.trim().length < 5}
                 variant="outline"
                 className="h-10 px-4 border-[#27272A]"
-                data-testid="onboarding-verify-siret-btn"
+                data-testid="onboarding-verify-btn"
               >
-                {siretLoading ? '...' : 'Vérifier'}
+                {idLoading ? '...' : 'Vérifier'}
               </Button>
             </div>
-            {siretValid === true && (
-              <p className="text-xs text-green-400 flex items-center gap-1" data-testid="siret-valid-msg">
-                <Check className="w-3 h-3" /> SIRET vérifié via INSEE Sirene
+            {idValid === true && (
+              <p className="text-xs text-green-400 flex items-center gap-1" data-testid="id-valid-msg">
+                <Check className="w-3 h-3" /> {countryCode === 'FR' ? 'Vérifié via INSEE Sirene' : 'Format valide'}
               </p>
             )}
-            {siretValid === false && siretError && (
-              <p className="text-xs text-red-400 flex items-center gap-1" data-testid="siret-invalid-msg">
-                <AlertCircle className="w-3 h-3" /> {siretError}
+            {idValid === false && idError && (
+              <p className="text-xs text-red-400 flex items-center gap-1" data-testid="id-invalid-msg">
+                <AlertCircle className="w-3 h-3" /> {idError}
               </p>
             )}
           </div>
@@ -156,17 +209,6 @@ const OnboardingForm = () => {
               className="bg-[#121214] border-[#27272A] text-white"
               data-testid="onboarding-company-name"
               required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label className="text-zinc-300">TVA Intracommunautaire</Label>
-            <Input
-              value={tvaIntra}
-              onChange={(e) => setTvaIntra(e.target.value)}
-              placeholder="FR12345678901"
-              className="bg-[#121214] border-[#27272A] text-white"
-              data-testid="onboarding-tva"
             />
           </div>
 
@@ -193,7 +235,7 @@ const OnboardingForm = () => {
             data-testid="onboarding-submit"
           >
             {loading ? (
-              'Redirection vers Stripe…'
+              'Redirection vers Stripe...'
             ) : (
               <>
                 Valider et activer l'essai
@@ -203,7 +245,7 @@ const OnboardingForm = () => {
           </Button>
 
           <p className="text-[10px] text-zinc-600 text-center">
-            Redirection Stripe — carte bancaire requise, débit 0€ pendant 30 jours.
+            Redirection Stripe - carte bancaire requise, débit 0€ pendant 30 jours.
             Données protégées RGPD.
           </p>
         </form>
