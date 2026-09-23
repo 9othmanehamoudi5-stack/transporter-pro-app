@@ -72,6 +72,203 @@ app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_handler)
 api_router = APIRouter(prefix="/api")
 
+# ==================== MODELS ====================
+
+class UserCreate(BaseModel):
+    email: EmailStr
+    password: str
+    name: str
+    role: Literal["admin", "driver", "client"] = "client"
+
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+
+class UserResponse(BaseModel):
+    id: str
+    email: str
+    name: str
+    role: str
+    created_at: str
+
+class DeliveryCreate(BaseModel):
+    recipient_name: str
+    recipient_address: str
+    recipient_phone: str
+    package_description: str
+    weight_kg: float = 1.0
+    client_id: Optional[str] = None
+
+class DeliveryUpdate(BaseModel):
+    status: Optional[Literal["pending", "assigned", "in_transit", "delivered", "failed"]] = None
+    driver_id: Optional[str] = None
+    signature_data: Optional[str] = None
+    delivery_notes: Optional[str] = None
+
+class InvoiceCreate(BaseModel):
+    delivery_id: str
+    amount: float
+    client_id: str
+
+class DamageReportCreate(BaseModel):
+    delivery_id: str
+    photo_base64: str
+    description: Optional[str] = None
+
+class EcoScoreUpdate(BaseModel):
+    harsh_braking_count: int = 0
+    harsh_acceleration_count: int = 0
+    distance_km: float = 0
+    fuel_liters: float = 0
+
+class OfflineSyncData(BaseModel):
+    deliveries: List[dict] = []
+    damage_reports: List[dict] = []
+    signatures: List[dict] = []
+
+class ChatMessage(BaseModel):
+    message: str
+    history: List[dict] = []
+
+class DriverCreate(BaseModel):
+    email: EmailStr
+    password: str
+    name: str
+    phone: Optional[str] = None
+    vehicle_plate: Optional[str] = None
+
+class SubscriptionUpdate(BaseModel):
+    plan: Literal["solo", "croissance", "flotte_pro"]
+    billing_cycle: Literal["monthly", "yearly"]
+
+class NotificationCreate(BaseModel):
+    user_id: str
+    type: str
+    title: str
+    message: str
+    delivery_id: Optional[str] = None
+
+# ==================== AUTH HELPERS ====================
+
+def hash_password(password: str) -> str:
+    salt = bcrypt.gensalt()
+    return bcrypt.hashpw(password.encode("utf-8"), salt).decode("utf-8")
+
+def verify_password(plain: str, hashed: str) -> bool:
+    return bcrypt.checkpw(plain.encode("utf-8"), hashed.encode("utf-8"))
+
+def create_access_token(user_id: str, email: str, role: str) -> str:
+    payload = {
+        "sub": user_id,
+        "email": email,
+        "role": role,
+        "exp": datetime.now(timezone.utc) + timedelta(minutes=60),
+        "type": "access"
+    }
+    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+
+def create_refresh_token(user_id: str) -> str:
+    payload = {
+        "sub": user_id,
+        "exp": datetime.now(timezone.utc) + timedelta(days=7),
+        "type": "refresh"
+    }
+    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+
+async def get_current_user(request: Request) -> dict:
+    token = request.cookies.get("access_token")
+    if not token:
+        auth_header = request.headers.get("Authorization", "")
+        if auth_header.startswith("Bearer "):
+            token = auth_header[7:]
+    if not token:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        if payload.get("type") != "access":
+            raise HTTPException(status_code=401, detail="Invalid token type")
+        user = await db.users.find_one({"_id": ObjectId(payload["sub"])})
+        if not user:
+            raise HTTPException(status_code=401, detail="User not found")
+        return {
+            "id": str(user["_id"]),
+            "email": user["email"],
+            "name": user["name"],
+            "role": user["role"],
+            "company_id": user.get("company_id", str(user["_id"])),
+            "plan": user.get("plan", "solo"),
+            "subscription_status": user.get("subscription_status", "trial"),
+            "trial_ends_at": user.get("trial_ends_at", "").isoformat() if isinstance(user.get("trial_ends_at"), datetime) else str(user.get("trial_ends_at", "")),
+            "created_at": user.get("created_at", "").isoformat() if isinstance(user.get("created_at"), datetime) else str(user.get("created_at", ""))
+        }
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token expired")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+def require_role(*roles):
+    async def role_checker(user: dict = Depends(get_current_user)):
+        if user["role"] not in roles:
+            raise HTTPException(status_code=403, detail="Insufficient permissions")
+        return user
+    return role_checker
+
+# ==================== AUDIT LOGGING ====================
+
+async def log_action(user_id: str, company_id: str, action: str, entity_type: str, entity_id: str = "", details: str = ""):
+    """Log every significant action for traceability"""
+    await db.audit_logs.insert_one({
+        "user_id": user_id,
+        "company_id": company_id,
+        "action": action,
+        "entity_type": entity_type,
+        "entity_id": entity_id,
+        "details": details,
+        "timestamp": datetime.now(timezone.utc),
+        "ip": ""
+    })
+
+@api_router.get("/audit-logs")
+async def get_audit_logs(user: dict = Depends(require_role("admin")), limit: int = 50):
+    """Get recent audit logs for this company"""
+    logs = await db.audit_logs.find(
+        {"company_id": user["company_id"]},
+        {"_id": 0}
+    ).sort("timestamp", -1).to_list(limit)
+    for log in logs:
+        if isinstance(log.get("timestamp"), datetime):
+            log["timestamp"] = log["timestamp"].isoformat()
+    return logs
+
+
+
+
+# ==================== TRANSPORTER-BOT (Gemini Chat) ====================
+
+SYSTEM_PROMPT = """Tu es Transporter-Bot, l'assistant IA de Transporter-Pro — un SaaS de gestion de flotte pour transporteurs routiers français.
+
+Tu réponds de manière concise, professionnelle et en français. Tu connais parfaitement :
+
+PRODUIT :
+- Transporter-Pro : plateforme SaaS pour transporteurs PME
+- IA Anti-Litige : analyse photo des colis via Gemini Vision (sévérité, confiance, preuve horodatée)
+- Éco-Score Chauffeur : scoring de conduite, podium, -15% carburant
+- Tracking GPS Live : positions temps réel sur carte
+- Génération e-CMR / Factur-X : lettres de voiture numériques
+
+TARIFS (Membres Fondateurs) :
+- SOLO : 39€/mois (3 camions max, e-CMR, support email)
+- CROISSANCE : 189€/mois (15 camions, IA Anti-Litige, Cash-Flow, GPS Live)
+- FLOTTE PRO : 489€/mois (illimité, Éco-Score, API, support 24/7)
+- Annuel : -17% (Solo 32€, Croissance 157€, Flotte Pro 406€/mois)
+- Essai gratuit de 30 jours sur tous les plans
+
+RÉGLEMENTATION :
+- Loi transport 2026 : obligation e-CMR numérique, amendes 50€/facture non conforme
+- Transporter-Pro est un outil d'aide à la gestion interne (pas lettre de voiture officielle en attente d'homologation)
+- Conforme RGPD, eFTI, eIDAS
+
+Si on te pose une question hors de ton domaine, réponds poliment que tu es spécialisé en gestion de flotte transport et redirige vers contact@transporter-pro.com."""
 
 
 @api_router.get("/audit-logs")
