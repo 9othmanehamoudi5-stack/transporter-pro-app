@@ -76,10 +76,14 @@ export const AuthProvider = ({ children }) => {
         { email, password },
         { withCredentials: true }
       );
+      // 2FA gate: backend returned a challenge instead of tokens
+      if (data?.requires_2fa) {
+        return { success: true, requires_2fa: true, challenge_token: data.challenge_token, message: data.message };
+      }
       // Save tokens to localStorage for mobile persistence
       tokenStore.save(data.access_token, data.refresh_token);
       setUser(data);
-      return { success: true };
+      return { success: true, user: data };
     } catch (e) {
       const detail = e.response?.data?.detail;
       const msg = typeof detail === 'string' ? detail
@@ -97,14 +101,32 @@ export const AuthProvider = ({ children }) => {
         { withCredentials: true }
       );
       tokenStore.save(data.access_token, data.refresh_token);
+      // Persist user id for downstream Stripe redirect (Step 2 onboarding)
+      try { localStorage.setItem('tp_user_id', data.id || ''); } catch {}
       setUser(data);
-      return { success: true };
+      return { success: true, user: data };
     } catch (e) {
       const detail = e.response?.data?.detail;
       const msg = typeof detail === 'string' ? detail
         : Array.isArray(detail) ? detail.map(d => d.msg || d).join(', ')
         : e.message;
       return { success: false, error: msg };
+    }
+  };
+
+  const verify2FA = async (challenge_token, code) => {
+    try {
+      const { data } = await axios.post(
+        `${API_URL}/api/auth/2fa/verify`,
+        { challenge_token, code },
+        { withCredentials: true }
+      );
+      tokenStore.save(data.access_token, data.refresh_token);
+      setUser(data);
+      return { success: true, user: data };
+    } catch (e) {
+      const detail = e.response?.data?.detail;
+      return { success: false, error: typeof detail === 'string' ? detail : 'Code invalide' };
     }
   };
 
@@ -122,7 +144,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, checkAuth }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, checkAuth, verify2FA }}>
       {children}
     </AuthContext.Provider>
   );

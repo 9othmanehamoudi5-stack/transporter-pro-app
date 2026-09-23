@@ -19,12 +19,12 @@ const LandingPage = () => {
   return (
     <div className="min-h-screen bg-black text-white selection:bg-blue-500/30">
       {/* ─── URGENCY BANNER ─── */}
-      <div className="bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-amber-500/10 border-b border-amber-500/10 text-center py-2.5 text-xs text-amber-300 fixed top-0 w-full z-[60]" data-testid="urgency-banner">
+      <div className="bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-amber-500/10 border-b border-amber-500/10 text-center py-2.5 text-xs text-amber-300 fixed top-0 w-full z-[1000]" data-testid="urgency-banner">
         Offre Membres Fondateurs : <span className="font-bold text-amber-200">Tarif garanti jusqu'à l'homologation e-CMR</span>
       </div>
 
       {/* ─── NAV ─── */}
-      <nav className="fixed top-[34px] w-full z-50 border-b border-white/[0.06] bg-black/70 backdrop-blur-2xl">
+      <nav className="fixed top-[34px] w-full z-[999] border-b border-white/[0.06] bg-black/70 backdrop-blur-2xl">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 bg-[#0066FF] rounded-lg flex items-center justify-center">
@@ -46,7 +46,7 @@ const LandingPage = () => {
       </nav>
 
       {/* ─── HERO ─── */}
-      <section className="relative pt-[7.5rem] pb-20 px-6 overflow-hidden" data-testid="hero-section">
+      <section className="relative pt-[140px] pb-20 px-6 overflow-hidden" data-testid="hero-section">
         {/* Glows */}
         <div className="absolute top-16 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-[#0066FF]/[0.06] rounded-full blur-[150px] pointer-events-none" />
         <div className="absolute top-40 right-0 w-[300px] h-[300px] bg-blue-600/[0.03] rounded-full blur-[100px] pointer-events-none" />
@@ -55,7 +55,7 @@ const LandingPage = () => {
           <div>
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/[0.08] bg-white/[0.03] text-xs text-zinc-400 mb-8 backdrop-blur-sm">
               <span className="w-1.5 h-1.5 rounded-full bg-[#0066FF] animate-pulse" />
-              30 jours d'essai gratuit — Aucune carte bancaire requise
+              30 jours d'essai gratuit — CB requise, débit 0€
             </div>
 
             <h1 className="text-4xl sm:text-5xl lg:text-[3.4rem] font-bold leading-[1.08] tracking-tight mb-7" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }} data-testid="hero-h1">
@@ -343,48 +343,48 @@ const LandingPage = () => {
 
 const plans = [
   {
-    id: 'solo',
-    name: 'SOLO',
+    id: 'starter',
+    name: 'STARTER',
     tagline: 'Pour les artisans du transport.',
     trucks: "Jusqu'à 3 camions",
-    monthly: 39,
-    yearlyTotal: 390,
-    yearlyMonthly: 32,
+    monthly: 79,
+    yearlyTotal: 759,
+    yearlyMonthly: 63,
     features: ['e-CMR illimitées', 'Support email', 'Dashboard basique', '3 chauffeurs max'],
     popular: false,
     links: {
-      monthly: 'https://buy.stripe.com/test_00wbJ29ckgDSc0v70C7IY02',
-      yearly: 'https://buy.stripe.com/test_8x2dRa60887m5C7acO7IY03'
+      monthly: 'https://buy.stripe.com/test_4gM14p7VxcbfaGY4ZOenS00',
+      yearly: 'https://buy.stripe.com/test_aFa3cxa3Ffnr3ewfEsenS0e'
     }
   },
   {
-    id: 'croissance',
-    name: 'CROISSANCE',
+    id: 'pme',
+    name: 'PME',
     tagline: 'Le standard pour les PME en expansion.',
     trucks: "Jusqu'à 15 camions",
-    monthly: 189,
-    yearlyTotal: 1890,
-    yearlyMonthly: 157,
-    features: ['Tout de Solo +', 'IA Anti-litige (Gemini)', 'Cash-Flow Dashboard', 'Tracking GPS Live', 'Support prioritaire', '15 chauffeurs max'],
+    monthly: 249,
+    yearlyTotal: 2390,
+    yearlyMonthly: 199,
+    features: ['Tout de Starter +', 'IA Anti-litige (Gemini)', 'Cash-Flow Dashboard', 'Tracking GPS Live', 'Support prioritaire', '15 chauffeurs max'],
     popular: true,
     links: {
-      monthly: 'https://buy.stripe.com/test_eVq9AUfAI9bq11R4Su7IY04',
-      yearly: 'https://buy.stripe.com/test_3cIeVe4W4cnCd4z2Km7IY05'
+      monthly: 'https://buy.stripe.com/test_28E00l8ZBfnrdTa8c0enS01',
+      yearly: 'https://buy.stripe.com/test_dRm14p0t5ejn9CU1NCenS03'
     }
   },
   {
-    id: 'flotte_pro',
-    name: 'FLOTTE PRO',
+    id: 'flotte',
+    name: 'FLOTTE',
     tagline: 'La puissance brute pour les empires logistiques.',
     trucks: 'Camions illimités',
-    monthly: 489,
-    yearlyTotal: 4890,
-    yearlyMonthly: 407,
-    features: ['Tout de Croissance +', 'Éco-Score complet', 'API Access', 'Support 24/7 dédié', 'Chauffeurs illimités', 'White-label'],
+    monthly: 690,
+    yearlyTotal: 6624,
+    yearlyMonthly: 552,
+    features: ['Tout de PME +', 'Éco-Score complet', 'API Access', 'Support 24/7 dédié', 'Chauffeurs illimités', 'White-label'],
     popular: false,
     links: {
-      monthly: 'https://buy.stripe.com/test_3cI8wQ4W4drG9SnckW7IY01',
-      yearly: 'https://buy.stripe.com/test_cNi5kE2NWgDSd4zbgS7IY0O'
+      monthly: 'https://buy.stripe.com/test_dRmbJ37Vx6QVcP69g4enS04',
+      yearly: 'https://buy.stripe.com/test_6oU28tgs3fnr3ewfEsenS05'
     }
   },
 ];
@@ -407,7 +407,6 @@ const PricingSection = ({ onNavigate }) => {
         <h2 className="text-2xl sm:text-3xl font-bold text-center mb-4" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>
           Un plan pour chaque ambition.
         </h2>
-        <p className="text-zinc-400 text-center max-w-lg mx-auto mb-2 text-sm">Essai gratuit de 30 jours inclus sur tous les plans. Annulable en un clic.</p>
         <p className="text-center mb-10">
           <span className="inline-flex items-center gap-1.5 text-xs text-amber-400 bg-amber-400/10 border border-amber-400/20 px-3 py-1 rounded-full" data-testid="founder-badge">Tarif garanti à vie pour les Membres Fondateurs</span>
         </p>
@@ -470,7 +469,7 @@ const PricingSection = ({ onNavigate }) => {
                 }`}
                 data-testid={`plan-cta-${plan.id}`}
               >
-                Démarrer l'essai gratuit — 14 jours
+                Choisir ce plan
               </button>
 
               <ul className="mt-6 space-y-2.5">

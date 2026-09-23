@@ -10,7 +10,13 @@ import { ClientPortal, TrackingSearch } from "./pages/ClientPortal";
 import LandingPage from "./pages/LandingPage";
 import PaymentSuccessPage from "./pages/PaymentSuccessPage";
 import { CGUPage, ConfidentialitePage, ContactPage } from "./pages/LegalPages";
+import OnboardingForm from "./pages/OnboardingForm";
 import TransporterBot from "./components/TransporterBot";
+import SubscriptionGate from "./components/SubscriptionGate";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
+import { ThemeProvider } from "./contexts/ThemeContext";
+import { I18nProvider } from "./i18n/index";
 import { Toaster } from "./components/ui/sonner";
 
 // Protected Route Component
@@ -58,6 +64,14 @@ const DashboardRouter = () => {
 
   switch (user.role) {
     case "admin":
+      if (!user.onboarding_complete) {
+        return <OnboardingForm />;
+      }
+      // STRICT subscription gate: admin can't access dashboard without active Stripe subscription
+      // subscription_status must be 'active' or 'trialing' (set by Stripe webhook after successful checkout)
+      if (user.subscription_status !== "active" && user.subscription_status !== "trialing") {
+        return <SubscriptionGate user={user} />;
+      }
       return <AdminDashboard />;
     case "driver":
       return <Navigate to="/driver" replace />;
@@ -138,6 +152,8 @@ const AuthGate = ({ children }) => {
 function App() {
   return (
     <AuthProvider>
+      <ThemeProvider>
+      <I18nProvider>
       <AuthGate>
         <SubscriptionProvider>
         <div className="App min-h-screen bg-[#0A0A0B]">
@@ -156,6 +172,10 @@ function App() {
                   <RegisterPage />
                 </PublicRoute>
               } />
+
+              {/* Forgot / Reset password — public */}
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
               
               {/* Client tracking portal - public */}
               <Route path="/track" element={<TrackingSearch />} />
@@ -191,6 +211,8 @@ function App() {
         </div>
       </SubscriptionProvider>
       </AuthGate>
+      </I18nProvider>
+      </ThemeProvider>
     </AuthProvider>
   );
 }

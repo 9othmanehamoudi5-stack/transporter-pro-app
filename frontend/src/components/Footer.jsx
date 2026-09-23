@@ -3,16 +3,33 @@ import { Link } from 'react-router-dom';
 import { Truck } from 'lucide-react';
 
 const Footer = () => (
-  <footer className="border-t border-white/[0.06] bg-black py-10 px-6" data-testid="footer">
-    <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-      <div className="flex items-center gap-2 text-zinc-500 text-sm">
-        <Truck className="w-4 h-4" />
-        <span>&copy; {new Date().getFullYear()} Transporter-Pro. Tous droits réservés.</span>
+  <footer className="border-t border-white/[0.06] bg-[#0f172a] py-12 px-6" data-testid="footer">
+    <div className="max-w-5xl mx-auto">
+      <div className="flex flex-col md:flex-row items-start justify-between gap-8 mb-8">
+        {/* Brand */}
+        <div>
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-7 h-7 bg-[#0066FF] rounded-lg flex items-center justify-center">
+              <Truck className="w-3.5 h-3.5 text-white" />
+            </div>
+            <span className="font-bold text-white">Transporter-Pro</span>
+          </div>
+          <p className="text-xs text-zinc-500 leading-relaxed max-w-xs">
+            La plateforme de gestion de flotte qui protège vos marges grâce à l'IA.
+          </p>
+        </div>
+
+        {/* Links */}
+        <div className="flex items-center gap-6 text-sm text-zinc-500">
+          <Link to="/cgu" className="hover:text-white transition-colors" data-testid="footer-cgu">Mentions Légales</Link>
+          <a href="#pricing" className="hover:text-white transition-colors" data-testid="footer-tarifs">Tarifs</a>
+          <Link to="/contact" className="hover:text-white transition-colors" data-testid="footer-contact">Contact</Link>
+        </div>
       </div>
-      <div className="flex items-center gap-6 text-sm text-zinc-500">
-        <Link to="/cgu" className="hover:text-white transition-colors" data-testid="footer-cgu">CGU</Link>
-        <Link to="/confidentialite" className="hover:text-white transition-colors" data-testid="footer-rgpd">Confidentialité (RGPD)</Link>
-        <Link to="/contact" className="hover:text-white transition-colors" data-testid="footer-contact">Contact</Link>
+
+      <div className="border-t border-white/[0.04] pt-6 flex flex-col md:flex-row items-center justify-between gap-4">
+        <p className="text-xs text-zinc-600">&copy; {new Date().getFullYear()} Transporter-Pro SAS. Tous droits réservés.</p>
+        <p className="text-[10px] text-zinc-700">Outil d'aide à la gestion interne — En attente d'homologation e-CMR</p>
       </div>
     </div>
   </footer>

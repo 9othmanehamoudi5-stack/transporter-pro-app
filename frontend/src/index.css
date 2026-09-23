@@ -89,6 +89,22 @@ input[type="range"]::-moz-range-thumb {
   cursor: pointer;
 }
 
+/* Light mode overrides */
+.light-mode {
+  --background: 0 0% 100%;
+  --foreground: 0 0% 4%;
+}
+.light-mode body { background: #f8fafc; color: #0f172a; }
+.light-mode .bg-\[\#0A0A0B\] { background: #f8fafc; }
+.light-mode .bg-\[\#121214\] { background: #ffffff; }
+.light-mode .bg-\[\#1A1A1E\] { background: #f1f5f9; }
+.light-mode .border-\[\#27272A\] { border-color: #e2e8f0; }
+.light-mode .text-white { color: #0f172a; }
+.light-mode .text-zinc-400 { color: #64748b; }
+.light-mode .text-zinc-300 { color: #475569; }
+.light-mode .text-zinc-500 { color: #94a3b8; }
+
+
 @layer base {
   :root {
     --background: 0 0% 4%;

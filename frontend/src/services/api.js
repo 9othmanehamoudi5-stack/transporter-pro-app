@@ -4,6 +4,38 @@ import { tokenStore } from './tokenStore';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
+/**
+ * Compress a photo (base64 data URL or raw base64) before enqueuing it offline.
+ * Downscales to max 800px on the longest side and re-encodes as JPEG @ quality 0.7.
+ * Falls back to the original input on any error (network, decode, etc.).
+ * Returns a Promise<string> resolving to a compressed `data:image/jpeg;base64,...` URL.
+ * A single 4032×3024 iPhone JPEG (~3MB base64) shrinks to ~120KB after this pass,
+ * so localStorage (~5MB budget) can safely hold ~30+ queued photos.
+ */
+export const compressPhoto = (input, { maxSize = 800, quality = 0.7 } = {}) =>
+  new Promise((resolve) => {
+    if (typeof input !== 'string' || !input) return resolve(input);
+    const src = input.startsWith('data:') ? input : `data:image/jpeg;base64,${input}`;
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
+        const w = Math.max(1, Math.round(img.width * scale));
+        const h = Math.max(1, Math.round(img.height * scale));
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      } catch {
+        resolve(input);
+      }
+    };
+    img.onerror = () => resolve(input);
+    img.src = src;
+  });
+
 const api = axios.create({
   baseURL: `${API_URL}/api`,
   withCredentials: true,
@@ -92,6 +124,9 @@ export const authApi = {
 
 // ==================== DELIVERIES (Hybrid: Backend + Firestore) ====================
 export const deliveriesApi = {
+  // Upload a proof-of-delivery photo (used online + by the offline queue on reconnect)
+  uploadPhoto: (trackingId, photoBase64) => api.post(`/deliveries/${trackingId}/photos`, { photo_base64: photoBase64 }),
+
   // Get all - from backend (primary), sync to Firestore
   getAll: async (status) => {
     try {
@@ -126,6 +161,23 @@ export const deliveriesApi = {
       throw error;
     }
   },
+
+  // Download operational PDF report
+  downloadReport: async (trackingId) => {
+    const response = await api.get(`/deliveries/${trackingId}/pdf`, { responseType: 'blob' });
+    const blob = new Blob([response.data], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `rapport-${trackingId}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 100);
+    return response;
+  },
+
+  // Optimize today's deliveries via OSRM
+  optimizeRoute: () => api.post('/deliveries/optimize'),
   
   // Create - save to backend (primary), sync to Firestore
   create: async (data) => {
@@ -197,6 +249,7 @@ export const invoicesApi = {
 export const adminDriversApi = {
   getAll: () => api.get('/admin/drivers'),
   create: (data) => api.post('/admin/drivers', data),
+  update: (driverId, data) => api.put(`/admin/drivers/${driverId}`, data),
   delete: (driverId) => api.delete(`/admin/drivers/${driverId}`),
   getQuota: () => api.get('/auth/company-quota')
 };
@@ -205,7 +258,9 @@ export const adminDriversApi = {
 export const subscriptionApi = {
   getPlans: () => api.get('/subscription/plans'),
   getCurrent: () => api.get('/subscription/current'),
-  update: (data) => api.post('/subscription/update', data)
+  update: (data) => api.post('/subscription/update', data),
+  createCheckout: (plan, billing = 'monthly') =>
+    api.post(`/stripe/create-checkout?plan=${encodeURIComponent(plan)}&billing=${encodeURIComponent(billing)}`)
 };
 
 // ==================== NOTIFICATIONS ====================

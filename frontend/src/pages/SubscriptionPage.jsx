@@ -1,111 +1,132 @@
 import React, { useState } from 'react';
 import { useSubscription } from '../contexts/SubscriptionContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useI18n } from '../i18n/index';
 import { Button } from '../components/ui/button';
 import { Switch } from '../components/ui/switch';
 import { 
   Check, Crown, Truck, Zap, Shield, Clock, 
-  ChevronRight, Sparkles, Building2, Lock, LogIn
+  ChevronRight, Sparkles, Building2, Lock
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-const PLANS = [
+// Stripe Payment Links — in-app version (NO free trial, prevents abuse).
+// Keys are `{planId}_{billing}`. Source of truth lives in the user's Stripe Dashboard.
+const STRIPE_PAYMENT_LINKS = {
+  starter_monthly: 'https://buy.stripe.com/test_cNibJ3b7Jejn8yQgIwenS06',
+  starter_yearly:  'https://buy.stripe.com/test_00w28t2Bda3702kdwkenS07',
+  pme_monthly:     'https://buy.stripe.com/test_fZu28tb7J3EJ7uM1NCenS08',
+  pme_yearly:      'https://buy.stripe.com/test_6oU5kFcbNfnr16o77WenS09',
+  flotte_monthly:  'https://buy.stripe.com/test_6oU7sNejVb7bcP69g4enS0a',
+  flotte_yearly:   'https://buy.stripe.com/test_eVqeVfcbNa37cP6bocenS0b',
+};
+
+// Legacy → new plan id mapping. Existing users still see the correct card highlighted.
+const LEGACY_PLAN_MAP = { solo: 'starter', croissance: 'pme', flotte_pro: 'flotte' };
+const normalizePlanId = (p) => LEGACY_PLAN_MAP[p] || p;
+
+const buildPlans = (t) => [
   {
-    id: 'solo',
-    name: 'SOLO / DUO',
-    description: 'Parfait pour démarrer',
-    monthlyPrice: 49,
-    yearlyPrice: 490,
+    id: 'starter',
+    name: t('subscription.plans.starter.name', 'STARTER'),
+    description: t('subscription.plans.starter.description', 'Parfait pour démarrer'),
+    monthlyPrice: 79,
+    yearlyPrice: 759,
     features: [
-      'Jusqu\'à 3 camions',
-      'Livraisons illimitées',
-      'Tracking client basique',
-      'Support email'
+      t('subscription.plans.starter.f1', "Jusqu'à 3 camions"),
+      t('subscription.plans.starter.f2', 'Livraisons illimitées'),
+      t('subscription.plans.starter.f3', 'Tracking client basique'),
+      t('subscription.plans.starter.f4', 'Support email'),
     ],
     lockedFeatures: [
-      'Génération PDF e-CMR',
-      'Carte GPS temps réel',
-      'Dashboard Cash-Flow',
-      'Scan Code-barre'
+      t('subscription.plans.starter.lf1', 'Génération PDF e-CMR'),
+      t('subscription.plans.starter.lf2', 'Carte GPS temps réel'),
+      t('subscription.plans.starter.lf3', 'Dashboard Cash-Flow'),
+      t('subscription.plans.starter.lf4', 'Scan Code-barre'),
     ],
     icon: Truck,
-    popular: false
+    popular: false,
   },
   {
-    id: 'croissance',
-    name: 'CROISSANCE',
-    description: 'Pour les PME en expansion',
-    monthlyPrice: 199,
-    yearlyPrice: 1990,
+    id: 'pme',
+    name: t('subscription.plans.pme.name', 'PME'),
+    description: t('subscription.plans.pme.description', 'Pour les PME en expansion'),
+    monthlyPrice: 249,
+    yearlyPrice: 2390,
     features: [
-      'Jusqu\'à 15 camions',
-      'e-CMR PDF illimitées',
-      'Carte GPS temps réel',
-      'IA Anti-litige',
-      'Cash-Flow Dashboard',
-      'Score Éco-conduite',
-      'Support prioritaire'
+      t('subscription.plans.pme.f1', "Jusqu'à 15 camions"),
+      t('subscription.plans.pme.f2', 'e-CMR PDF illimitées'),
+      t('subscription.plans.pme.f3', 'Carte GPS temps réel'),
+      t('subscription.plans.pme.f4', 'IA Anti-litige'),
+      t('subscription.plans.pme.f5', 'Cash-Flow Dashboard'),
+      t('subscription.plans.pme.f6', 'Score Éco-conduite'),
+      t('subscription.plans.pme.f7', 'Support prioritaire'),
     ],
     lockedFeatures: [
-      'Scan Code-barre',
-      'Portail Client avancé',
-      'API Access'
+      t('subscription.plans.pme.lf1', 'Scan Code-barre'),
+      t('subscription.plans.pme.lf2', 'Portail Client avancé'),
+      t('subscription.plans.pme.lf3', 'API Access'),
     ],
     icon: Zap,
-    popular: true
+    popular: true,
   },
   {
-    id: 'flotte_pro',
-    name: 'FLOTTE PRO',
-    description: 'Solution entreprise complète',
-    monthlyPrice: 499,
-    yearlyPrice: 4990,
+    id: 'flotte',
+    name: t('subscription.plans.flotte.name', 'FLOTTE'),
+    description: t('subscription.plans.flotte.description', 'Solution entreprise complète'),
+    monthlyPrice: 690,
+    yearlyPrice: 6624,
     features: [
-      'Camions illimités',
-      'Toutes fonctionnalités',
-      'Scan Code-barre',
-      'Portail Client avancé',
-      'API Access complet',
-      'Carte Temps Réel',
-      'Support 24/7',
-      'Manager dédié'
+      t('subscription.plans.flotte.f1', 'Camions illimités'),
+      t('subscription.plans.flotte.f2', 'Toutes fonctionnalités'),
+      t('subscription.plans.flotte.f3', 'Scan Code-barre'),
+      t('subscription.plans.flotte.f4', 'Portail Client avancé'),
+      t('subscription.plans.flotte.f5', 'API Access complet'),
+      t('subscription.plans.flotte.f6', 'Carte Temps Réel'),
+      t('subscription.plans.flotte.f7', 'Support 24/7'),
+      t('subscription.plans.flotte.f8', 'Manager dédié'),
     ],
     lockedFeatures: [],
     icon: Building2,
-    popular: false
-  }
+    popular: false,
+  },
 ];
 
 export const SubscriptionPage = () => {
+  const { t } = useI18n();
   const [isYearly, setIsYearly] = useState(false);
-  const [updating, setUpdating] = useState(false);
-  const { plan: currentPlan, loading, updatePlan } = useSubscription();
+  const { plan: currentPlan, loading } = useSubscription();
   const { user } = useAuth();
+  const PLANS = buildPlans(t);
+  // Normalize legacy plan ids (solo/croissance/flotte_pro) so existing users still see the right card highlighted.
+  const currentPlanId = normalizePlanId(currentPlan);
 
-  const handleSelectPlan = async (planId) => {
+  const handleSelectPlan = (planId) => {
     if (!user) {
-      toast.error('Veuillez vous connecter pour changer de plan');
+      toast.error(t('toasts.loginRequired', 'Veuillez vous connecter pour changer de plan'));
       return;
     }
 
-    if (currentPlan === planId) {
-      toast.info('Vous êtes déjà sur ce plan');
+    if (currentPlanId === planId) {
+      toast.info(t('toasts.alreadyOnPlan', 'Vous êtes déjà sur ce plan'));
       return;
     }
 
-    setUpdating(true);
-    try {
-      const result = await updatePlan(planId, isYearly ? 'yearly' : 'monthly');
-      if (result.success) {
-        toast.success(`Plan ${PLANS.find(p => p.id === planId)?.name} activé !`);
-      } else {
-        toast.error(`Erreur : ${result.error || 'Mise à jour impossible'}`);
-      }
-    } catch (error) {
-      console.error('Plan update error:', error);
-      toast.error(`Erreur : ${error.response?.data?.detail || error.message}`);
+    const key = `${planId}_${isYearly ? 'yearly' : 'monthly'}`;
+    const baseUrl = STRIPE_PAYMENT_LINKS[key];
+    if (!baseUrl) {
+      toast.error(`${t('toasts.error', 'Erreur')} : lien Stripe introuvable (${key})`);
+      return;
     }
-    setUpdating(false);
+    // Build the final URL by simple concatenation — Stripe Payment Links accept
+    // `prefilled_email` and `client_reference_id` as query params. We only append
+    // params that have a value (empty ones can make Stripe reject the link).
+    const parts = [];
+    if (user.email) parts.push(`prefilled_email=${encodeURIComponent(user.email)}`);
+    if (user.id) parts.push(`client_reference_id=${encodeURIComponent(user.id)}`);
+    const url = parts.length > 0 ? `${baseUrl}?${parts.join('&')}` : baseUrl;
+    toast.success(t('toasts.redirectingStripe', 'Redirection vers le paiement sécurisé Stripe…'));
+    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   const savings = (monthly, yearly) => {
@@ -114,10 +135,10 @@ export const SubscriptionPage = () => {
   };
 
   const getPlanBadgeColor = (planId) => {
-    switch(planId) {
-      case 'solo': return 'bg-zinc-600';
-      case 'croissance': return 'bg-[#0066FF]';
-      case 'flotte_pro': return 'bg-gradient-to-r from-yellow-500 to-orange-500';
+    switch(normalizePlanId(planId)) {
+      case 'starter': return 'bg-zinc-600';
+      case 'pme': return 'bg-[#0066FF]';
+      case 'flotte': return 'bg-gradient-to-r from-yellow-500 to-orange-500';
       default: return 'bg-zinc-600';
     }
   };
@@ -126,8 +147,8 @@ export const SubscriptionPage = () => {
     <div className="space-y-8">
       {/* Header */}
       <div className="text-center">
-        <h2 className="text-3xl font-bold mb-2">Mon Abonnement</h2>
-        <p className="text-zinc-400">Choisissez le plan qui correspond à votre flotte</p>
+        <h2 className="text-3xl font-bold mb-2">{t('subscription.title', 'Mon Abonnement')}</h2>
+        <p className="text-zinc-400">{t('subscription.subtitle', 'Choisissez le plan qui correspond à votre flotte')}</p>
       </div>
 
       {/* Current Status */}
@@ -138,15 +159,15 @@ export const SubscriptionPage = () => {
               <Crown className="w-6 h-6 text-[#0066FF]" />
               <div>
                 <p className="font-semibold">
-                  Plan actuel : {PLANS.find(p => p.id === currentPlan)?.name || currentPlan}
+                  {t('subscription.currentPlan', 'Plan actuel')} : {PLANS.find(p => p.id === currentPlanId)?.name || currentPlanId}
                 </p>
                 <p className="text-sm text-zinc-400">
-                  Facturation {isYearly ? 'annuelle' : 'mensuelle'}
+                  {t('subscription.billingCycle', 'Facturation')} {isYearly ? t('subscription.billingYearly', 'annuelle') : t('subscription.billingMonthly', 'mensuelle')}
                 </p>
               </div>
             </div>
             <span className={`px-3 py-1 rounded-full text-sm text-white ${getPlanBadgeColor(currentPlan)}`}>
-              Actif
+              {t('subscription.active', 'Actif')}
             </span>
           </div>
         </div>
@@ -155,7 +176,7 @@ export const SubscriptionPage = () => {
       {/* Billing Toggle */}
       <div className="flex items-center justify-center gap-4">
         <span className={`font-medium ${!isYearly ? 'text-white' : 'text-zinc-400'}`}>
-          Mensuel
+          {t('subscription.monthly', 'Mensuel')}
         </span>
         <Switch
           checked={isYearly}
@@ -164,17 +185,17 @@ export const SubscriptionPage = () => {
           data-testid="billing-toggle"
         />
         <span className={`font-medium ${isYearly ? 'text-white' : 'text-zinc-400'}`}>
-          Annuel
+          {t('subscription.yearly', 'Annuel')}
         </span>
         <span className="px-3 py-1 bg-green-500/10 text-green-400 rounded-full text-sm font-medium">
-          -20% (2 mois offerts)
+          {t('subscription.saveYear', '-20% (2 mois offerts)')}
         </span>
       </div>
 
       {/* Plans Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {PLANS.map((plan) => {
-          const isCurrentPlan = currentPlan === plan.id;
+          const isCurrentPlan = currentPlanId === plan.id;
           const price = isYearly ? plan.yearlyPrice : plan.monthlyPrice;
           const Icon = plan.icon;
 
@@ -193,7 +214,7 @@ export const SubscriptionPage = () => {
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                   <span className="px-4 py-1 bg-[#0066FF] text-white text-xs font-semibold rounded-full flex items-center gap-1">
                     <Sparkles className="w-3 h-3" />
-                    POPULAIRE
+                    {t('subscription.popular', 'POPULAIRE')}
                   </span>
                 </div>
               )}
@@ -216,11 +237,11 @@ export const SubscriptionPage = () => {
                   <span className="text-zinc-400">€</span>
                 </div>
                 <p className="text-sm text-zinc-400">
-                  {isYearly ? '/an' : '/mois'}
+                  {isYearly ? t('subscription.perYear', '/an') : t('subscription.perMonth', '/mois')}
                 </p>
                 {isYearly && (
                   <p className="text-xs text-green-400 mt-1">
-                    Économisez {savings(plan.monthlyPrice, plan.yearlyPrice)}%
+                    {t('subscription.save', 'Économisez {percent}%').replace('{percent}', savings(plan.monthlyPrice, plan.yearlyPrice))}
                   </p>
                 )}
               </div>
@@ -250,7 +271,7 @@ export const SubscriptionPage = () => {
               {/* CTA Button */}
               <Button
                 onClick={() => handleSelectPlan(plan.id)}
-                disabled={updating || loading}
+                disabled={loading}
                 className={`w-full h-12 font-semibold ${
                   isCurrentPlan
                     ? 'bg-green-600 hover:bg-green-700'
@@ -263,11 +284,11 @@ export const SubscriptionPage = () => {
                 {isCurrentPlan ? (
                   <>
                     <Check className="w-4 h-4 mr-2" />
-                    Plan actuel
+                    {t('subscription.currentPlanBtn', 'Plan actuel')}
                   </>
                 ) : (
                   <>
-                    Choisir ce plan
+                    {t('subscription.selectPlan', 'Choisir ce plan')}
                     <ChevronRight className="w-4 h-4 ml-2" />
                   </>
                 )}
@@ -279,22 +300,22 @@ export const SubscriptionPage = () => {
 
       {/* Features Comparison */}
       <div className="bg-[#121214] border border-[#27272A] rounded-xl p-6">
-        <h3 className="text-lg font-semibold mb-4">Pourquoi passer au plan supérieur ?</h3>
+        <h3 className="text-lg font-semibold mb-4">{t('subscription.whyUpgrade', 'Pourquoi passer au plan supérieur ?')}</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="p-4 bg-[#1A1A1E] rounded-lg">
             <Shield className="w-8 h-8 text-[#0066FF] mb-3" />
-            <h4 className="font-semibold mb-1">IA Anti-litige</h4>
-            <p className="text-sm text-zinc-400">Protégez-vous des fausses réclamations avec l'analyse photo automatique</p>
+            <h4 className="font-semibold mb-1">{t('subscription.upgrade1Title', 'IA Anti-litige')}</h4>
+            <p className="text-sm text-zinc-400">{t('subscription.upgrade1Desc', "Protégez-vous des fausses réclamations avec l'analyse photo automatique")}</p>
           </div>
           <div className="p-4 bg-[#1A1A1E] rounded-lg">
             <Zap className="w-8 h-8 text-yellow-400 mb-3" />
-            <h4 className="font-semibold mb-1">Cash-Flow Instantané</h4>
-            <p className="text-sm text-zinc-400">Facturez à la seconde et suivez l'argent bloqué en temps réel</p>
+            <h4 className="font-semibold mb-1">{t('subscription.upgrade2Title', 'Cash-Flow Instantané')}</h4>
+            <p className="text-sm text-zinc-400">{t('subscription.upgrade2Desc', "Facturez à la seconde et suivez l'argent bloqué en temps réel")}</p>
           </div>
           <div className="p-4 bg-[#1A1A1E] rounded-lg">
             <Clock className="w-8 h-8 text-green-400 mb-3" />
-            <h4 className="font-semibold mb-1">Support Prioritaire</h4>
-            <p className="text-sm text-zinc-400">Assistance dédiée pour résoudre vos problèmes rapidement</p>
+            <h4 className="font-semibold mb-1">{t('subscription.upgrade3Title', 'Support Prioritaire')}</h4>
+            <p className="text-sm text-zinc-400">{t('subscription.upgrade3Desc', 'Assistance dédiée pour résoudre vos problèmes rapidement')}</p>
           </div>
         </div>
       </div>

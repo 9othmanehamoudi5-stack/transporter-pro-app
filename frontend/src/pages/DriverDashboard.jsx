@@ -1,15 +1,16 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useOfflineSync } from '../hooks/useOfflineSync';
-import { deliveriesApi, damageReportsApi, ecoScoresApi, dashboardApi, syncApi } from '../services/api';
+import { deliveriesApi, damageReportsApi, ecoScoresApi, dashboardApi, syncApi, compressPhoto } from '../services/api';
 import { firestoreGPS } from '../services/firebase';
 import { Button } from '../components/ui/button';
 import { 
   Truck, Package, Camera, CheckCircle, MapPin, LogOut, 
   Wifi, WifiOff, AlertTriangle, ChevronRight, Clock,
-  Navigation, Leaf, Shield, RefreshCw, X, Upload
+  Navigation, Leaf, Shield, RefreshCw, X, Upload, ScanLine
 } from 'lucide-react';
 import { Toaster, toast } from 'sonner';
+import BarcodeScanner from '../components/BarcodeScanner';
 import SignatureCanvas from './SignatureCanvas';
 
 const statusLabels = {
@@ -22,13 +23,14 @@ const statusLabels = {
 
 export const DriverDashboard = () => {
   const { user, logout } = useAuth();
-  const { isOnline, queueLength, addToQueue, processQueue } = useOfflineSync();
+  const { isOnline, syncQueue, queueLength, addToQueue, processQueue } = useOfflineSync();
   const [activeTab, setActiveTab] = useState('deliveries');
   const [deliveries, setDeliveries] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedDelivery, setSelectedDelivery] = useState(null);
   const [showCamera, setShowCamera] = useState(false);
+  const [showScanner, setShowScanner] = useState(false);
   const [showSignature, setShowSignature] = useState(false);
   const [ecoScore, setEcoScore] = useState(null);
 
@@ -69,6 +71,8 @@ export const DriverDashboard = () => {
           await deliveriesApi.update(item.data.tracking_id, item.data);
         } else if (item.type === 'damage_report') {
           await damageReportsApi.create(item.data);
+        } else if (item.type === 'delivery_photo') {
+          await deliveriesApi.uploadPhoto(item.data.tracking_id, item.data.photo_base64);
         }
       }).then((processed) => {
         if (processed > 0) {
@@ -78,6 +82,17 @@ export const DriverDashboard = () => {
       });
     }
   }, [isOnline, queueLength, processQueue, fetchData]);
+
+  // Map of tracking_id → count of photos waiting in the offline queue (drives the badge on cards)
+  const pendingPhotosByDelivery = React.useMemo(() => {
+    const map = {};
+    for (const item of syncQueue) {
+      if (item.type === 'delivery_photo' && item.data?.tracking_id) {
+        map[item.data.tracking_id] = (map[item.data.tracking_id] || 0) + 1;
+      }
+    }
+    return map;
+  }, [syncQueue]);
 
   // GPS Live Tracking — send position every 60s when there's an in_transit delivery
   useEffect(() => {
@@ -188,7 +203,11 @@ export const DriverDashboard = () => {
           toast.success('Colis en bon état - Confiance: ' + (analysis?.confidence || 0) + '%');
         }
       } else {
-        addToQueue('damage_report', data);
+        // Offline: compress the photo (canvas 800px / q=0.7) BEFORE enqueuing so
+        // localStorage (~5MB budget) doesn't fill up after a handful of shots.
+        const compressed = await compressPhoto(photoBase64);
+        addToQueue('damage_report', { ...data, photo_base64: compressed });
+        addToQueue('delivery_photo', { tracking_id, photo_base64: compressed });
         toast.info('Photo enregistrée (sync au retour)');
       }
       setShowCamera(false);
@@ -256,6 +275,29 @@ export const DriverDashboard = () => {
         </div>
       </div>
 
+      {/* Scanner Button */}
+      <div className="px-4 py-2">
+        <button
+          onClick={() => setShowScanner(true)}
+          className="w-full flex items-center justify-center gap-2 py-3 bg-[#121214] border border-[#27272A] rounded-xl text-sm text-zinc-300 hover:border-[#0066FF]/30 transition-colors"
+          data-testid="driver-scan-btn"
+        >
+          <ScanLine className="w-4 h-4 text-[#0066FF]" />
+          Scanner un colis
+        </button>
+      </div>
+
+      {/* Scanner Modal */}
+      {showScanner && (
+        <BarcodeScanner
+          onScan={(code) => {
+            setShowScanner(false);
+            toast.success(`Code scanné : ${code}`);
+          }}
+          onClose={() => setShowScanner(false)}
+        />
+      )}
+
       {/* Main Content */}
       <div className="px-4 space-y-4">
         {activeTab === 'deliveries' && (
@@ -277,6 +319,7 @@ export const DriverDashboard = () => {
                   <DeliveryCard
                     key={delivery.tracking_id}
                     delivery={delivery}
+                    pendingPhotos={pendingPhotosByDelivery[delivery.tracking_id] || 0}
                     onStart={() => handleStartDelivery(delivery.tracking_id)}
                     onPhoto={() => { setSelectedDelivery(delivery); setShowCamera(true); }}
                     onComplete={() => { setSelectedDelivery(delivery); setShowSignature(true); }}
@@ -465,7 +508,7 @@ export const DriverDashboard = () => {
   );
 };
 
-const DeliveryCard = ({ delivery, onStart, onPhoto, onComplete }) => {
+const DeliveryCard = ({ delivery, onStart, onPhoto, onComplete, pendingPhotos = 0 }) => {
   const isInTransit = delivery.status === 'in_transit';
 
   return (
@@ -477,6 +520,16 @@ const DeliveryCard = ({ delivery, onStart, onPhoto, onComplete }) => {
         <div>
           <p className="font-mono text-sm text-zinc-400">{delivery.tracking_id}</p>
           <p className="text-lg font-semibold mt-1">{delivery.recipient_name}</p>
+          {pendingPhotos > 0 && (
+            <span
+              className="inline-flex items-center gap-1 mt-2 px-2 py-0.5 rounded-full text-xs bg-amber-500/15 text-amber-300 border border-amber-500/30"
+              data-testid={`pending-sync-badge-${delivery.tracking_id}`}
+              title={`${pendingPhotos} photo(s) en attente de synchronisation`}
+            >
+              <Upload className="w-3 h-3" />
+              {pendingPhotos} photo{pendingPhotos > 1 ? 's' : ''} en attente de sync
+            </span>
+          )}
         </div>
         <span className={`px-3 py-1 rounded-full text-xs ${
           isInTransit ? 'bg-blue-500/10 text-blue-400' : 'bg-yellow-500/10 text-yellow-400'
