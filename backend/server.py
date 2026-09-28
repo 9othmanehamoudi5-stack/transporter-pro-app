@@ -1091,17 +1091,16 @@ async def stripe_webhook(request: Request):
     sig_header = request.headers.get("stripe-signature", "")
 
     # Verify webhook signature if secret is configured
-    if STRIPE_WEBHOOK_SECRET:
-        try:
+    if not STRIPE_WEBHOOK_SECRET:
+        logger.error("STRIPE_WEBHOOK_SECRET not configured")
+        raise HTTPException(status_code=500, detail="Webhook secret not configured")
+    try:
             event = stripe.Webhook.construct_event(payload, sig_header, STRIPE_WEBHOOK_SECRET)
         except stripe.error.SignatureVerificationError:
             raise HTTPException(status_code=400, detail="Invalid signature")
         except Exception as e:
             logger.error(f"Stripe webhook error: {e}")
             raise HTTPException(status_code=400, detail="Webhook error")
-    else:
-        import json
-        event = json.loads(payload)
 
     if event.get("type") == "checkout.session.completed":
         session = event["data"]["object"]
@@ -1804,7 +1803,7 @@ app.include_router(api_router)
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
-    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
+    allow_origins=os.environ.get('CORS_ORIGINS', 'https://delivery-cash-flow.preview.emergentagent.com,https://transporter-pro.com,http://localhost:3000').split(','),
     allow_methods=["*"],
     allow_headers=["*"],
 )
