@@ -183,7 +183,7 @@ const LandingPage = () => {
           <div className="grid md:grid-cols-3 gap-5" data-testid="pain-cards">
             {/* Card 1 - Impay&eacute;s */}
             <div className="bg-red-500/[0.04] border border-red-500/10 rounded-2xl p-6 hover:border-red-500/25 transition-colors">
-              <div className="text-3xl mb-4">&#128548;</div>
+              <div className="text-3xl mb-4">😤</div>
               <p className="text-3xl font-bold font-mono text-red-400 mb-2">45 jours</p>
               <p className="text-base font-semibold text-zinc-200 mb-2">pour &ecirc;tre pay&eacute;</p>
               <p className="text-sm text-zinc-500 leading-relaxed">
@@ -193,7 +193,7 @@ const LandingPage = () => {
 
             {/* Card 2 - Temps perdu */}
             <div className="bg-red-500/[0.04] border border-red-500/10 rounded-2xl p-6 hover:border-red-500/25 transition-colors">
-              <div className="text-3xl mb-4">&#128222;</div>
+              <div className="text-3xl mb-4"></div>
               <p className="text-3xl font-bold font-mono text-red-400 mb-2">2h / jour</p>
               <p className="text-base font-semibold text-zinc-200 mb-2">&agrave; relancer vos clients</p>
               <p className="text-sm text-zinc-500 leading-relaxed">
@@ -203,7 +203,7 @@ const LandingPage = () => {
 
             {/* Card 3 - Erreurs */}
             <div className="bg-red-500/[0.04] border border-red-500/10 rounded-2xl p-6 hover:border-red-500/25 transition-colors">
-              <div className="text-3xl mb-4">&#128196;</div>
+              <div className="text-3xl mb-4"></div>
               <p className="text-3xl font-bold font-mono text-red-400 mb-2">1 sur 5</p>
               <p className="text-base font-semibold text-zinc-200 mb-2">factures contient une erreur</p>
               <p className="text-sm text-zinc-500 leading-relaxed">
