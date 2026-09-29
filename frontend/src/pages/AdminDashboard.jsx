@@ -608,8 +608,8 @@ export const AdminDashboard = () => {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <p className="text-sm text-zinc-400">{deliveries.length} {t('kpi.totalDeliveries', 'Livraisons')}</p>
-                <Button
-              {plan !== 'starter' && plan !== 'solo' && (
+                {plan !== 'starter' && plan !== 'solo' && (
+                  <Button
                   onClick={handleOptimizeRoute}
                   disabled={optimizing}
                   className="bg-[#0066FF] hover:bg-[#0052CC] disabled:opacity-50"
