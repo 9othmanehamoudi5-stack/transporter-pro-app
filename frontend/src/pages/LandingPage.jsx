@@ -4,7 +4,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { 
   Shield, Truck, Leaf, ArrowRight, Eye, MapPin, Camera, FileText, Check, 
   ChevronRight, Zap, Clock, AlertTriangle, ChevronDown, Award, TrendingUp,
-  CreditCard, Sparkles, Building2, Users, FileCheck, Smartphone, CheckCircle2, X
+  CreditCard, Sparkles, Building2, Users, FileCheck, Smartphone, CheckCircle2, X,
+  HelpCircle, ChevronUp, Lock
 } from 'lucide-react';
 import Footer from '../components/Footer';
 
@@ -18,47 +19,56 @@ const LandingPage = () => {
   }, [user, navigate]);
 
   return (
-    <div className="min-h-screen bg-[#0A0A0B] text-white selection:bg-[#0066FF]/30 font-sans">
+    <div className="min-h-screen bg-[#F8FAFC] text-slate-900 font-sans antialiased selection:bg-blue-100">
       
-      {/* 1. TOP BANNER REGLEMENTAIRE */}
-      <div className="bg-gradient-to-r from-[#0066FF]/10 via-[#0066FF]/20 to-[#0066FF]/10 border-b border-[#0066FF]/20 text-center py-2 px-4 text-xs text-blue-300 fixed top-0 w-full z-[1000] backdrop-blur-md" data-testid="urgency-banner">
-        <span className="inline-flex items-center gap-1.5 font-medium">
-          <Sparkles className="w-3.5 h-3.5 text-blue-400 animate-pulse" />
-          Conforme Loi Facturation Électronique & e-CMR 2026 : <strong className="text-white">Essai 30 jours gratuit sans engagement</strong>
-        </span>
+      {/* 1. BANDEAU DE CONFORMITÉ & OFFRE */}
+      <div className="bg-slate-900 text-white text-xs py-2.5 px-4 text-center fixed top-0 w-full z-[1000] border-b border-slate-800">
+        <div className="max-w-7xl mx-auto flex items-center justify-center gap-2">
+          <span className="bg-blue-500/20 text-blue-300 font-semibold px-2 py-0.5 rounded text-[11px] border border-blue-400/30">
+            Loi 2026-2027
+          </span>
+          <span>Préparez votre entreprise à la transition e-CMR & Facturation : <strong className="text-white">30 jours d'essai gratuit sans engagement</strong></span>
+        </div>
       </div>
 
-      {/* 2. NAVIGATION GLOBALE */}
-      <nav className="fixed top-[33px] w-full z-[999] border-b border-white/[0.06] bg-[#0A0A0B]/85 backdrop-blur-2xl">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-gradient-to-br from-[#0066FF] to-[#0040B0] rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
+      {/* 2. NAVIGATION ÉPURÉE (Style Stripe / Pennylane) */}
+      <nav className="fixed top-[37px] w-full z-[999] bg-white/95 backdrop-blur-md border-b border-slate-200">
+        <div className="max-w-7xl mx-auto px-6 h-18 py-3.5 flex items-center justify-between">
+          
+          {/* Logo */}
+          <div className="flex items-center gap-3 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+            <div className="w-10 h-10 bg-[#1E40AF] rounded-xl flex items-center justify-center shadow-md shadow-blue-900/10">
               <Truck className="w-5 h-5 text-white" />
             </div>
-            <span className="text-xl font-bold tracking-tight text-white font-mono">
-              Transporter<span className="text-[#0066FF]">-Pro</span>
-            </span>
+            <div>
+              <span className="text-xl font-bold tracking-tight text-slate-900 font-mono">
+                Transporter<span className="text-[#2563EB]">-Pro</span>
+              </span>
+              <p className="text-[10px] text-slate-500 font-medium leading-none">Logiciel Transport & Facturation</p>
+            </div>
           </div>
 
-          <div className="hidden lg:flex items-center gap-8 text-sm text-zinc-400 font-medium">
-            <a href="#comparatif" className="hover:text-white transition-colors">Pourquoi nous ?</a>
-            <a href="#solutions" className="hover:text-white transition-colors">Solutions TMS</a>
-            <a href="#roi" className="hover:text-white transition-colors">Calculateur ROI</a>
-            <a href="#tarifs" className="hover:text-white transition-colors">Tarifs transparents</a>
-            <a href="#faq" className="hover:text-white transition-colors">FAQ</a>
+          {/* Liens centraux */}
+          <div className="hidden lg:flex items-center gap-8 text-sm font-semibold text-slate-600">
+            <a href="#comparatif" className="hover:text-[#2563EB] transition-colors">Pourquoi nous ?</a>
+            <a href="#modules" className="hover:text-[#2563EB] transition-colors">Fonctionnalités</a>
+            <a href="#roi" className="hover:text-[#2563EB] transition-colors">Calculateur d'économies</a>
+            <a href="#tarifs" className="hover:text-[#2563EB] transition-colors">Tarifs</a>
+            <a href="#faq" className="hover:text-[#2563EB] transition-colors">Questions fréquentes</a>
           </div>
 
+          {/* Boutons d'action */}
           <div className="flex items-center gap-3">
             <button 
               onClick={() => navigate('/login')} 
-              className="text-sm text-zinc-300 hover:text-white transition-colors px-4 py-2 font-medium" 
+              className="text-sm font-semibold text-slate-700 hover:text-slate-900 px-4 py-2 transition-colors" 
               data-testid="nav-login-btn"
             >
               Connexion
             </button>
             <button 
               onClick={() => navigate('/register')} 
-              className="text-sm font-semibold bg-[#0066FF] hover:bg-[#0052CC] text-white px-5 py-2.5 rounded-xl transition-all hover:shadow-lg hover:shadow-blue-500/25 flex items-center gap-1.5" 
+              className="text-sm font-semibold bg-[#2563EB] hover:bg-[#1D4ED8] text-white px-5 py-2.5 rounded-xl transition-all shadow-sm shadow-blue-600/20 flex items-center gap-2" 
               data-testid="nav-cta-btn"
             >
               Essai gratuit
@@ -68,133 +78,131 @@ const LandingPage = () => {
         </div>
       </nav>
 
-      {/* 3. HERO SECTION ULTRA-PERCUTANTE */}
-      <section className="relative pt-[140px] pb-20 px-6 overflow-hidden" data-testid="hero-section">
-        {/* Glows d'ambiance */}
-        <div className="absolute top-10 left-1/2 -translate-x-1/2 w-[900px] h-[550px] bg-[#0066FF]/10 rounded-full blur-[160px] pointer-events-none" />
-        <div className="absolute top-60 right-10 w-[350px] h-[350px] bg-emerald-500/5 rounded-full blur-[140px] pointer-events-none" />
-
-        <div className="max-w-7xl mx-auto grid lg:grid-cols-12 gap-12 items-center relative">
+      {/* 3. HERO SECTION CLAIRE & PROFESSIONNELLE */}
+      <section className="pt-[140px] pb-20 px-6 bg-gradient-to-b from-white to-[#F8FAFC] border-b border-slate-200">
+        <div className="max-w-7xl mx-auto grid lg:grid-cols-12 gap-12 items-center">
           
-          {/* Colonne gauche (Texte + CTA) */}
+          {/* Texte Hero */}
           <div className="lg:col-span-7">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-blue-500/20 bg-blue-500/5 text-xs text-blue-400 mb-6 backdrop-blur-sm">
-              <span className="w-2 h-2 rounded-full bg-[#10B981] animate-pulse" />
-              Le TMS nouvelle génération pour Artisans & PME du Transport
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-50 border border-blue-200 text-xs font-semibold text-[#1E40AF] mb-6">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              La solution de gestion conçue pour les transporteurs routiers en France
             </div>
 
-            <h1 className="text-4xl sm:text-5xl lg:text-[3.5rem] font-black leading-[1.08] tracking-tight mb-6" data-testid="hero-h1">
-              Gérez, facturez et protégez vos transports{' '}
-              <span className="bg-gradient-to-r from-[#0066FF] via-[#38BDF8] to-[#10B981] bg-clip-text text-transparent">
-                en toute simplicité.
+            <h1 className="text-4xl sm:text-5xl lg:text-[3.4rem] font-extrabold text-slate-900 leading-[1.12] tracking-tight mb-6" data-testid="hero-h1">
+              Gérez vos transports, éditez vos e-CMR et{' '}
+              <span className="text-[#2563EB]">
+                sécurisez vos paiements.
               </span>
             </h1>
 
-            <p className="text-lg text-zinc-300 max-w-2xl mb-8 leading-relaxed font-normal" data-testid="hero-subtitle">
-              Oubliez les logiciels lourds et opaques d'ancienne génération. Transporter-Pro réunit en un seul outil : <strong className="text-white">e-CMR légale</strong>, <strong className="text-white">facturation en 30 sec</strong>, <strong className="text-white">IA anti-litige photos</strong> et <strong className="text-white">suivi GPS en direct</strong>.
+            <p className="text-lg text-slate-600 max-w-2xl mb-8 leading-relaxed">
+              Fini les classeurs Excel, les litiges sans preuve et les factures payées à 60 jours. <strong>Transporter-Pro</strong> réunit votre facturation, vos lettres de voiture numériques et le suivi de vos chauffeurs dans un logiciel simple et intuitif.
             </p>
 
+            {/* Boutons d'action */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 mb-8">
               <button 
                 onClick={() => navigate('/register')} 
-                className="group flex items-center justify-center gap-2.5 bg-[#10B981] hover:bg-[#059669] text-white font-bold px-8 py-4 rounded-xl text-base transition-all hover:shadow-xl hover:shadow-emerald-500/25 hover:-translate-y-0.5" 
+                className="flex items-center justify-center gap-2.5 bg-[#059669] hover:bg-[#047857] text-white font-bold px-8 py-4 rounded-xl text-base transition-all shadow-md shadow-emerald-700/15 hover:-translate-y-0.5" 
                 data-testid="hero-cta-btn"
               >
-                Démarrer l'essai gratuit (30 jours)
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                Démarrer mon essai gratuit 30 jours
+                <ArrowRight className="w-5 h-5" />
               </button>
               
               <button 
                 onClick={() => document.getElementById('roi')?.scrollIntoView({ behavior: 'smooth' })} 
-                className="flex items-center justify-center gap-2 text-sm text-zinc-300 hover:text-white transition-colors border border-white/[0.12] bg-white/[0.02] px-6 py-4 rounded-xl hover:border-white/25" 
+                className="flex items-center justify-center gap-2 text-sm font-semibold text-slate-700 hover:text-slate-900 bg-white border border-slate-300 hover:bg-slate-50 px-6 py-4 rounded-xl transition-all shadow-sm" 
                 data-testid="hero-demo-btn"
               >
-                <TrendingUp className="w-4 h-4 text-blue-400" />
-                Calculer mes économies
+                <TrendingUp className="w-4 h-4 text-[#2563EB]" />
+                Simuler mes économies
               </button>
             </div>
 
-            {/* Réassurances */}
-            <div className="flex flex-wrap gap-x-6 gap-y-2 text-xs text-zinc-400 font-medium">
-              <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-[#10B981]" /> Sans carte bancaire</span>
-              <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-[#10B981]" /> Prêt en 2 minutes chrono</span>
-              <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-[#10B981]" /> Conforme Loi Finances 2026</span>
+            {/* Badges de confiance */}
+            <div className="flex flex-wrap gap-x-6 gap-y-2 text-xs font-semibold text-slate-500">
+              <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-[#059669]" /> Aucune carte bancaire requise</span>
+              <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-[#059669]" /> Prêt en 2 minutes</span>
+              <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-[#059669]" /> Données hébergées en France (RGPD)</span>
             </div>
           </div>
 
-          {/* Colonne droite (Mockup Dashboard Interactif 3D) */}
-          <div className="lg:col-span-5 relative">
-            <div className="relative rounded-2xl border border-[#27272A] bg-[#121214] p-5 shadow-2xl shadow-blue-500/10 backdrop-blur-xl">
+          {/* Interface Mockup Dashboard (Style Pro Blanc/Gris) */}
+          <div className="lg:col-span-5">
+            <div className="rounded-2xl border border-slate-300/80 bg-white p-5 shadow-xl shadow-slate-200/70">
               
-              {/* Header fenêtre macOS style */}
-              <div className="flex items-center justify-between border-b border-[#27272A] pb-3 mb-4">
+              {/* Header fenêtre */}
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-red-500/80" />
-                  <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
-                  <div className="w-3 h-3 rounded-full bg-green-500/80" />
-                  <span className="text-xs text-zinc-400 font-mono ml-2">cockpit.transporter-pro.com</span>
+                  <div className="w-3 h-3 rounded-full bg-slate-300" />
+                  <div className="w-3 h-3 rounded-full bg-slate-300" />
+                  <div className="w-3 h-3 rounded-full bg-slate-300" />
+                  <span className="text-xs text-slate-500 font-medium ml-2">app.transporter-pro.com</span>
                 </div>
-                <span className="text-[10px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-full font-semibold border border-emerald-500/20">
-                  Temps réel
+                <span className="text-[11px] bg-emerald-50 text-emerald-700 px-2.5 py-0.5 rounded-full font-bold border border-emerald-200">
+                  ● En direct
                 </span>
               </div>
 
-              {/* 3 KPIs de Trésorerie */}
+              {/* 3 Cartes de Trésorerie */}
               <div className="grid grid-cols-3 gap-3 mb-4">
-                <div className="bg-[#0A0A0B] border border-[#27272A] rounded-xl p-3">
-                  <p className="text-[10px] text-zinc-400 uppercase font-semibold">À Encaisser</p>
-                  <p className="text-base font-bold text-[#0066FF] font-mono mt-0.5">14 250 €</p>
-                  <p className="text-[9px] text-zinc-500">6 factures</p>
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3">
+                  <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">À Encaisser</p>
+                  <p className="text-base font-bold text-[#1E40AF] font-mono mt-0.5">14 250 €</p>
+                  <p className="text-[10px] text-slate-500 mt-0.5">6 factures</p>
                 </div>
-                <div className="bg-[#0A0A0B] border border-[#27272A] rounded-xl p-3">
-                  <p className="text-[10px] text-zinc-400 uppercase font-semibold">Encaissé</p>
-                  <p className="text-base font-bold text-[#10B981] font-mono mt-0.5">32 800 €</p>
-                  <p className="text-[9px] text-emerald-400 font-medium">↑ +18% ce mois</p>
+                <div className="bg-emerald-50/60 border border-emerald-200 rounded-xl p-3">
+                  <p className="text-[10px] text-emerald-800 uppercase font-bold tracking-wider">Encaissé</p>
+                  <p className="text-base font-bold text-[#059669] font-mono mt-0.5">32 800 €</p>
+                  <p className="text-[10px] text-emerald-700 font-semibold mt-0.5">↑ +18% ce mois</p>
                 </div>
-                <div className="bg-[#0A0A0B] border border-red-500/20 rounded-xl p-3">
-                  <p className="text-[10px] text-red-400 uppercase font-semibold">En Retard</p>
-                  <p className="text-base font-bold text-red-400 font-mono mt-0.5">2 100 €</p>
-                  <p className="text-[9px] text-red-400/80">1 client relancé</p>
+                <div className="bg-rose-50 border border-rose-200 rounded-xl p-3">
+                  <p className="text-[10px] text-rose-700 uppercase font-bold tracking-wider">En Retard</p>
+                  <p className="text-base font-bold text-rose-600 font-mono mt-0.5">2 100 €</p>
+                  <p className="text-[10px] text-rose-600 font-semibold mt-0.5">1 relance auto</p>
                 </div>
               </div>
 
-              {/* Liste d'ordres & livraisons */}
-              <div className="bg-[#0A0A0B] border border-[#27272A] rounded-xl p-3 mb-3">
+              {/* Ordres en direct */}
+              <div className="border border-slate-200 rounded-xl p-3 bg-white mb-3">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-semibold text-zinc-300">Ordres de transport récents</span>
-                  <span className="text-[10px] text-zinc-500">Aujourd'hui</span>
+                  <span className="text-xs font-bold text-slate-800">Ordres de transport du jour</span>
+                  <span className="text-[10px] text-slate-500 font-medium">Temps réel</span>
                 </div>
+                
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between text-xs py-1.5 border-b border-white/[0.04]">
+                  <div className="flex items-center justify-between text-xs py-2 border-b border-slate-100">
                     <div>
-                      <p className="font-medium text-white">Paris → Lyon (24t)</p>
-                      <p className="text-[10px] text-zinc-500">Chauffeur : Karim M. • Camion #04</p>
+                      <p className="font-bold text-slate-900">Paris → Lyon (Semi 24t)</p>
+                      <p className="text-[11px] text-slate-500">Chauffeur : Karim M. • Camion #04</p>
                     </div>
-                    <span className="text-[10px] font-semibold bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded-full">
-                      En route (GPS)
+                    <span className="text-[10px] font-bold bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full border border-blue-200">
+                      GPS En route
                     </span>
                   </div>
 
-                  <div className="flex items-center justify-between text-xs py-1.5 border-b border-white/[0.04]">
+                  <div className="flex items-center justify-between text-xs py-2">
                     <div>
-                      <p className="font-medium text-white">Lille → Bruxelles</p>
-                      <p className="text-[10px] text-zinc-500">Factur-X #2026-089 générée</p>
+                      <p className="font-bold text-slate-900">Lille → Reims</p>
+                      <p className="text-[11px] text-slate-500">Factur-X envoyée • 1 450 €</p>
                     </div>
-                    <span className="text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-full">
+                    <span className="text-[10px] font-bold bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-full border border-emerald-200">
                       e-CMR Signée ✓
                     </span>
                   </div>
                 </div>
               </div>
 
-              {/* Badge Flottant IA Protection */}
-              <div className="bg-gradient-to-r from-[#0066FF]/10 to-[#10B981]/10 border border-[#0066FF]/30 rounded-xl p-3 flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-[#0066FF] flex items-center justify-center flex-shrink-0">
+              {/* Bloc Sécurité IA */}
+              <div className="bg-slate-900 text-white rounded-xl p-3 flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0">
                   <Shield className="w-4 h-4 text-white" />
                 </div>
                 <div className="text-xs">
-                  <p className="font-semibold text-white">Bouclier IA Anti-Litige</p>
-                  <p className="text-zinc-400 text-[11px]">Photo certifiée au départ : 0 réclamation abusive.</p>
+                  <p className="font-bold">Bouclier IA Anti-Litige</p>
+                  <p className="text-slate-300 text-[11px]">Photo au chargement horodatée : litiges infondés bloqués.</p>
                 </div>
               </div>
 
@@ -204,159 +212,159 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* 4. BANDEAU DE CHIFFRES CLÉS */}
-      <section className="border-y border-white/[0.06] bg-[#121214]/50 py-10 px-6">
+      {/* 4. CHIFFRES CLÉS */}
+      <section className="py-12 px-6 bg-white border-b border-slate-200">
         <div className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
           <div>
-            <p className="text-3xl sm:text-4xl font-black font-mono text-[#10B981]">30 jours</p>
-            <p className="text-xs uppercase tracking-wider text-zinc-400 mt-1 font-semibold">Essai gratuit sans CB</p>
+            <p className="text-3xl sm:text-4xl font-black font-mono text-[#059669]">30 jours</p>
+            <p className="text-xs uppercase tracking-wider text-slate-500 mt-1 font-bold">Essai sans engagement</p>
           </div>
           <div>
-            <p className="text-3xl sm:text-4xl font-black font-mono text-white">&lt; 30 sec</p>
-            <p className="text-xs uppercase tracking-wider text-zinc-400 mt-1 font-semibold">Pour éditer une facture</p>
+            <p className="text-3xl sm:text-4xl font-black font-mono text-slate-900">&lt; 30 sec</p>
+            <p className="text-xs uppercase tracking-wider text-slate-500 mt-1 font-bold">Pour créer une facture</p>
           </div>
           <div>
-            <p className="text-3xl sm:text-4xl font-black font-mono text-[#0066FF]">-80%</p>
-            <p className="text-xs uppercase tracking-wider text-zinc-400 mt-1 font-semibold">De litiges grâce à l'IA</p>
+            <p className="text-3xl sm:text-4xl font-black font-mono text-[#2563EB]">-80%</p>
+            <p className="text-xs uppercase tracking-wider text-slate-500 mt-1 font-bold">De litiges contestés</p>
           </div>
           <div>
-            <p className="text-3xl sm:text-4xl font-black font-mono text-white">100%</p>
-            <p className="text-xs uppercase tracking-wider text-zinc-400 mt-1 font-semibold">Conforme e-CMR & Loi 2026</p>
+            <p className="text-3xl sm:text-4xl font-black font-mono text-slate-900">100%</p>
+            <p className="text-xs uppercase tracking-wider text-slate-500 mt-1 font-bold">Conforme e-CMR légale</p>
           </div>
         </div>
       </section>
 
-      {/* 5. TABLEAU COMPARATIF : TRANSPORTER-PRO VS ANCIENS TMS (AKANEA, DASHDOC...) */}
-      <section id="comparatif" className="py-24 px-6 relative">
+      {/* 5. TABLEAU COMPARATIF VS ANCIENS LOGICIELS */}
+      <section id="comparatif" className="py-20 px-6 bg-[#F8FAFC]">
         <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-16">
-            <span className="text-xs uppercase tracking-[0.2em] text-[#0066FF] font-bold">Comparatif direct</span>
-            <h2 className="text-3xl sm:text-4xl font-black text-white mt-2 mb-4">
-              Pourquoi les transporteurs quittent les anciens TMS ?
+          <div className="text-center mb-14">
+            <span className="text-xs uppercase tracking-[0.2em] text-[#2563EB] font-bold">Comparatif</span>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 mt-2 mb-3">
+              Pourquoi choisir Transporter-Pro ?
             </h2>
-            <p className="text-zinc-400 text-sm max-w-xl mx-auto">
-              Les solutions traditionnelles (comme Akanea ou les ERP lourds) ont été pensées dans les années 2000. Voici la différence avec Transporter-Pro.
+            <p className="text-slate-600 text-sm max-w-xl mx-auto">
+              Comparez notre solution tout-en-un aux anciens logiciels de transport traditionnels.
             </p>
           </div>
 
-          <div className="rounded-2xl border border-[#27272A] bg-[#121214] overflow-hidden shadow-2xl">
-            <div className="grid grid-cols-12 bg-[#1A1A1E] p-4 text-xs font-bold text-zinc-300 border-b border-[#27272A] uppercase tracking-wider">
-              <div className="col-span-5 sm:col-span-4">Critère</div>
-              <div className="col-span-3 sm:col-span-4 text-center text-zinc-400">TMS Traditionnels (Akanea, etc.)</div>
-              <div className="col-span-4 sm:col-span-4 text-center text-[#10B981] font-bold">Transporter-Pro</div>
+          <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-md">
+            <div className="grid grid-cols-12 bg-slate-100 p-4 text-xs font-bold text-slate-700 border-b border-slate-200 uppercase tracking-wider">
+              <div className="col-span-5 sm:col-span-4">Fonctionnalité</div>
+              <div className="col-span-3 sm:col-span-4 text-center text-slate-500">Anciens logiciels (Akanea, etc.)</div>
+              <div className="col-span-4 sm:col-span-4 text-center text-[#2563EB] font-extrabold">Transporter-Pro</div>
             </div>
 
-            <div className="divide-y divide-[#27272A]/60 text-sm">
-              <div className="grid grid-cols-12 p-4 items-center hover:bg-white/[0.01]">
-                <div className="col-span-5 sm:col-span-4 font-medium text-white">Tarifs & Prix</div>
-                <div className="col-span-3 sm:col-span-4 text-center text-zinc-400 text-xs">Opaque (sur devis, engagement 3 ans)</div>
-                <div className="col-span-4 sm:col-span-4 text-center text-emerald-400 font-semibold text-xs bg-emerald-500/5 py-1 rounded-lg">Transparent dès 79€/m (Sans engagement)</div>
+            <div className="divide-y divide-slate-100 text-sm">
+              <div className="grid grid-cols-12 p-4 items-center">
+                <div className="col-span-5 sm:col-span-4 font-bold text-slate-800">Transparence des prix</div>
+                <div className="col-span-3 sm:col-span-4 text-center text-slate-500 text-xs">Opaque (devis, engagement 3 ans)</div>
+                <div className="col-span-4 sm:col-span-4 text-center text-emerald-800 font-bold text-xs bg-emerald-50 py-1.5 rounded-lg border border-emerald-200">Clair dès 79€/mois (Sans engagement)</div>
               </div>
 
-              <div className="grid grid-cols-12 p-4 items-center hover:bg-white/[0.01]">
-                <div className="col-span-5 sm:col-span-4 font-medium text-white">Mise en place</div>
-                <div className="col-span-3 sm:col-span-4 text-center text-zinc-400 text-xs">3 à 6 semaines de formation payante</div>
-                <div className="col-span-4 sm:col-span-4 text-center text-emerald-400 font-semibold text-xs bg-emerald-500/5 py-1 rounded-lg">Prêt en 2 minutes chrono</div>
+              <div className="grid grid-cols-12 p-4 items-center">
+                <div className="col-span-5 sm:col-span-4 font-bold text-slate-800">Prise en main</div>
+                <div className="col-span-3 sm:col-span-4 text-center text-slate-500 text-xs">Formations lourdes et payantes</div>
+                <div className="col-span-4 sm:col-span-4 text-center text-emerald-800 font-bold text-xs bg-emerald-50 py-1.5 rounded-lg border border-emerald-200">Immédiate en 2 minutes</div>
               </div>
 
-              <div className="grid grid-cols-12 p-4 items-center hover:bg-white/[0.01]">
-                <div className="col-span-5 sm:col-span-4 font-medium text-white">IA Anti-Litige Photos</div>
-                <div className="col-span-3 sm:col-span-4 text-center text-red-400 text-xs flex items-center justify-center gap-1"><X className="w-3.5 h-3.5" /> Aucune</div>
-                <div className="col-span-4 sm:col-span-4 text-center text-emerald-400 font-semibold text-xs bg-emerald-500/5 py-1 rounded-lg flex items-center justify-center gap-1"><Check className="w-3.5 h-3.5" /> Gemini Vision intégrée</div>
+              <div className="grid grid-cols-12 p-4 items-center">
+                <div className="col-span-5 sm:col-span-4 font-bold text-slate-800">Preuve photo Anti-Litige</div>
+                <div className="col-span-3 sm:col-span-4 text-center text-rose-600 text-xs font-semibold flex items-center justify-center gap-1"><X className="w-3.5 h-3.5" /> Aucune</div>
+                <div className="col-span-4 sm:col-span-4 text-center text-emerald-800 font-bold text-xs bg-emerald-50 py-1.5 rounded-lg border border-emerald-200 flex items-center justify-center gap-1"><Check className="w-3.5 h-3.5 text-emerald-600" /> Analyse IA Gemini intégrée</div>
               </div>
 
-              <div className="grid grid-cols-12 p-4 items-center hover:bg-white/[0.01]">
-                <div className="col-span-5 sm:col-span-4 font-medium text-white">Facturation & TVA Intra</div>
-                <div className="col-span-3 sm:col-span-4 text-center text-zinc-400 text-xs">Complexe, modules payants séparés</div>
-                <div className="col-span-4 sm:col-span-4 text-center text-emerald-400 font-semibold text-xs bg-emerald-500/5 py-1 rounded-lg">Automatisée en Factur-X & multi-pays</div>
+              <div className="grid grid-cols-12 p-4 items-center">
+                <div className="col-span-5 sm:col-span-4 font-bold text-slate-800">Facturation & TVA Intra</div>
+                <div className="col-span-3 sm:col-span-4 text-center text-slate-500 text-xs">Modules complexes et payants</div>
+                <div className="col-span-4 sm:col-span-4 text-center text-emerald-800 font-bold text-xs bg-emerald-50 py-1.5 rounded-lg border border-emerald-200">Factur-X automatique incluse</div>
               </div>
 
-              <div className="grid grid-cols-12 p-4 items-center hover:bg-white/[0.01]">
-                <div className="col-span-5 sm:col-span-4 font-medium text-white">Suivi GPS Chauffeurs & Clients</div>
-                <div className="col-span-3 sm:col-span-4 text-center text-zinc-400 text-xs">Boîtiers matériels coûteux</div>
-                <div className="col-span-4 sm:col-span-4 text-center text-emerald-400 font-semibold text-xs bg-emerald-500/5 py-1 rounded-lg">Directement via smartphone</div>
+              <div className="grid grid-cols-12 p-4 items-center">
+                <div className="col-span-5 sm:col-span-4 font-bold text-slate-800">Suivi GPS Chauffeurs</div>
+                <div className="col-span-3 sm:col-span-4 text-center text-slate-500 text-xs">Boîtiers GPS coûteux à installer</div>
+                <div className="col-span-4 sm:col-span-4 text-center text-emerald-800 font-bold text-xs bg-emerald-50 py-1.5 rounded-lg border border-emerald-200">Directement via smartphone</div>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* 6. LES 4 PILIERS DE TRANSPORTER-PRO (SOLUTIONS TMS) */}
-      <section id="solutions" className="py-24 px-6 border-t border-white/[0.06] bg-[#0A0A0B]">
+      {/* 6. LES 4 MODULES CLÉS (Style Cartes Blanches) */}
+      <section id="modules" className="py-20 px-6 bg-white border-t border-slate-200">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
-            <span className="text-xs uppercase tracking-[0.2em] text-[#0066FF] font-bold">Tout-en-un</span>
-            <h2 className="text-3xl sm:text-4xl font-black text-white mt-2 mb-4">
-              4 modules intégrés pour piloter votre transport
+            <span className="text-xs uppercase tracking-[0.2em] text-[#2563EB] font-bold">Tout-en-un</span>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 mt-2 mb-3">
+              4 outils puissants dans une seule interface
             </h2>
-            <p className="text-zinc-400 text-sm max-w-xl mx-auto">
-              Plus besoin de payer 4 abonnements différents. Transporter-Pro centralise tout dans une interface fluide.
+            <p className="text-slate-600 text-sm max-w-xl mx-auto">
+              Centralisez vos opérations et débarrassez-vous de la paperasse inutile.
             </p>
           </div>
 
           <div className="grid md:grid-cols-2 gap-6">
             
-            {/* Module 1 : Facturation & Trésorerie */}
-            <div className="bg-[#121214] border border-[#27272A] hover:border-[#0066FF]/40 rounded-2xl p-8 transition-all group">
-              <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center text-[#0066FF] mb-6">
+            {/* Module 1 */}
+            <div className="bg-slate-50 border border-slate-200/90 rounded-2xl p-8 hover:border-blue-400 transition-all shadow-sm hover:shadow-md">
+              <div className="w-12 h-12 rounded-xl bg-blue-100 text-[#1E40AF] flex items-center justify-center mb-6">
                 <FileText className="w-6 h-6" />
               </div>
-              <h3 className="text-xl font-bold text-white mb-3">Facturation Électronique & Relances</h3>
-              <p className="text-sm text-zinc-400 leading-relaxed mb-6">
-                Générez des factures conformes Factur-X en 3 clics avec calcul automatique de TVA intra. Relancez automatiquement les factures impayées à J+7, J+15 et J+30.
+              <h3 className="text-xl font-bold text-slate-900 mb-2">Facturation Électronique & Relances Automatiques</h3>
+              <p className="text-sm text-slate-600 leading-relaxed mb-6">
+                Éditez vos factures en moins de 30 secondes avec calcul automatique de la TVA intracommunautaire. Relancez les clients en retard automatiquement.
               </p>
-              <ul className="space-y-2.5 text-xs text-zinc-300 font-medium">
-                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#10B981]" /> Auto-complétion SIRET via INSEE Sirene</li>
-                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#10B981]" /> Tableau de bord de trésorerie en temps réel</li>
-                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#10B981]" /> Export comptable en 1 clic</li>
+              <ul className="space-y-2 text-xs font-semibold text-slate-700">
+                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#059669]" /> Remplissage automatique SIRET via l'INSEE</li>
+                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#059669]" /> Suivi des impayés et des encaissements en temps réel</li>
+                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#059669]" /> Export comptable en 1 clic</li>
               </ul>
             </div>
 
-            {/* Module 2 : e-CMR & Ordres de transport */}
-            <div className="bg-[#121214] border border-[#27272A] hover:border-emerald-500/40 rounded-2xl p-8 transition-all group">
-              <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center text-[#10B981] mb-6">
+            {/* Module 2 */}
+            <div className="bg-slate-50 border border-slate-200/90 rounded-2xl p-8 hover:border-emerald-400 transition-all shadow-sm hover:shadow-md">
+              <div className="w-12 h-12 rounded-xl bg-emerald-100 text-[#059669] flex items-center justify-center mb-6">
                 <FileCheck className="w-6 h-6" />
               </div>
-              <h3 className="text-xl font-bold text-white mb-3">e-CMR & Lettres de Voiture Numériques</h3>
-              <p className="text-sm text-zinc-400 leading-relaxed mb-6">
-                Supprimez le papier. Vos chauffeurs créent, signent et partagent la e-CMR directement depuis leur téléphone. Signature électronique horodatée et archivage sécurisé.
+              <h3 className="text-xl font-bold text-slate-900 mb-2">e-CMR & Lettres de Voiture Numériques</h3>
+              <p className="text-sm text-slate-600 leading-relaxed mb-6">
+                Vos chauffeurs font signer le destinataire directement sur leur smartphone. Le document PDF certifié est archivé et accessible instantanément.
               </p>
-              <ul className="space-y-2.5 text-xs text-zinc-300 font-medium">
-                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#10B981]" /> Signature tactile sur écran smartphone</li>
-                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#10B981]" /> Téléchargement immédiat en PDF certifié</li>
-                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#10B981]" /> 100% conforme à la réglementation européenne</li>
+              <ul className="space-y-2 text-xs font-semibold text-slate-700">
+                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#059669]" /> Signature tactile sur écran smartphone</li>
+                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#059669]" /> Génération immédiate de la lettre de voiture PDF</li>
+                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#059669]" /> 100% conforme à la réglementation transport</li>
               </ul>
             </div>
 
-            {/* Module 3 : IA Anti-Litige Gemini Vision */}
-            <div className="bg-[#121214] border border-[#27272A] hover:border-purple-500/40 rounded-2xl p-8 transition-all group">
-              <div className="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-400 mb-6">
+            {/* Module 3 */}
+            <div className="bg-slate-50 border border-slate-200/90 rounded-2xl p-8 hover:border-blue-400 transition-all shadow-sm hover:shadow-md">
+              <div className="w-12 h-12 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center mb-6">
                 <Shield className="w-6 h-6" />
               </div>
-              <h3 className="text-xl font-bold text-white mb-3">Bouclier IA Anti-Litige Photos</h3>
-              <p className="text-sm text-zinc-400 leading-relaxed mb-6">
-                Le chauffeur prend une photo du colis au départ. L'intelligence artificielle Gemini analyse les anomalies, horodate la preuve et dégage votre responsabilité en cas de casse à l'arrivée.
+              <h3 className="text-xl font-bold text-slate-900 mb-2">Bouclier IA Anti-Litige Photos</h3>
+              <p className="text-sm text-slate-600 leading-relaxed mb-6">
+                Une photo prise par le chauffeur au départ certifie l'état de la marchandise. En cas de contestation à la livraison, vous avez la preuve juridique que le colis est parti intact.
               </p>
-              <ul className="space-y-2.5 text-xs text-zinc-300 font-medium">
-                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#10B981]" /> Analyse de sévérité des dommages en 3 secondes</li>
-                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#10B981]" /> Rapport de preuve infalsifiable pour les assureurs</li>
-                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#10B981]" /> Réduction de 80% des pertes financières liées aux litiges</li>
+              <ul className="space-y-2 text-xs font-semibold text-slate-700">
+                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#059669]" /> Analyse des colis par vision artificielle en 3 secondes</li>
+                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#059669]" /> Preuve horodatée et géolocalisée irréfutable</li>
+                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#059669]" /> Fin des pénalités injustifiées imposées par les clients</li>
               </ul>
             </div>
 
-            {/* Module 4 : GPS Live & Portail Client */}
-            <div className="bg-[#121214] border border-[#27272A] hover:border-amber-500/40 rounded-2xl p-8 transition-all group">
-              <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-400 mb-6">
+            {/* Module 4 */}
+            <div className="bg-slate-50 border border-slate-200/90 rounded-2xl p-8 hover:border-amber-400 transition-all shadow-sm hover:shadow-md">
+              <div className="w-12 h-12 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center mb-6">
                 <MapPin className="w-6 h-6" />
               </div>
-              <h3 className="text-xl font-bold text-white mb-3">Suivi GPS & Portail Client Autonome</h3>
-              <p className="text-sm text-zinc-400 leading-relaxed mb-6">
-                Partagez un lien de tracking en direct à vos clients sans création de compte. Ils suivent leur livraison sur la carte en temps réel et arrêtent de vous saturer d'appels.
+              <h3 className="text-xl font-bold text-slate-900 mb-2">Suivi GPS & Portail Client sans Inscription</h3>
+              <p className="text-sm text-slate-600 leading-relaxed mb-6">
+                Envoyez un lien public à vos clients pour qu'ils suivent l'arrivée de leur chauffeur en direct. Vos lignes téléphoniques restent libres.
               </p>
-              <ul className="space-y-2.5 text-xs text-zinc-300 font-medium">
-                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#10B981]" /> Lien public de tracking sécurisé sans mot de passe</li>
-                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#10B981]" /> Optimisation des tournées pour économiser 15% de carburant</li>
-                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#10B981]" /> Éco-score de conduite pour vos chauffeurs</li>
+              <ul className="space-y-2 text-xs font-semibold text-slate-700">
+                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#059669]" /> Lien de tracking sécurisé sans mot de passe</li>
+                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#059669]" /> Éco-score chauffeur pour économiser le carburant</li>
+                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#059669]" /> Optimisation des tournées de livraison</li>
               </ul>
             </div>
 
@@ -364,112 +372,112 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* 7. CALCULATEUR DE ROI INTERACTIF */}
-      <section id="roi" className="py-24 px-6 border-t border-white/[0.06] bg-[#121214]/30">
+      {/* 7. CALCULATEUR DE ROI */}
+      <section id="roi" className="py-20 px-6 bg-[#F8FAFC] border-t border-slate-200">
         <ROICalculator onNavigate={navigate} />
       </section>
 
       {/* 8. GRILLE TARIFAIRE TRANSPARENTE */}
-      <section id="tarifs" className="py-24 px-6 border-t border-white/[0.06]">
+      <section id="tarifs" className="py-20 px-6 bg-white border-t border-slate-200">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
-            <span className="text-xs uppercase tracking-[0.2em] text-[#10B981] font-bold">Aucun frais caché</span>
-            <h2 className="text-3xl sm:text-4xl font-black text-white mt-2 mb-4">
-              Des tarifs clairs et sans engagement
+            <span className="text-xs uppercase tracking-[0.2em] text-[#059669] font-bold">Sans engagement</span>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 mt-2 mb-3">
+              Des forfaits simples et adaptés à votre flotte
             </h2>
-            <p className="text-zinc-400 text-sm max-w-lg mx-auto">
-              Tous nos forfaits incluent 30 jours d'essai gratuit. Changez ou résiliez en 1 clic.
+            <p className="text-slate-600 text-sm max-w-lg mx-auto">
+              Chaque plan comprend 30 jours d'essai gratuit. Résiliation libre en 1 clic.
             </p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8 items-stretch">
             
-            {/* Plan Starter */}
-            <div className="bg-[#121214] border border-[#27272A] rounded-2xl p-8 flex flex-col justify-between hover:border-zinc-500/50 transition-all">
+            {/* Starter */}
+            <div className="bg-white border border-slate-200 rounded-2xl p-8 flex flex-col justify-between hover:shadow-lg transition-all">
               <div>
-                <div className="inline-block px-3 py-1 rounded-full bg-zinc-800 text-zinc-300 text-xs font-semibold mb-4">
+                <div className="inline-block px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-bold mb-4">
                   STARTER
                 </div>
-                <h3 className="text-xl font-bold text-white">Artisans & 1-3 Camions</h3>
-                <p className="text-xs text-zinc-400 mt-2">Pour démarrer proprement sans prise de tête.</p>
+                <h3 className="text-xl font-bold text-slate-900">Artisans & 1 à 3 Camions</h3>
+                <p className="text-xs text-slate-500 mt-1">L'essentiel pour démarrer sereinement.</p>
                 <div className="my-6">
-                  <span className="text-4xl font-black font-mono text-white">79 €</span>
-                  <span className="text-zinc-400 text-xs"> / mois</span>
-                  <p className="text-[11px] text-emerald-400 mt-1">ou 759 €/an (~63 €/mois)</p>
+                  <span className="text-4xl font-extrabold font-mono text-slate-900">79 €</span>
+                  <span className="text-slate-500 text-xs font-medium"> / mois</span>
+                  <p className="text-[11px] text-[#059669] font-bold mt-1">ou 759 €/an (~63 €/mois)</p>
                 </div>
-                <ul className="space-y-3 text-xs text-zinc-300 font-medium mb-8">
-                  <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#10B981]" /> Jusqu'à 3 chauffeurs / camions</li>
-                  <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#10B981]" /> Facturation Factur-X illimitée</li>
-                  <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#10B981]" /> e-CMR électronique avec signature</li>
-                  <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#10B981]" /> Suivi des statuts de livraison</li>
-                  <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#10B981]" /> Support réactif par email 7j/7</li>
+                <ul className="space-y-3 text-xs font-semibold text-slate-700 mb-8">
+                  <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#059669]" /> Jusqu'à 3 chauffeurs</li>
+                  <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#059669]" /> Facturation Factur-X illimitée</li>
+                  <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#059669]" /> e-CMR avec signature tactile</li>
+                  <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#059669]" /> Suivi des statuts des missions</li>
+                  <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#059669]" /> Support client français 7j/7</li>
                 </ul>
               </div>
               <button 
                 onClick={() => navigate('/register')} 
-                className="w-full py-3.5 rounded-xl border border-white/20 hover:bg-white/10 text-white font-semibold text-sm transition-all"
+                className="w-full py-3.5 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-800 font-bold text-sm transition-all"
               >
                 Démarrer l'essai gratuit
               </button>
             </div>
 
-            {/* Plan PME (Recommandé) */}
-            <div className="bg-[#121214] border-2 border-[#0066FF] rounded-2xl p-8 flex flex-col justify-between relative shadow-2xl shadow-blue-500/10 scale-105">
-              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-[#0066FF] text-white text-[11px] uppercase tracking-wider font-bold px-4 py-1 rounded-full shadow-md">
-                Le choix des PME
+            {/* PME (Recommandé) */}
+            <div className="bg-white border-2 border-[#2563EB] rounded-2xl p-8 flex flex-col justify-between relative shadow-xl shadow-blue-500/10 scale-105">
+              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-[#2563EB] text-white text-[11px] uppercase tracking-wider font-extrabold px-4 py-1 rounded-full shadow-md">
+                Le choix recommandé
               </div>
               <div>
-                <div className="inline-block px-3 py-1 rounded-full bg-blue-500/10 text-blue-400 text-xs font-semibold mb-4">
+                <div className="inline-block px-3 py-1 rounded-full bg-blue-50 text-[#1E40AF] text-xs font-bold mb-4">
                   PME CROISSANCE
                 </div>
-                <h3 className="text-xl font-bold text-white">Flottes 4 à 15 Camions</h3>
-                <p className="text-xs text-zinc-400 mt-2">La solution complète avec IA Anti-Litige.</p>
+                <h3 className="text-xl font-bold text-slate-900">Flottes de 4 à 15 Camions</h3>
+                <p className="text-xs text-slate-500 mt-1">La suite complète avec l'IA Anti-Litige.</p>
                 <div className="my-6">
-                  <span className="text-4xl font-black font-mono text-white">249 €</span>
-                  <span className="text-zinc-400 text-xs"> / mois</span>
-                  <p className="text-[11px] text-emerald-400 mt-1">ou 2 390 €/an (~199 €/mois)</p>
+                  <span className="text-4xl font-extrabold font-mono text-slate-900">249 €</span>
+                  <span className="text-slate-500 text-xs font-medium"> / mois</span>
+                  <p className="text-[11px] text-[#059669] font-bold mt-1">ou 2 390 €/an (~199 €/mois)</p>
                 </div>
-                <ul className="space-y-3 text-xs text-zinc-200 font-medium mb-8">
-                  <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#10B981]" /> <strong>Jusqu'à 15 chauffeurs</strong></li>
-                  <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#10B981]" /> <strong>Bouclier IA Gemini Anti-Litige</strong></li>
-                  <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#10B981]" /> <strong>GPS Live + Optimisation Tournées</strong></li>
-                  <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#10B981]" /> Éco-Score Chauffeurs (-15% carburant)</li>
-                  <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#10B981]" /> Portail de suivi client autonome</li>
-                  <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#10B981]" /> Support prioritaire téléphonique</li>
+                <ul className="space-y-3 text-xs font-semibold text-slate-800 mb-8">
+                  <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#059669]" /> <strong>Jusqu'à 15 chauffeurs</strong></li>
+                  <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#059669]" /> <strong>Bouclier IA Gemini Anti-Litige</strong></li>
+                  <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#059669]" /> <strong>GPS Live & Optimisation tournées</strong></li>
+                  <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#059669]" /> Éco-Score carburant (-15%)</li>
+                  <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#059669]" /> Portail de suivi client autonome</li>
+                  <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#059669]" /> Support prioritaire par téléphone</li>
                 </ul>
               </div>
               <button 
                 onClick={() => navigate('/register')} 
-                className="w-full py-4 rounded-xl bg-[#0066FF] hover:bg-[#0052CC] text-white font-bold text-sm transition-all shadow-lg shadow-blue-500/25"
+                className="w-full py-4 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-bold text-sm transition-all shadow-md shadow-blue-600/20"
               >
-                Démarrer l'essai gratuit — 30 jours
+                Démarrer l'essai 30 jours
               </button>
             </div>
 
-            {/* Plan Flotte */}
-            <div className="bg-[#121214] border border-[#27272A] rounded-2xl p-8 flex flex-col justify-between hover:border-zinc-500/50 transition-all">
+            {/* Flotte Pro */}
+            <div className="bg-white border border-slate-200 rounded-2xl p-8 flex flex-col justify-between hover:shadow-lg transition-all">
               <div>
-                <div className="inline-block px-3 py-1 rounded-full bg-zinc-800 text-zinc-300 text-xs font-semibold mb-4">
+                <div className="inline-block px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-bold mb-4">
                   FLOTTE PRO
                 </div>
-                <h3 className="text-xl font-bold text-white">Grandes Flottes (15+)</h3>
-                <p className="text-xs text-zinc-400 mt-2">Puissance maximale sans aucune limite.</p>
+                <h3 className="text-xl font-bold text-slate-900">Grandes Flottes (+15 camions)</h3>
+                <p className="text-xs text-slate-500 mt-1">Toutes les fonctionnalités sans aucune limite.</p>
                 <div className="my-6">
-                  <span className="text-4xl font-black font-mono text-white">690 €</span>
-                  <span className="text-zinc-400 text-xs"> / mois</span>
-                  <p className="text-[11px] text-emerald-400 mt-1">ou 6 624 €/an (~552 €/mois)</p>
+                  <span className="text-4xl font-extrabold font-mono text-slate-900">690 €</span>
+                  <span className="text-slate-500 text-xs font-medium"> / mois</span>
+                  <p className="text-[11px] text-[#059669] font-bold mt-1">ou 6 624 €/an (~552 €/mois)</p>
                 </div>
-                <ul className="space-y-3 text-xs text-zinc-300 font-medium mb-8">
-                  <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#10B981]" /> <strong>Chauffeurs & camions illimités</strong></li>
-                  <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#10B981]" /> Toutes les fonctionnalités PME</li>
-                  <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#10B981]" /> Accès API dédié pour votre ERP</li>
-                  <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#10B981]" /> Accompagnement & onboarding personnalisé</li>
-                  <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#10B981]" /> Account Manager dédié</li>
+                <ul className="space-y-3 text-xs font-semibold text-slate-700 mb-8">
+                  <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#059669]" /> <strong>Chauffeurs & camions illimités</strong></li>
+                  <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#059669]" /> Toutes les fonctionnalités PME incluses</li>
+                  <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#059669]" /> Accès API dédié</li>
+                  <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#059669]" /> Accompagnement & onboarding sur mesure</li>
+                  <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#059669]" /> Chargé de compte dédié</li>
                 </ul>
               </div>
               <button 
                 onClick={() => navigate('/register')} 
-                className="w-full py-3.5 rounded-xl border border-white/20 hover:bg-white/10 text-white font-semibold text-sm transition-all"
+                className="w-full py-3.5 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-800 font-bold text-sm transition-all"
               >
                 Démarrer l'essai gratuit
               </button>
@@ -479,51 +487,51 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* 9. FAQ DIRECTE & SEO IA */}
-      <section id="faq" className="py-24 px-6 border-t border-white/[0.06] bg-[#121214]/40">
+      {/* 9. FAQ DIRECTE */}
+      <section id="faq" className="py-20 px-6 bg-[#F8FAFC] border-t border-slate-200">
         <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-16">
-            <span className="text-xs uppercase tracking-[0.2em] text-[#0066FF] font-bold">Réponses claires</span>
-            <h2 className="text-3xl sm:text-4xl font-black text-white mt-2 mb-4">
+          <div className="text-center mb-14">
+            <span className="text-xs uppercase tracking-[0.2em] text-[#2563EB] font-bold">Réponses claires</span>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 mt-2 mb-3">
               Questions Fréquentes
             </h2>
-            <p className="text-zinc-400 text-sm">
-              Tout ce que vous devez savoir avant de tester Transporter-Pro.
+            <p className="text-slate-600 text-sm">
+              Tout ce que vous devez savoir avant de commencer.
             </p>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-3">
             {[
               {
                 q: "Quel est le prix de Transporter-Pro pour une entreprise de transport ?",
-                a: "Le prix de Transporter-Pro débute à 79 € par mois pour le forfait STARTER (jusqu'à 3 camions). Le forfait PME est à 249 € par mois (jusqu'à 15 camions) et le forfait FLOTTE est à 690 € par mois (camions illimités). Tous les plans incluent un essai gratuit de 30 jours sans engagement."
+                a: "Le tarif démarre à 79 € par mois pour le forfait STARTER (jusqu'à 3 camions). Le forfait PME est à 249 € par mois (jusqu'à 15 camions) et le forfait FLOTTE est à 690 € par mois (camions illimités). Tous les forfaits incluent 30 jours d'essai gratuit sans engagement."
               },
               {
-                q: "Comment fonctionne l'IA Anti-Litige sur les photos de colis ?",
-                a: "Le chauffeur prend une photo du colis lors du chargement. L'IA Gemini Vision analyse instantanément l'état de la marchandise, certifie l'intégrité du colis avec un horodatage et géolocalisation. En cas de réclamation du destinataire à l'arrivée, vous disposez d'un rapport de preuve juridique immédiat."
+                q: "Comment fonctionne la protection IA sur les photos de colis ?",
+                a: "Le chauffeur prend une photo du colis au chargement. L'IA analyse instantanément l'état de la marchandise et génère un horodatage avec géolocalisation. En cas de réclamation du destinataire à l'arrivée, vous disposez immédiatement de la preuve que le colis a été pris en charge intact."
               },
               {
-                q: "Est-ce difficile de remplacer mon ancien logiciel ou mes fichiers Excel ?",
-                a: "Non, Transporter-Pro est conçu pour être pris en main en moins de 2 minutes sans aucune formation préalable. L'auto-complétion des entreprises via l'API INSEE Sirene permet de créer vos clients et factures instantanément."
+                q: "Est-ce difficile de remplacer mes anciens fichiers ou logiciels ?",
+                a: "Non, Transporter-Pro a été pensé pour être utilisé en 2 minutes sans formation. La recherche automatique des entreprises via l'INSEE remplit automatiquement les coordonnées de vos clients et partenaires."
               },
               {
-                q: "Le logiciel est-il conforme à la loi sur la facturation électronique 2026 ?",
-                a: "Oui, Transporter-Pro génère des factures au format hybride Factur-X conformes aux exigences de l'administration fiscale française et gère automatiquement la TVA intracommunautaire pour vos transports en Europe."
+                q: "Le logiciel est-il conforme à la réglementation française et européenne ?",
+                a: "Oui, Transporter-Pro édite des factures conformes Factur-X et génère des lettres de voiture électroniques (e-CMR) reconnues légalement avec signature numérique du destinataire."
               }
             ].map((faq, idx) => (
               <div 
                 key={idx} 
-                className="bg-[#121214] border border-[#27272A] rounded-xl overflow-hidden transition-colors"
+                className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm"
               >
                 <button 
                   onClick={() => setActiveFaq(activeFaq === idx ? null : idx)}
-                  className="w-full text-left p-5 flex items-center justify-between font-semibold text-sm text-white hover:text-blue-400 transition-colors"
+                  className="w-full text-left p-5 flex items-center justify-between font-bold text-sm text-slate-800 hover:text-[#2563EB] transition-colors"
                 >
                   <span>{faq.q}</span>
-                  <ChevronDown className={`w-4 h-4 text-zinc-400 transition-transform ${activeFaq === idx ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${activeFaq === idx ? 'rotate-180 text-[#2563EB]' : ''}`} />
                 </button>
                 {activeFaq === idx && (
-                  <div className="p-5 pt-0 text-xs sm:text-sm text-zinc-400 leading-relaxed border-t border-[#27272A]/50">
+                  <div className="p-5 pt-0 text-sm text-slate-600 leading-relaxed border-t border-slate-100">
                     {faq.a}
                   </div>
                 )}
@@ -533,20 +541,20 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* 10. CTA FINAL BANNER */}
-      <section className="py-20 px-6 border-t border-white/[0.06] bg-gradient-to-b from-[#0A0A0B] to-[#0066FF]/10 text-center">
+      {/* 10. BANDEAU D'APPEL À L'ACTION FINAL */}
+      <section className="py-20 px-6 bg-slate-900 text-white text-center">
         <div className="max-w-3xl mx-auto">
-          <h2 className="text-3xl sm:text-4xl font-black text-white mb-4">
-            Rejoignez la nouvelle génération de transporteurs routiers.
+          <h2 className="text-3xl sm:text-4xl font-extrabold mb-4">
+            Reprenez le contrôle de vos transports et de votre trésorerie.
           </h2>
-          <p className="text-zinc-400 text-sm mb-8">
-            Testez gratuitement pendant 30 jours. Aucune carte bancaire requise. Vos premiers ordres de transport créés en 2 minutes.
+          <p className="text-slate-400 text-sm mb-8 max-w-xl mx-auto">
+            Testez gratuitement pendant 30 jours. Aucune carte bancaire requise à l'inscription.
           </p>
           <button 
             onClick={() => navigate('/register')} 
-            className="inline-flex items-center gap-2 bg-[#10B981] hover:bg-[#059669] text-white font-bold px-9 py-4 rounded-xl text-base transition-all hover:shadow-2xl hover:shadow-emerald-500/30"
+            className="inline-flex items-center gap-2.5 bg-[#059669] hover:bg-[#047857] text-white font-bold px-9 py-4 rounded-xl text-base transition-all shadow-lg shadow-emerald-900/30"
           >
-            Commencer mon essai gratuit maintenant
+            Démarrer mon essai gratuit — 30 jours
             <ArrowRight className="w-5 h-5" />
           </button>
         </div>
@@ -559,7 +567,7 @@ const LandingPage = () => {
   );
 };
 
-/* --- CALCULATEUR DE RENTABILITE (ROI) --- */
+/* --- CALCULATEUR DE RENTABILITÉ (Style Clair & Professionnel) --- */
 const ROICalculator = ({ onNavigate }) => {
   const [trucks, setTrucks] = useState(5);
   const [litiges, setLitiges] = useState(3);
@@ -575,17 +583,17 @@ const ROICalculator = ({ onNavigate }) => {
   return (
     <div className="max-w-4xl mx-auto">
       <div className="text-center mb-12">
-        <span className="text-xs uppercase tracking-[0.2em] text-emerald-400 font-bold">Simulateur d'économies</span>
-        <h2 className="text-3xl sm:text-4xl font-black text-white mt-2 mb-3">
+        <span className="text-xs uppercase tracking-[0.2em] text-[#059669] font-bold">Simulateur de rentabilité</span>
+        <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 mt-2 mb-3">
           Combien d'argent perdez-vous chaque mois ?
         </h2>
-        <p className="text-zinc-400 text-sm max-w-lg mx-auto">
-          Ajustez les curseurs pour calculer ce que Transporter-Pro vous fait économiser sur le carburant et les litiges.
+        <p className="text-slate-600 text-sm max-w-lg mx-auto">
+          Ajustez les curseurs pour calculer les économies réalisées avec Transporter-Pro sur vos litiges et votre carburant.
         </p>
       </div>
 
       <div className="grid md:grid-cols-2 gap-8">
-        <div className="space-y-6 bg-[#121214] border border-[#27272A] rounded-2xl p-6">
+        <div className="space-y-6 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
           <SliderInput
             label="Nombre de camions dans votre flotte"
             value={trucks}
@@ -595,7 +603,7 @@ const ROICalculator = ({ onNavigate }) => {
             testId="slider-trucks"
           />
           <SliderInput
-            label="Litiges ou réclamations par mois"
+            label="Nombre de litiges / réclamations par mois"
             value={litiges}
             onChange={setLitiges}
             min={0} max={15} step={1}
@@ -603,7 +611,7 @@ const ROICalculator = ({ onNavigate }) => {
             testId="slider-litiges"
           />
           <SliderInput
-            label="Coût moyen d'un litige / colis cassé"
+            label="Coût moyen d'un litige / colis endommagé"
             value={costPerLitige}
             onChange={setCostPerLitige}
             min={100} max={1500} step={50}
@@ -613,29 +621,29 @@ const ROICalculator = ({ onNavigate }) => {
         </div>
 
         <div className="space-y-4">
-          <div className="bg-red-500/[0.05] border border-red-500/20 rounded-2xl p-5">
-            <p className="text-xs font-bold uppercase text-red-400 tracking-wider mb-2">Pertes estimées sans Transporter-Pro</p>
+          <div className="bg-rose-50 border border-rose-200 rounded-2xl p-5">
+            <p className="text-xs font-bold uppercase text-rose-700 tracking-wider mb-2">Pertes estimées sans Transporter-Pro</p>
             <div className="flex justify-between items-baseline">
-              <span className="text-xs text-zinc-400">Litiges + carburant gaspillé</span>
-              <span className="text-2xl font-black font-mono text-red-400">-{totalPertes.toLocaleString('fr-FR')} € / mois</span>
+              <span className="text-xs text-slate-600">Litiges impayés + carburant gaspillé</span>
+              <span className="text-2xl font-extrabold font-mono text-rose-600">-{totalPertes.toLocaleString('fr-FR')} € / mois</span>
             </div>
           </div>
 
-          <div className="bg-emerald-500/[0.05] border border-emerald-500/20 rounded-2xl p-5">
-            <p className="text-xs font-bold uppercase text-emerald-400 tracking-wider mb-2">Gains garantis avec Transporter-Pro</p>
+          <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-5">
+            <p className="text-xs font-bold uppercase text-emerald-800 tracking-wider mb-2">Économies garanties avec Transporter-Pro</p>
             <div className="flex justify-between items-baseline">
-              <span className="text-xs text-zinc-400">Pertes évitées via IA & Éco-Score</span>
-              <span className="text-2xl font-black font-mono text-[#10B981]">+{totalEconomies.toLocaleString('fr-FR')} € / mois</span>
+              <span className="text-xs text-slate-600">Pertes évitées via l'IA & l'Éco-Score</span>
+              <span className="text-2xl font-extrabold font-mono text-[#059669]">+{totalEconomies.toLocaleString('fr-FR')} € / mois</span>
             </div>
           </div>
 
-          <div className="bg-[#0066FF]/10 border border-[#0066FF]/30 rounded-2xl p-4 text-center">
-            <p className="text-xs text-blue-200 font-medium mb-3">
+          <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 text-center">
+            <p className="text-xs text-[#1E40AF] font-semibold mb-3">
               Votre investissement logiciel est rentabilisé dès la première semaine.
             </p>
             <button 
               onClick={() => onNavigate('/register')}
-              className="w-full py-3 bg-[#0066FF] hover:bg-[#0052CC] text-white font-bold rounded-xl text-xs uppercase tracking-wider transition-all"
+              className="w-full py-3 bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-bold rounded-xl text-xs uppercase tracking-wider transition-all shadow-sm"
             >
               Récupérer mes économies maintenant →
             </button>
@@ -651,9 +659,9 @@ const SliderInput = ({ label, value, onChange, min, max, step, unit, testId }) =
   return (
     <div>
       <div className="flex justify-between items-baseline mb-2">
-        <label className="text-xs text-zinc-300 font-semibold">{label}</label>
-        <span className="text-base font-bold font-mono text-white" data-testid={`${testId}-value`}>
-          {value} <span className="text-xs text-zinc-500 font-normal">{unit}</span>
+        <label className="text-xs text-slate-700 font-bold">{label}</label>
+        <span className="text-base font-bold font-mono text-slate-900" data-testid={`${testId}-value`}>
+          {value} <span className="text-xs text-slate-500 font-normal">{unit}</span>
         </span>
       </div>
       <input
@@ -661,10 +669,10 @@ const SliderInput = ({ label, value, onChange, min, max, step, unit, testId }) =
         min={min} max={max} step={step}
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="w-full h-2 rounded-full appearance-none cursor-pointer bg-[#27272A] accent-[#0066FF]"
+        className="w-full h-2 rounded-full appearance-none cursor-pointer bg-slate-200 accent-[#2563EB]"
         data-testid={testId}
       />
-      <div className="flex justify-between mt-1 text-[10px] text-zinc-500">
+      <div className="flex justify-between mt-1 text-[10px] text-slate-500">
         <span>{min} {unit}</span>
         <span>{max} {unit}</span>
       </div>
