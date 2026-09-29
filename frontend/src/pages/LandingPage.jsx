@@ -8,6 +8,7 @@ const IMG_TRUCK_NIGHT = 'https://images.unsplash.com/photo-1610793148376-2b2b64b
 const IMG_WAREHOUSE = 'https://images.unsplash.com/photo-1694875522449-e852b63be76d?w=800&q=80';
 const IMG_TRUCK_ROAD = 'https://images.unsplash.com/photo-1668532069532-5bf7b1708aa0?w=800&q=80';
 
+
 const LandingPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -45,7 +46,7 @@ const LandingPage = () => {
         </div>
       </nav>
 
-      {/* ─── HERO ─── */}
+      {/* HERO */}
       <section className="relative pt-[140px] pb-20 px-6 overflow-hidden" data-testid="hero-section">
         {/* Glows */}
         <div className="absolute top-16 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-[#0066FF]/[0.06] rounded-full blur-[150px] pointer-events-none" />
@@ -54,56 +55,102 @@ const LandingPage = () => {
         <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-12 items-center relative">
           <div>
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/[0.08] bg-white/[0.03] text-xs text-zinc-400 mb-8 backdrop-blur-sm">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#0066FF] animate-pulse" />
-              30 jours d'essai gratuit — CB requise, débit 0€
+              <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] animate-pulse" />
+              +200 transporteurs en France nous font confiance
             </div>
 
             <h1 className="text-4xl sm:text-5xl lg:text-[3.4rem] font-bold leading-[1.08] tracking-tight mb-7" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }} data-testid="hero-h1">
-              <span className="bg-gradient-to-b from-white via-white to-zinc-400 bg-clip-text text-transparent">Chaque minute, votre trésorerie fuit. </span>
-              <span className="bg-gradient-to-r from-[#0066FF] to-[#00AAFF] bg-clip-text text-transparent">Reprenez le contrôle.</span>
+              <span className="bg-gradient-to-b from-white via-white to-zinc-400 bg-clip-text text-transparent">Vos factures sont pay&eacute;es. </span>
+              <span className="bg-gradient-to-r from-[#10B981] to-[#34D399] bg-clip-text text-transparent">Votre tr&eacute;sorerie respire.</span>
             </h1>
 
             <p className="text-base text-zinc-400 max-w-xl mb-10 leading-relaxed" data-testid="hero-subtitle">
-              Marre de payer pour des colis que vous n'avez pas cassés ? Marre du gasoil qui s'évapore ?{' '}
-              <span className="text-zinc-200">Transporter-Pro est votre assistant de gestion interne</span> : Bouclier IA + Éco-Score + Tracking.{' '}
-              <span className="text-[#0066FF] font-medium">30 jours d'essai gratuit, 0€ aujourd'hui.</span>
+              Le logiciel de facturation qui transforme vos <span className="text-red-400 font-semibold">45 jours d'impay&eacute;s</span> en <span className="text-[#10B981] font-semibold">15 jours</span>.{' '}
+              <span className="text-zinc-300">Relance automatique, e-CMR, IA Anti-Litige. Essai gratuit 30 jours.</span>
             </p>
 
-            <div className="flex flex-col sm:flex-row items-start gap-4">
-              <button onClick={() => navigate('/register')} className="group flex items-center gap-2.5 bg-[#0066FF] hover:bg-[#0052CC] text-white font-semibold px-8 py-4 rounded-xl text-base transition-all hover:shadow-xl hover:shadow-blue-500/25 hover:-translate-y-0.5" data-testid="hero-cta-btn">
-                Démarrer mon essai gratuit
+            <div className="flex flex-col sm:flex-row items-start gap-4 mb-8">
+              <button onClick={() => navigate('/register')} className="group flex items-center gap-2.5 bg-[#10B981] hover:bg-[#059669] text-white font-semibold px-8 py-4 rounded-xl text-base transition-all hover:shadow-xl hover:shadow-green-500/25 hover:-translate-y-0.5" data-testid="hero-cta-btn">
+                Lancer mon essai gratuit
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </button>
               <button onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })} className="flex items-center gap-2 text-sm text-zinc-400 hover:text-white transition-colors border border-white/[0.08] px-6 py-3.5 rounded-xl hover:border-white/[0.15]" data-testid="hero-demo-btn">
                 <Eye className="w-4 h-4" />
-                Voir la démo
+                Voir la d&eacute;mo
               </button>
+            </div>
+
+            {/* Trust signals under CTA */}
+            <div className="flex flex-wrap gap-x-6 gap-y-2 text-xs text-zinc-500">
+              <span className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-[#10B981]" /> Sans carte bancaire</span>
+              <span className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-[#10B981]" /> Pr&ecirc;t en 2 minutes</span>
+              <span className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-[#10B981]" /> Donn&eacute;es import&eacute;es automatiquement</span>
             </div>
           </div>
 
-          {/* Hero Image */}
-          <div className="relative hidden lg:block">
-            <div className="rounded-2xl overflow-hidden border border-white/[0.08] shadow-2xl shadow-blue-500/5">
-              <img src={IMG_TRUCK_NIGHT} alt="Camion moderne de nuit" className="w-full h-[400px] object-cover" loading="eager" />
-              {/* Overlay gradient */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20 rounded-2xl" />
-            </div>
-            {/* Floating badge */}
-            <div className="absolute -bottom-3 -left-3 bg-[#0A0A0B] border border-[#0066FF]/20 rounded-xl px-4 py-2.5 shadow-xl shadow-black/50 backdrop-blur-sm">
-              <div className="flex items-center gap-2 text-xs">
-                <div className="w-6 h-6 rounded-full bg-[#0066FF]/10 flex items-center justify-center"><Shield className="w-3 h-3 text-[#0066FF]" /></div>
-                <span className="text-[#0066FF] font-semibold">IA Gemini Vision Active</span>
+          {/* Hero Image - Dashboard Mock instead of Unsplash */}
+          <div className="relative hidden lg:block" style={{ perspective: '1200px' }}>
+            <div className="rounded-2xl overflow-hidden border border-white/[0.08] shadow-2xl shadow-blue-500/10 bg-[#0A0A0B]" style={{ transform: 'rotateY(-3deg) rotateX(1deg)' }}>
+              {/* Fake Dashboard */}
+              <div className="p-5">
+                <div className="flex items-center gap-2 mb-5">
+                  <div className="w-3 h-3 rounded-full bg-red-500/60" />
+                  <div className="w-3 h-3 rounded-full bg-yellow-500/60" />
+                  <div className="w-3 h-3 rounded-full bg-green-500/60" />
+                  <span className="ml-3 text-[10px] text-zinc-600 font-mono">transporter-pro.com/dashboard</span>
+                </div>
+                {/* 3 KPI cards */}
+                <div className="grid grid-cols-3 gap-3 mb-4">
+                  <div className="bg-[#121214] border border-[#27272A] rounded-xl p-3">
+                    <p className="text-[9px] uppercase text-zinc-500 mb-1 tracking-wider">&Agrave; encaisser</p>
+                    <p className="text-lg font-bold text-[#0066FF] font-mono">12 450 &euro;</p>
+                    <p className="text-[9px] text-zinc-600 mt-0.5">8 factures</p>
+                  </div>
+                  <div className="bg-[#121214] border border-[#27272A] rounded-xl p-3">
+                    <p className="text-[9px] uppercase text-zinc-500 mb-1 tracking-wider">Encaiss&eacute;</p>
+                    <p className="text-lg font-bold text-[#10B981] font-mono">28 300 &euro;</p>
+                    <p className="text-[9px] text-[#10B981] mt-0.5">&uarr; +12% vs mois dernier</p>
+                  </div>
+                  <div className="bg-[#121214] border border-red-500/20 rounded-xl p-3">
+                    <p className="text-[9px] uppercase text-zinc-500 mb-1 tracking-wider">En retard</p>
+                    <p className="text-lg font-bold text-red-400 font-mono">4 200 &euro;</p>
+                    <p className="text-[9px] text-red-400 mt-0.5">3 factures</p>
+                  </div>
+                </div>
+                {/* Fake table */}
+                <div className="bg-[#121214] border border-[#27272A] rounded-xl p-3">
+                  <p className="text-[9px] uppercase text-zinc-500 mb-2 tracking-wider">Derni&egrave;res factures</p>
+                  {[
+                    { client: 'TransLog SARL', amount: '3 200', status: 'Pay\u00e9e', color: 'text-[#10B981] bg-[#10B981]/10' },
+                    { client: 'ExpressFret', amount: '1 870', status: 'En attente', color: 'text-[#0066FF] bg-[#0066FF]/10' },
+                    { client: 'LogiNord', amount: '4 200', status: 'En retard', color: 'text-red-400 bg-red-500/10' },
+                  ].map((row, i) => (
+                    <div key={i} className="flex items-center justify-between py-1.5 border-t border-[#27272A]/50 first:border-0">
+                      <span className="text-[10px] text-zinc-400">{row.client}</span>
+                      <span className="text-[10px] font-mono text-zinc-300">{row.amount} &euro;</span>
+                      <span className={`text-[9px] font-medium px-2 py-0.5 rounded-full ${row.color}`}>{row.status}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
-            <div className="absolute -top-3 -right-3 bg-[#0A0A0B] border border-green-500/20 rounded-xl px-4 py-2.5 shadow-xl shadow-black/50 backdrop-blur-sm">
+            {/* Floating badges */}
+            <div className="absolute -bottom-3 -left-3 bg-[#0A0A0B] border border-[#10B981]/20 rounded-xl px-4 py-2.5 shadow-xl shadow-black/50 backdrop-blur-sm">
               <div className="flex items-center gap-2 text-xs">
-                <div className="w-6 h-6 rounded-full bg-green-500/10 flex items-center justify-center"><Check className="w-3 h-3 text-green-400" /></div>
-                <span className="text-green-400 font-semibold">3 camions en route</span>
+                <div className="w-6 h-6 rounded-full bg-[#10B981]/10 flex items-center justify-center"><Check className="w-3 h-3 text-[#10B981]" /></div>
+                <span className="text-[#10B981] font-semibold">Facture pay&eacute;e - 3 200 &euro;</span>
+              </div>
+            </div>
+            <div className="absolute -top-3 -right-3 bg-[#0A0A0B] border border-[#0066FF]/20 rounded-xl px-4 py-2.5 shadow-xl shadow-black/50 backdrop-blur-sm">
+              <div className="flex items-center gap-2 text-xs">
+                <div className="w-6 h-6 rounded-full bg-[#0066FF]/10 flex items-center justify-center"><Shield className="w-3 h-3 text-[#0066FF]" /></div>
+                <span className="text-[#0066FF] font-semibold">IA Anti-Litige active</span>
               </div>
             </div>
           </div>
         </div>
       </section>
+
 
       {/* ─── METRICS ─── */}
       <section className="border-y border-white/[0.06]">
@@ -122,55 +169,64 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* ─── PAIN / e-CMR ─── */}
+      {/* PAIN SECTION - 3 cartes douleur tresorerie */}
       <section id="pain" className="py-24 px-6" data-testid="pain-section">
         <div className="max-w-5xl mx-auto">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-red-400 mb-3">Le cauchemar du transport</p>
-              <h2 className="text-2xl sm:text-3xl font-bold leading-tight mb-6" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }} data-testid="pain-h2">
-                Ne jouez plus la survie de votre entreprise sur une signature illisible.
-              </h2>
-              <p className="text-zinc-400 leading-relaxed mb-4">
-                Une photo floue, une case non cochée sur votre e-CMR, et c'est{' '}
-                <span className="text-red-400 font-semibold">2 000€ perdus pour votre trésorerie</span>.
+          <p className="text-xs uppercase tracking-[0.2em] text-red-400 text-center mb-3">Le cauchemar du transport</p>
+          <h2 className="text-2xl sm:text-3xl font-bold text-center mb-4 leading-tight" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }} data-testid="pain-h2">
+            Votre quotidien ressemble &agrave; &ccedil;a ?
+          </h2>
+          <p className="text-zinc-400 text-center max-w-lg mx-auto mb-14 text-sm">
+            Pendant que vous g&eacute;rez des probl&egrave;mes qui ne devraient pas exister, vos concurrents avancent.
+          </p>
+
+          <div className="grid md:grid-cols-3 gap-5" data-testid="pain-cards">
+            {/* Card 1 - Impay&eacute;s */}
+            <div className="bg-red-500/[0.04] border border-red-500/10 rounded-2xl p-6 hover:border-red-500/25 transition-colors">
+              <div className="text-3xl mb-4">&#128548;</div>
+              <p className="text-3xl font-bold font-mono text-red-400 mb-2">45 jours</p>
+              <p className="text-base font-semibold text-zinc-200 mb-2">pour &ecirc;tre pay&eacute;</p>
+              <p className="text-sm text-zinc-500 leading-relaxed">
+                Votre banquier vous appelle. Pas vos clients. Votre tr&eacute;sorerie est en tension permanente &agrave; cause des retards de paiement.
               </p>
-              <ul className="space-y-3 mb-6 text-sm text-zinc-400">
-                <li className="flex items-start gap-2.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-red-400 mt-1.5 flex-shrink-0" />
-                  <span><strong className="text-zinc-200">Litiges injustifiés :</strong> 8% du CA des PME transport perdu en réclamations abusives sans preuve photo.</span>
-                </li>
-                <li className="flex items-start gap-2.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-red-400 mt-1.5 flex-shrink-0" />
-                  <span><strong className="text-zinc-200">Gasoil qui s'évapore :</strong> Sans monitoring, le gaspillage de carburant dépasse 15% de votre budget annuel.</span>
-                </li>
-                <li className="flex items-start gap-2.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-red-400 mt-1.5 flex-shrink-0" />
-                  <span><strong className="text-zinc-200">Amendes réglementaires :</strong> 50€ par facture non conforme (loi 2026). Ça s'accumule vite.</span>
-                </li>
-              </ul>
-              <div className="bg-white/[0.02] border border-[#0066FF]/20 rounded-xl p-5">
-                <p className="text-sm text-zinc-300 flex items-start gap-3">
-                  <Shield className="w-5 h-5 text-[#0066FF] flex-shrink-0 mt-0.5" />
-                  <span><strong className="text-white">Notre solution :</strong> L'IA Gemini Vision valide l'état du colis AVANT le départ. Preuve numérique infalsifiable, horodatée et géolocalisée.</span>
-                </p>
-              </div>
             </div>
-            <div className="relative">
-              <div className="rounded-2xl overflow-hidden border border-white/[0.06] shadow-xl shadow-black/40">
-                <img src={IMG_WAREHOUSE} alt="Entrepôt logistique moderne" className="w-full h-72 object-cover" loading="lazy" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent rounded-2xl" />
-              </div>
-              <div className="absolute -bottom-4 -left-4 bg-[#0A0A0B] border border-white/[0.08] rounded-xl p-3 shadow-xl shadow-black/50">
-                <div className="flex items-center gap-2 text-xs">
-                  <div className="w-6 h-6 rounded-full bg-green-500/10 flex items-center justify-center"><Check className="w-3 h-3 text-green-400" /></div>
-                  <span className="text-green-400 font-medium">Colis intact — Confiance 94%</span>
-                </div>
-              </div>
+
+            {/* Card 2 - Temps perdu */}
+            <div className="bg-red-500/[0.04] border border-red-500/10 rounded-2xl p-6 hover:border-red-500/25 transition-colors">
+              <div className="text-3xl mb-4">&#128222;</div>
+              <p className="text-3xl font-bold font-mono text-red-400 mb-2">2h / jour</p>
+              <p className="text-base font-semibold text-zinc-200 mb-2">&agrave; relancer vos clients</p>
+              <p className="text-sm text-zinc-500 leading-relaxed">
+                Au lieu de d&eacute;velopper votre activit&eacute;, vous passez vos soir&eacute;es au t&eacute;l&eacute;phone &agrave; r&eacute;clamer l'argent qu'on vous doit.
+              </p>
+            </div>
+
+            {/* Card 3 - Erreurs */}
+            <div className="bg-red-500/[0.04] border border-red-500/10 rounded-2xl p-6 hover:border-red-500/25 transition-colors">
+              <div className="text-3xl mb-4">&#128196;</div>
+              <p className="text-3xl font-bold font-mono text-red-400 mb-2">1 sur 5</p>
+              <p className="text-base font-semibold text-zinc-200 mb-2">factures contient une erreur</p>
+              <p className="text-sm text-zinc-500 leading-relaxed">
+                Une erreur de TVA, un SIRET manquant, et c'est le paiement qui est retard&eacute; de 30 jours suppl&eacute;mentaires. &Ccedil;a s'accumule.
+              </p>
+            </div>
+          </div>
+
+          {/* Solution banner */}
+          <div className="mt-10 bg-white/[0.02] border border-[#0066FF]/20 rounded-xl p-6 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <div className="w-11 h-11 rounded-xl bg-[#0066FF]/10 flex items-center justify-center flex-shrink-0">
+              <Shield className="w-5 h-5 text-[#0066FF]" />
+            </div>
+            <div>
+              <p className="text-sm text-zinc-300">
+                <strong className="text-white">Transporter-Pro automatise ce qui vous &eacute;puise :</strong> relance automatique &agrave; J+7, J+15 et J+30. Factures conformes g&eacute;n&eacute;r&eacute;es en 30 secondes. IA qui prot&egrave;ge vos colis.{' '}
+                <span className="text-[#0066FF] font-medium">Vous ne touchez &agrave; rien.</span>
+              </p>
             </div>
           </div>
         </div>
       </section>
+
 
       {/* ─── FEATURES (Bento Grid) ─── */}
       <section id="features" className="py-24 px-6 border-t border-white/[0.06]" data-testid="features-section">
