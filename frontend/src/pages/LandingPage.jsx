@@ -60,12 +60,12 @@ const LandingPage = () => {
             </div>
 
             <h1 className="text-4xl sm:text-5xl lg:text-[3.4rem] font-bold leading-[1.08] tracking-tight mb-7" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }} data-testid="hero-h1">
-              <span className="bg-gradient-to-b from-white via-white to-zinc-400 bg-clip-text text-transparent">Vos factures sont payu{00E9}es. </span>
-              <span className="bg-gradient-to-r from-[#10B981] to-[#34D399] bg-clip-text text-transparent">Votre tru{00E9}sorerie respire.</span>
+              <span className="bg-gradient-to-b from-white via-white to-zinc-400 bg-clip-text text-transparent">Vos factures sont payÃ©es. </span>
+              <span className="bg-gradient-to-r from-[#10B981] to-[#34D399] bg-clip-text text-transparent">Votre trÃ©sorerie respire.</span>
             </h1>
 
             <p className="text-base text-zinc-400 max-w-xl mb-10 leading-relaxed" data-testid="hero-subtitle">
-              Le logiciel de facturation qui transforme vos <span className="text-red-400 font-semibold">45 jours d'impayu{00E9}s</span> en <span className="text-[#10B981] font-semibold">15 jours</span>.{' '}
+              Le logiciel de facturation qui transforme vos <span className="text-red-400 font-semibold">45 jours d'impayÃ©s</span> en <span className="text-[#10B981] font-semibold">15 jours</span>.{' '}
               <span className="text-zinc-300">Relance automatique, e-CMR, IA Anti-Litige. Essai gratuit 30 jours.</span>
             </p>
 
@@ -76,15 +76,15 @@ const LandingPage = () => {
               </button>
               <button onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })} className="flex items-center gap-2 text-sm text-zinc-400 hover:text-white transition-colors border border-white/[0.08] px-6 py-3.5 rounded-xl hover:border-white/[0.15]" data-testid="hero-demo-btn">
                 <Eye className="w-4 h-4" />
-                Voir la du{00E9}mo
+                Voir la dÃ©mo
               </button>
             </div>
 
             {/* Trust signals under CTA */}
             <div className="flex flex-wrap gap-x-6 gap-y-2 text-xs text-zinc-500">
               <span className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-[#10B981]" /> Sans carte bancaire</span>
-              <span className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-[#10B981]" /> Pru{00EA}t en 2 minutes</span>
-              <span className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-[#10B981]" /> Donnu{00E9}es importu{00E9}es automatiquement</span>
+              <span className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-[#10B981]" /> PrÃªt en 2 minutes</span>
+              <span className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-[#10B981]" /> DonnÃ©es importÃ©es automatiquement</span>
             </div>
           </div>
 
@@ -102,32 +102,32 @@ const LandingPage = () => {
                 {/* 3 KPI cards */}
                 <div className="grid grid-cols-3 gap-3 mb-4">
                   <div className="bg-[#121214] border border-[#27272A] rounded-xl p-3">
-                    <p className="text-[9px] uppercase text-zinc-500 mb-1 tracking-wider">u{00C0} encaisser</p>
-                    <p className="text-lg font-bold text-[#0066FF] font-mono">12 450 u{20AC}</p>
+                    <p className="text-[9px] uppercase text-zinc-500 mb-1 tracking-wider">Ã€ encaisser</p>
+                    <p className="text-lg font-bold text-[#0066FF] font-mono">12 450 â‚¬</p>
                     <p className="text-[9px] text-zinc-600 mt-0.5">8 factures</p>
                   </div>
                   <div className="bg-[#121214] border border-[#27272A] rounded-xl p-3">
-                    <p className="text-[9px] uppercase text-zinc-500 mb-1 tracking-wider">Encaissu{00E9}</p>
-                    <p className="text-lg font-bold text-[#10B981] font-mono">28 300 u{20AC}</p>
-                    <p className="text-[9px] text-[#10B981] mt-0.5">u{2191} +12% vs mois dernier</p>
+                    <p className="text-[9px] uppercase text-zinc-500 mb-1 tracking-wider">EncaissÃ©</p>
+                    <p className="text-lg font-bold text-[#10B981] font-mono">28 300 â‚¬</p>
+                    <p className="text-[9px] text-[#10B981] mt-0.5">â†‘ +12% vs mois dernier</p>
                   </div>
                   <div className="bg-[#121214] border border-red-500/20 rounded-xl p-3">
                     <p className="text-[9px] uppercase text-zinc-500 mb-1 tracking-wider">En retard</p>
-                    <p className="text-lg font-bold text-red-400 font-mono">4 200 u{20AC}</p>
+                    <p className="text-lg font-bold text-red-400 font-mono">4 200 â‚¬</p>
                     <p className="text-[9px] text-red-400 mt-0.5">3 factures</p>
                   </div>
                 </div>
                 {/* Fake table */}
                 <div className="bg-[#121214] border border-[#27272A] rounded-xl p-3">
-                  <p className="text-[9px] uppercase text-zinc-500 mb-2 tracking-wider">Derniu{00E8}res factures</p>
+                  <p className="text-[9px] uppercase text-zinc-500 mb-2 tracking-wider">DerniÃ¨res factures</p>
                   {[
-                    { client: 'TransLog SARL', amount: '3 200', status: 'Pay\u00e9e', color: 'text-[#10B981] bg-[#10B981]/10' },
+                    { client: 'TransLog SARL', amount: '3 200', status: 'PayÃ©e', color: 'text-[#10B981] bg-[#10B981]/10' },
                     { client: 'ExpressFret', amount: '1 870', status: 'En attente', color: 'text-[#0066FF] bg-[#0066FF]/10' },
                     { client: 'LogiNord', amount: '4 200', status: 'En retard', color: 'text-red-400 bg-red-500/10' },
                   ].map((row, i) => (
                     <div key={i} className="flex items-center justify-between py-1.5 border-t border-[#27272A]/50 first:border-0">
                       <span className="text-[10px] text-zinc-400">{row.client}</span>
-                      <span className="text-[10px] font-mono text-zinc-300">{row.amount} u{20AC}</span>
+                      <span className="text-[10px] font-mono text-zinc-300">{row.amount} â‚¬</span>
                       <span className={`text-[9px] font-medium px-2 py-0.5 rounded-full ${row.color}`}>{row.status}</span>
                     </div>
                   ))}
@@ -138,7 +138,7 @@ const LandingPage = () => {
             <div className="absolute -bottom-3 -left-3 bg-[#0A0A0B] border border-[#10B981]/20 rounded-xl px-4 py-2.5 shadow-xl shadow-black/50 backdrop-blur-sm">
               <div className="flex items-center gap-2 text-xs">
                 <div className="w-6 h-6 rounded-full bg-[#10B981]/10 flex items-center justify-center"><Check className="w-3 h-3 text-[#10B981]" /></div>
-                <span className="text-[#10B981] font-semibold">Facture payu{00E9}e - 3 200 u{20AC}</span>
+                <span className="text-[#10B981] font-semibold">Facture payÃ©e - 3 200 â‚¬</span>
               </div>
             </div>
             <div className="absolute -top-3 -right-3 bg-[#0A0A0B] border border-[#0066FF]/20 rounded-xl px-4 py-2.5 shadow-xl shadow-black/50 backdrop-blur-sm">
@@ -174,20 +174,20 @@ const LandingPage = () => {
         <div className="max-w-5xl mx-auto">
           <p className="text-xs uppercase tracking-[0.2em] text-red-400 text-center mb-3">Le cauchemar du transport</p>
           <h2 className="text-2xl sm:text-3xl font-bold text-center mb-4 leading-tight" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }} data-testid="pain-h2">
-            Votre quotidien ressemble u{00E0} u{00E7}a ?
+            Votre quotidien ressemble Ã  Ã§a ?
           </h2>
           <p className="text-zinc-400 text-center max-w-lg mx-auto mb-14 text-sm">
-            Pendant que vous gu{00E9}rez des problu{00E8}mes qui ne devraient pas exister, vos concurrents avancent.
+            Pendant que vous gÃ©rez des problÃ¨mes qui ne devraient pas exister, vos concurrents avancent.
           </p>
 
           <div className="grid md:grid-cols-3 gap-5" data-testid="pain-cards">
-            {/* Card 1 - Impayu{00E9}s */}
+            {/* Card 1 - ImpayÃ©s */}
             <div className="bg-red-500/[0.04] border border-red-500/10 rounded-2xl p-6 hover:border-red-500/25 transition-colors">
               <div className="text-3xl mb-4">😤</div>
               <p className="text-3xl font-bold font-mono text-red-400 mb-2">45 jours</p>
-              <p className="text-base font-semibold text-zinc-200 mb-2">pour u{00EA}tre payu{00E9}</p>
+              <p className="text-base font-semibold text-zinc-200 mb-2">pour Ãªtre payÃ©</p>
               <p className="text-sm text-zinc-500 leading-relaxed">
-                Votre banquier vous appelle. Pas vos clients. Votre tru{00E9}sorerie est en tension permanente u{00E0} cause des retards de paiement.
+                Votre banquier vous appelle. Pas vos clients. Votre trÃ©sorerie est en tension permanente Ã  cause des retards de paiement.
               </p>
             </div>
 
@@ -195,9 +195,9 @@ const LandingPage = () => {
             <div className="bg-red-500/[0.04] border border-red-500/10 rounded-2xl p-6 hover:border-red-500/25 transition-colors">
               <div className="text-3xl mb-4"></div>
               <p className="text-3xl font-bold font-mono text-red-400 mb-2">2h / jour</p>
-              <p className="text-base font-semibold text-zinc-200 mb-2">u{00E0} relancer vos clients</p>
+              <p className="text-base font-semibold text-zinc-200 mb-2">Ã  relancer vos clients</p>
               <p className="text-sm text-zinc-500 leading-relaxed">
-                Au lieu de du{00E9}velopper votre activitu{00E9}, vous passez vos soiru{00E9}es au tu{00E9}lu{00E9}phone u{00E0} ru{00E9}clamer l'argent qu'on vous doit.
+                Au lieu de dÃ©velopper votre activitÃ©, vous passez vos soirÃ©es au tÃ©lÃ©phone Ã  rÃ©clamer l'argent qu'on vous doit.
               </p>
             </div>
 
@@ -207,7 +207,7 @@ const LandingPage = () => {
               <p className="text-3xl font-bold font-mono text-red-400 mb-2">1 sur 5</p>
               <p className="text-base font-semibold text-zinc-200 mb-2">factures contient une erreur</p>
               <p className="text-sm text-zinc-500 leading-relaxed">
-                Une erreur de TVA, un SIRET manquant, et c'est le paiement qui est retardu{00E9} de 30 jours supplu{00E9}mentaires. u{00C7}a s'accumule.
+                Une erreur de TVA, un SIRET manquant, et c'est le paiement qui est retardÃ© de 30 jours supplÃ©mentaires. Ã‡a s'accumule.
               </p>
             </div>
           </div>
@@ -219,8 +219,8 @@ const LandingPage = () => {
             </div>
             <div>
               <p className="text-sm text-zinc-300">
-                <strong className="text-white">Transporter-Pro automatise ce qui vous u{00E9}puise :</strong> relance automatique u{00E0} J+7, J+15 et J+30. Factures conformes gu{00E9}nu{00E9}ru{00E9}es en 30 secondes. IA qui protu{00E8}ge vos colis.{' '}
-                <span className="text-[#0066FF] font-medium">Vous ne touchez u{00E0} rien.</span>
+                <strong className="text-white">Transporter-Pro automatise ce qui vous Ã©puise :</strong> relance automatique Ã  J+7, J+15 et J+30. Factures conformes gÃ©nÃ©rÃ©es en 30 secondes. IA qui protÃ¨ge vos colis.{' '}
+                <span className="text-[#0066FF] font-medium">Vous ne touchez Ã  rien.</span>
               </p>
             </div>
           </div>
