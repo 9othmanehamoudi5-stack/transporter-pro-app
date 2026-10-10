@@ -2,7 +2,7 @@ import axios from 'axios';
 import firestoreMissions from './firebase';
 import { tokenStore } from './tokenStore';
 
-const API_URL = process.env.REACT_APP_BACKEND_URL;
+const API_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8000';
 
 /**
  * Compress a photo (base64 data URL or raw base64) before enqueuing it offline.
