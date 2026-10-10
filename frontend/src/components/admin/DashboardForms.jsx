@@ -22,6 +22,8 @@ import {
 export const NewDeliveryForm = ({ drivers, onSubmit, onCancel }) => {
   const { t } = useI18n();
   const [formData, setFormData] = useState({
+    pickup_name: 'Entrepôt / Départ',
+    pickup_address: '',
     recipient_name: '',
     recipient_address: '',
     recipient_phone: '',
@@ -33,6 +35,8 @@ export const NewDeliveryForm = ({ drivers, onSubmit, onCancel }) => {
   const [verifying, setVerifying] = useState(false);
   const [addressSuggestions, setAddressSuggestions] = useState([]);
   const [showAddrSuggestions, setShowAddrSuggestions] = useState(false);
+  const [pickupSuggestions, setPickupSuggestions] = useState([]);
+  const [showPickupSuggestions, setShowPickupSuggestions] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -63,6 +67,57 @@ export const NewDeliveryForm = ({ drivers, onSubmit, onCancel }) => {
           ))}
         </select>
       </div>
+            {/* Point de départ / Chargement */}
+      <div className="space-y-2 relative border border-emerald-500/20 bg-emerald-500/[0.02] p-3 rounded-xl">
+        <div className="flex items-center justify-between">
+          <Label className="text-emerald-400 font-semibold text-xs flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            1. Point de départ / Entrepôt de chargement
+          </Label>
+          <span className="text-[10px] text-zinc-500">Optionnel (dépôt par défaut)</span>
+        </div>
+        <Input
+          value={formData.pickup_address}
+          onChange={(e) => {
+            const val = e.target.value;
+            setFormData({ ...formData, pickup_address: val });
+            if (val.length >= 3) {
+              clearTimeout(window.__pickupDebounce);
+              window.__pickupDebounce = setTimeout(async () => {
+                try {
+                  const res = await fetch(`https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(val)}&limit=5`);
+                  const json = await res.json();
+                  setPickupSuggestions(json.features?.map(f => f.properties.label) || []);
+                  setShowPickupSuggestions(true);
+                } catch(err) { setPickupSuggestions([]); }
+              }, 300);
+            } else {
+              setPickupSuggestions([]); setShowPickupSuggestions(false);
+            }
+          }}
+          onBlur={() => setTimeout(() => setShowPickupSuggestions(false), 200)}
+          placeholder="Ex: 15 Rue de l'Industrie, 95000 Cergy (ou laisser vide pour dépôt habituel)"
+          className="bg-[#0A0A0B] border-[#27272A] text-xs"
+          data-testid="delivery-pickup-address"
+          autoComplete="off"
+        />
+        {showPickupSuggestions && pickupSuggestions.length > 0 && (
+          <ul className="absolute z-50 top-full left-0 right-0 bg-[#1A1A1E] border border-emerald-500/30 rounded-lg mt-1 shadow-xl max-h-40 overflow-y-auto">
+            {pickupSuggestions.map((s, idx) => (
+              <li key={idx}
+                className="px-3 py-2 text-xs text-white hover:bg-emerald-500/20 cursor-pointer"
+                onMouseDown={() => {
+                  setFormData(f => ({ ...f, pickup_address: s }));
+                  setPickupSuggestions([]);
+                  setShowPickupSuggestions(false);
+                }}
+              >{s}</li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      {/* Point d'arrivée / Destinataire */}
       <div className="space-y-2">
         <Label>{t('modals.newDelivery.recipientName', 'Nom du destinataire')}</Label>
         <Input
