@@ -40,22 +40,29 @@ const createTruckIcon = (online) => {
   });
 };
 
-// Numbered stop marker for route preview
-const createStopIcon = (n) => L.divIcon({
-  className: 'route-stop-marker',
-  html: `<div style="
-    width: 32px; height: 32px;
-    background: #0066FF;
-    border: 2px solid #fff;
-    border-radius: 50%;
-    color: #fff; font-weight: 800; font-size: 13px;
-    display:flex; align-items:center; justify-content:center;
-    box-shadow: 0 4px 10px rgba(0,102,255,0.45);
-  ">${n}</div>`,
-  iconSize: [32, 32],
-  iconAnchor: [16, 16],
-  popupAnchor: [0, -18],
-});
+// Numbered stop marker for route preview (Green for Departure / Depot, Blue for Deliveries)
+const createStopIcon = (s, n) => {
+  const isDepot = s?.is_depot || n === 'A' || n === 0;
+  const bgColor = isDepot ? '#059669' : '#0066FF';
+  const label = isDepot ? 'A' : n;
+  const glow = isDepot ? 'rgba(5,150,105,0.45)' : 'rgba(0,102,255,0.45)';
+
+  return L.divIcon({
+    className: 'route-stop-marker',
+    html: `<div style="
+      width: 32px; height: 32px;
+      background: ${bgColor};
+      border: 2px solid #fff;
+      border-radius: 50%;
+      color: #fff; font-weight: 800; font-size: 13px;
+      display:flex; align-items:center; justify-content:center;
+      box-shadow: 0 4px 10px ${glow};
+    ">${label}</div>`,
+    iconSize: [32, 32],
+    iconAnchor: [16, 16],
+    popupAnchor: [0, -18],
+  });
+};
 
 // Auto-fit bounds component
 const FitBounds = ({ locations }) => {
@@ -246,7 +253,7 @@ const LiveMapPanel = () => {
               <Marker
                 key={`stop-${s.tracking_id}`}
                 position={[s.lat, s.lng]}
-                icon={createStopIcon(idx + 1)}
+                icon={createStopIcon(s, s.is_depot ? "A" : (s.order || idx + 1))}
                 ref={(el) => { if (el) stopMarkerRefs.current[idx] = el; }}
               >
                 <Popup className="dark-popup">
