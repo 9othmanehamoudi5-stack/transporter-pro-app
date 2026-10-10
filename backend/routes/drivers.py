@@ -117,7 +117,7 @@ async def delete_driver(driver_id: str, user: dict = Depends(require_role("admin
 
 @router.put("/admin/drivers/{driver_id}")
 async def update_driver(driver_id: str, payload: DriverUpdatePayload, user: dict = Depends(require_role("admin"))):
-    """Update driver info (name, phone, vehicle_plate). Email/password not editable here."""
+    """Update driver info (name, phone, vehicle_plate, password)."""
     import re as _re
     company_id = user["company_id"]
     updates = {}
@@ -134,6 +134,12 @@ async def update_driver(driver_id: str, payload: DriverUpdatePayload, user: dict
         if clean and not _re.fullmatch(r"[A-Z0-9\-]+", clean):
             raise HTTPException(status_code=400, detail="Immatriculation invalide (lettres, chiffres, tirets uniquement)")
         updates["vehicle_plate"] = clean
+    if payload.password is not None and payload.password.strip():
+        pwd = payload.password.strip()
+        if len(pwd) < 6:
+            raise HTTPException(status_code=400, detail="Le mot de passe doit contenir au moins 6 caractères")
+        updates["password_hash"] = hash_password(pwd)
+        updates["password_updated_at"] = datetime.now(timezone.utc)
     if not updates:
         raise HTTPException(status_code=400, detail="Aucune modification fournie")
 
@@ -144,7 +150,10 @@ async def update_driver(driver_id: str, payload: DriverUpdatePayload, user: dict
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Chauffeur non trouvé")
 
-    await log_action(user["id"], company_id, "update_driver", "driver", driver_id, f"Champs: {','.join(updates.keys())}")
+    log_fields = [k for k in updates.keys() if k != "password_hash"]
+    if "password_hash" in updates:
+        log_fields.append("password_reset")
+    await log_action(user["id"], company_id, "update_driver", "driver", driver_id, f"Champs: {','.join(log_fields)}")
     driver = await db.users.find_one({"_id": ObjectId(driver_id)}, {"_id": 0, "password_hash": 0})
     return {"message": "Chauffeur mis à jour", "driver": driver}
 

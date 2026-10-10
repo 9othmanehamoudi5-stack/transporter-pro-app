@@ -1134,7 +1134,7 @@ export const AdminDashboard = () => {
         <DialogContent className="bg-[#121214] border border-[#27272A] text-white">
           <DialogHeader>
             <DialogTitle>{t('modals.editDriver.title', 'Modifier le chauffeur')}</DialogTitle>
-            <DialogDescription>{t('modals.editDriver.subtitle', 'Mettez à jour les informations. Email et mot de passe non modifiables ici.')}</DialogDescription>
+            <DialogDescription>{t('modals.editDriver.subtitle', 'Mettez à jour les coordonnées ou réinitialisez le mot de passe du chauffeur.')}</DialogDescription>
           </DialogHeader>
           {editingDriver && (
             <EditDriverForm

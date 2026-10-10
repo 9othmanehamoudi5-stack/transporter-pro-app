@@ -10,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../ui/select';
+import { Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   sanitizeName,
@@ -328,20 +329,34 @@ export const EditDriverForm = ({ driver, onSubmit, onCancel }) => {
     name: driver?.name || '',
     phone: driver?.phone || '',
     vehicle_plate: driver?.vehicle_plate || '',
+    password: '',
   });
+  const [showPassword, setShowPassword] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (formData.password && formData.password.trim().length > 0 && formData.password.trim().length < 6) {
+      toast.error(t('modals.editDriver.pwdTooShort', 'Le nouveau mot de passe doit contenir au moins 6 caractères'));
+      return;
+    }
     setSaving(true);
-    await onSubmit(formData);
+    const payload = {
+      name: formData.name,
+      phone: formData.phone,
+      vehicle_plate: formData.vehicle_plate,
+    };
+    if (formData.password && formData.password.trim()) {
+      payload.password = formData.password.trim();
+    }
+    await onSubmit(payload);
     setSaving(false);
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="p-3 bg-[#1A1A1E] rounded-lg">
-        <p className="text-xs text-zinc-400">Email</p>
+        <p className="text-xs text-zinc-400">Email (identifiant de connexion)</p>
         <p className="font-mono text-sm text-zinc-300" data-testid="edit-driver-email">{driver?.email || '—'}</p>
       </div>
       <div className="space-y-2">
@@ -353,6 +368,31 @@ export const EditDriverForm = ({ driver, onSubmit, onCancel }) => {
           className="bg-[#0A0A0B] border-[#27272A]"
           data-testid="edit-driver-name"
         />
+      </div>
+      <div className="space-y-2">
+        <Label>{t('modals.editDriver.newPassword', 'Nouveau mot de passe')}</Label>
+        <div className="relative">
+          <Input
+            type={showPassword ? 'text' : 'password'}
+            value={formData.password}
+            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+            placeholder={t('modals.editDriver.passwordPh', 'Laisser vide si inchangé (min. 6 car.)')}
+            minLength={6}
+            className="bg-[#0A0A0B] border-[#27272A] pr-10"
+            data-testid="edit-driver-password"
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white transition-colors"
+            tabIndex={-1}
+          >
+            {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+          </button>
+        </div>
+        <p className="text-xs text-zinc-500">
+          {t('modals.editDriver.passwordHelp', 'Optionnel. Renseignez ce champ uniquement pour modifier ou réinitialiser le mot de passe.')}
+        </p>
       </div>
       <div className="space-y-2">
         <Label>{t('modals.addDriver.phone', 'Téléphone')}</Label>
@@ -374,7 +414,7 @@ export const EditDriverForm = ({ driver, onSubmit, onCancel }) => {
           data-testid="edit-driver-plate"
         />
       </div>
-      <div className="flex gap-3">
+      <div className="flex gap-3 pt-2">
         <Button type="button" variant="outline" onClick={onCancel} className="flex-1 border-[#27272A]">
           {t('actions.cancel', 'Annuler')}
         </Button>

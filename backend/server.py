@@ -883,6 +883,7 @@ class DriverUpdatePayload(BaseModel):
     name: Optional[str] = None
     phone: Optional[str] = None
     vehicle_plate: Optional[str] = None
+    password: Optional[str] = None
 
 
 # ==================== SUBSCRIPTION MANAGEMENT ====================
