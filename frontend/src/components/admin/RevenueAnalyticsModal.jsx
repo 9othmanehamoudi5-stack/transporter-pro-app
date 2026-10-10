@@ -32,7 +32,7 @@ import {
   CartesianGrid,
   Legend,
 } from 'recharts';
-import { generateInvoicePDF, generateAllInvoicesPDF } from '../../utils/pdfGenerator';
+import { generateInvoicePDF, generateAllInvoicesPDF } from '../../services/pdfGenerator';
 import { toast } from 'sonner';
 
 export const RevenueAnalyticsModal = ({
