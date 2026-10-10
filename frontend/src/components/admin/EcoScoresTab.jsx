@@ -174,7 +174,7 @@ export const EcoScoresTab = ({ stats, ecoSummary, ecoDailyAvg, fetchData }) => {
         </div>
       </div>
 
-      <EcoChart data={ecoDailyAvg} />
+      <EcoChart data={ecoDailyAvg} stats={stats} />
 
       <div className="bg-[#121214] border border-[#27272A] rounded-xl overflow-hidden">
         <div className="p-4 border-b border-[#27272A] flex items-center justify-between">

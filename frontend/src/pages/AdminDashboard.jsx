@@ -13,6 +13,7 @@ import { DamageReportCard } from '../components/admin/DamageReportCard';
 import { EcoScoresTab } from '../components/admin/EcoScoresTab';
 import { NewDeliveryForm, NewDriverForm, EditDriverForm, AssignDeliveryForm } from '../components/admin/DashboardForms';
 import { RevenueSparkline } from '../components/admin/RevenueSparkline';
+import { RevenueAnalyticsModal } from '../components/admin/RevenueAnalyticsModal';
 import { useI18n } from '../i18n/index';
 import { Button } from '../components/ui/button';
 import { 
@@ -68,6 +69,7 @@ export const AdminDashboard = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [showNewDelivery, setShowNewDelivery] = useState(false);
+  const [showRevenueModal, setShowRevenueModal] = useState(false);
   const [showAssignDriver, setShowAssignDriver] = useState(null);
   const [showNewDriver, setShowNewDriver] = useState(false);
   const [editingDriver, setEditingDriver] = useState(null);
@@ -738,6 +740,23 @@ export const AdminDashboard = () => {
               />
             ) : (
             <>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2">
+                <div>
+                  <h2 className="text-2xl font-bold flex items-center gap-2">
+                    <DollarSign className="w-6 h-6 text-[#0066FF]" />
+                    {t('cashflow.title', 'Cash-Flow & Facturation Factur-X')}
+                  </h2>
+                  <p className="text-sm text-zinc-400 mt-1">Suivi de la trésorerie, argent bloqué et factures conformes</p>
+                </div>
+                <Button
+                  onClick={() => setShowRevenueModal(true)}
+                  className="bg-gradient-to-r from-[#0066FF] to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-medium flex items-center gap-2 shadow-lg shadow-blue-500/20"
+                >
+                  <TrendingUp className="w-4 h-4" />
+                  Ouvrir l'Analyse CRM Complète ↗
+                </Button>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="bg-[#121214] border border-[#27272A] rounded-xl p-6">
                   <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
