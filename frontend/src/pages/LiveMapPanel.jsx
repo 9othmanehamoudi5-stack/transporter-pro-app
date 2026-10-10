@@ -225,7 +225,7 @@ const LiveMapPanel = () => {
           >
             <TileLayer
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
-              url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+              url="https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png"
             />
             {allWithCoords.length > 0 && <FitBounds locations={allWithCoords} />}
             {route.stops.length > 0 && allWithCoords.length === 0 && (
