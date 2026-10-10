@@ -24,6 +24,8 @@ class UserResponse(BaseModel):
 
 
 class DeliveryCreate(BaseModel):
+    pickup_address: Optional[str] = None
+    pickup_name: Optional[str] = None
     recipient_name: str
     recipient_address: str
     recipient_phone: str
