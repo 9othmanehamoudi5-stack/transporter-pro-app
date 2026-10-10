@@ -1207,9 +1207,38 @@ async def get_invoices(user: dict = Depends(get_current_user)):
     if user["role"] == "client":
         query["client_id"] = user["id"]
     elif user["role"] == "admin":
-        query["company_id"] = user["company_id"]
+        cid = user.get("company_id", "")
+        # Find all tracking IDs for this admin's company
+        admin_deliveries = await db.deliveries.find({"company_id": cid}, {"tracking_id": 1, "recipient_name": 1, "weight_kg": 1, "status": 1, "_id": 0}).to_list(500)
+        trackings = [d["tracking_id"] for d in admin_deliveries]
+        
+        # Auto-backfill invoices for delivered deliveries that don't have an invoice yet
+        for d in admin_deliveries:
+            if d.get("status") == "delivered":
+                tid = d["tracking_id"]
+                existing = await db.invoices.find_one({"delivery_id": tid})
+                if not existing:
+                    amt = max(35, (d.get("weight_kg") or 1) * 35)
+                    inv_doc = {
+                        "invoice_id": f"INV-{datetime.now().strftime('%Y%m%d')}-{uuid.uuid4().hex[:6].upper()}",
+                        "delivery_id": tid,
+                        "company_id": cid,
+                        "client_name": d.get("recipient_name", "Client"),
+                        "amount": amt,
+                        "status": "ready_to_send",
+                        "created_at": datetime.now(timezone.utc),
+                        "due_date": datetime.now(timezone.utc) + timedelta(days=30),
+                        "paid_at": None,
+                        "facturx_generated": True,
+                        "blockchain_proof": create_blockchain_hash({"delivery": tid, "amount": amt})
+                    }
+                    await db.invoices.insert_one(inv_doc)
+
+        query = {"$or": [
+            {"company_id": cid},
+            {"delivery_id": {"$in": trackings}}
+        ]}
     elif user["role"] == "driver":
-        # drivers don't see invoices
         return []
 
     invoices = await db.invoices.find(query, {"_id": 0}).sort("created_at", -1).to_list(100)
@@ -1379,6 +1408,48 @@ async def get_eco_scores(user: dict = Depends(get_current_user), driver_id: Opti
         query["driver_id"] = driver_id
 
     scores = await db.eco_scores.find(query, {"_id": 0}).sort("date", -1).to_list(30)
+
+    # If driver has no score record, generate it from their delivered missions
+    if not scores and user["role"] == "driver":
+        did = user["id"]
+        completed = await db.deliveries.count_documents({"driver_id": did, "status": "delivered"})
+        total = await db.deliveries.count_documents({"driver_id": did})
+        driver_deliveries = await db.deliveries.find({"driver_id": did}, {"tracking_id": 1, "_id": 0}).to_list(500)
+        tids = [d["tracking_id"] for d in driver_deliveries]
+        damages = await db.damage_reports.count_documents({
+            "delivery_id": {"$in": tids},
+            "ai_analysis.is_damaged": True
+        }) if tids else 0
+
+        score = 85.0
+        if total > 0:
+            score += (completed / total) * 10
+        if completed > 0:
+            score -= (damages / completed) * 20
+        score = max(0, min(100, round(score)))
+
+        est_distance = completed * 25
+        co2 = round(est_distance * 0.12, 1)
+        fuel = round(est_distance / 10, 1)
+        today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+
+        auto_doc = {
+            "driver_id": did,
+            "date": today,
+            "score": score,
+            "distance_km": est_distance,
+            "co2_kg": co2,
+            "fuel_liters": fuel,
+            "harsh_braking_count": 0,
+            "harsh_acceleration_count": 0,
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        await db.eco_scores.update_one(
+            {"driver_id": did, "date": today},
+            {"$set": {**auto_doc, "created_at": datetime.now(timezone.utc)}},
+            upsert=True
+        )
+        return [auto_doc]
 
     for s in scores:
         if isinstance(s.get("created_at"), datetime):
@@ -1551,7 +1622,7 @@ async def get_cash_flow(user: dict = Depends(require_role("admin"))):
     blocked = blocked_result[0] if blocked_result else {"total_blocked": 0, "count": 0}
     
     # Pending invoices for this company
-    pending_invoices = await db.invoices.count_documents({"company_id": cid, "status": "pending"})
+    pending_invoices = await db.invoices.count_documents({"company_id": cid, "status": {"$in": ["pending", "ready_to_send"]}})
     
     # Revenue this month — combines in-app paid invoices + real Stripe charges
     now = datetime.now(timezone.utc)

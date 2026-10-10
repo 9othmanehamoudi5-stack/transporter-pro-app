@@ -737,24 +737,26 @@ const CameraModal = ({ delivery, onCapture, onClose }) => {
 
 const SignatureModal = ({ delivery, onSign, onClose }) => {
   return (
-    <div className="fixed inset-0 z-50 bg-[#0A0A0B] flex flex-col">
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-[#27272A]">
-        <div>
-          <p className="font-mono text-sm text-zinc-400">{delivery.tracking_id}</p>
-          <p className="font-semibold">{delivery.recipient_name}</p>
+    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
+      <div className="bg-[#0A0A0B] border border-[#27272A] rounded-2xl w-full max-w-xl max-h-[92vh] flex flex-col overflow-hidden shadow-2xl">
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b border-[#27272A] bg-[#121214] flex-shrink-0">
+          <div>
+            <p className="font-mono text-xs text-zinc-400">{delivery.tracking_id}</p>
+            <p className="font-semibold text-sm sm:text-base text-white">{delivery.recipient_name}</p>
+          </div>
+          <button 
+            onClick={onClose}
+            className="w-9 h-9 bg-[#1A1A1E] hover:bg-[#27272A] rounded-full flex items-center justify-center text-zinc-300 hover:text-white transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
-        <button 
-          onClick={onClose}
-          className="w-10 h-10 bg-[#1A1A1E] rounded-full flex items-center justify-center"
-        >
-          <X className="w-5 h-5" />
-        </button>
-      </div>
 
-      {/* Signature Canvas */}
-      <div className="flex-1 p-4">
-        <SignatureCanvas onComplete={onSign} />
+        {/* Signature Canvas */}
+        <div className="flex-1 p-4 sm:p-6 min-h-0 flex flex-col">
+          <SignatureCanvas onComplete={onSign} />
+        </div>
       </div>
     </div>
   );

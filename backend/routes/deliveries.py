@@ -313,33 +313,63 @@ async def update_delivery(tracking_id: str, data: DeliveryUpdate, user: dict = D
             update_data["delivered_at"] = datetime.now(timezone.utc)
             
             # When driver completes delivery, notify admin and create invoice
-            if user["role"] == "driver":
-                # Find admin to notify
-                admins = await db.users.find({"role": "admin"}).to_list(10)
-                for admin in admins:
-                    await create_notification(
-                        str(admin["_id"]),
-                        "delivery_complete",
-                        "Livraison terminée",
-                        f"Le chauffeur a validé la livraison {tracking_id}. Facture prête à l'envoi.",
-                        tracking_id
-                    )
-                
-                # Auto-create invoice if client exists
-                if delivery.get("client_id"):
-                    invoice = {
-                        "invoice_id": f"INV-{datetime.now().strftime('%Y%m%d')}-{uuid.uuid4().hex[:6].upper()}",
-                        "delivery_id": tracking_id,
-                        "client_id": delivery["client_id"],
-                        "amount": delivery.get("weight_kg", 1) * 15,  # 15€ per kg base
-                        "status": "ready_to_send",  # Ready for Factur-X
-                        "created_at": datetime.now(timezone.utc),
-                        "due_date": datetime.now(timezone.utc) + timedelta(days=30),
-                        "paid_at": None,
-                        "facturx_generated": True,
-                        "blockchain_proof": create_blockchain_hash({"delivery": tracking_id})
-                    }
-                    await db.invoices.insert_one(invoice)
+            admins = await db.users.find({"role": "admin"}).to_list(10)
+            for admin in admins:
+                await create_notification(
+                    str(admin["_id"]),
+                    "delivery_complete",
+                    "Livraison terminée",
+                    f"Le chauffeur a validé la livraison {tracking_id}. Facture prête à l'envoi.",
+                    tracking_id
+                )
+            
+            # Auto-create invoice if not existing
+            existing_inv = await db.invoices.find_one({"delivery_id": tracking_id})
+            if not existing_inv:
+                company_id = delivery.get("company_id") or user.get("company_id", "")
+                amt = max(35, (delivery.get("weight_kg") or 1) * 35)
+                invoice = {
+                    "invoice_id": f"INV-{datetime.now().strftime('%Y%m%d')}-{uuid.uuid4().hex[:6].upper()}",
+                    "delivery_id": tracking_id,
+                    "company_id": company_id,
+                    "client_id": delivery.get("client_id", ""),
+                    "client_name": delivery.get("recipient_name", "Client"),
+                    "amount": amt,
+                    "status": "ready_to_send",  # Ready for Factur-X
+                    "created_at": datetime.now(timezone.utc),
+                    "due_date": datetime.now(timezone.utc) + timedelta(days=30),
+                    "paid_at": None,
+                    "facturx_generated": True,
+                    "blockchain_proof": create_blockchain_hash({"delivery": tracking_id, "amount": amt})
+                }
+                await db.invoices.insert_one(invoice)
+
+            # Auto-update driver's eco-score
+            did = delivery.get("driver_id") or user.get("id")
+            if did:
+                completed_count = await db.deliveries.count_documents({"driver_id": did, "status": "delivered"})
+                total_count = await db.deliveries.count_documents({"driver_id": did})
+                score = 85.0
+                if total_count > 0:
+                    score += (completed_count / total_count) * 10
+                score = max(0, min(100, round(score)))
+                est_dist = completed_count * 25
+                today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+                await db.eco_scores.update_one(
+                    {"driver_id": did, "date": today_str},
+                    {"$set": {
+                        "driver_id": did,
+                        "date": today_str,
+                        "score": score,
+                        "distance_km": est_dist,
+                        "co2_kg": round(est_dist * 0.12, 1),
+                        "fuel_liters": round(est_dist / 10, 1),
+                        "harsh_braking_count": 0,
+                        "harsh_acceleration_count": 0,
+                        "created_at": datetime.now(timezone.utc)
+                    }},
+                    upsert=True
+                )
     
     if data.driver_id:
         update_data["driver_id"] = data.driver_id
