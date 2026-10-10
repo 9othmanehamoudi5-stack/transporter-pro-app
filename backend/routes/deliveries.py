@@ -21,6 +21,8 @@ router = APIRouter(prefix="/api")
 async def create_delivery(data: DeliveryCreate, user: dict = Depends(require_role("admin", "client"))):
     delivery = {
         "tracking_id": f"TP-{uuid.uuid4().hex[:8].upper()}",
+        "pickup_address": data.pickup_address or None,
+        "pickup_name": data.pickup_name or "Entrepôt / Départ",
         "recipient_name": data.recipient_name,
         "recipient_address": data.recipient_address,
         "recipient_phone": data.recipient_phone,
@@ -95,7 +97,7 @@ async def get_deliveries(user: dict = Depends(get_current_user), status: Optiona
 
 @router.get("/deliveries/route-preview")
 async def get_route_preview(user: dict = Depends(require_role("admin"))):
-    """Return current optimized sequence + OSRM polyline geometry for Live Map overlay."""
+    """Return current optimized sequence starting from Depot/Pickup + OSRM polyline geometry."""
     import httpx
     from core.routing import geocode_address, OSRM
 
@@ -105,16 +107,60 @@ async def get_route_preview(user: dict = Depends(require_role("admin"))):
         {"_id": 0}
     ).sort([("sequence_order", 1), ("created_at", -1)]).to_list(50)
 
-    stops = []
+    if not deliveries:
+        return {"stops": [], "geometry": []}
+
+    # 1. Determine departure / warehouse address
+    depot_address = None
+    depot_name = "Point de départ / Entrepôt"
+
+    # Check if first delivery has a specific pickup_address
     for d in deliveries:
+        if d.get("pickup_address"):
+            depot_address = d["pickup_address"]
+            depot_name = d.get("pickup_name") or "Entrepôt / Départ"
+            break
+
+    # If no delivery pickup_address, check company profile in db
+    if not depot_address:
+        company = await db.users.find_one({"_id": user["id"]}, {"warehouse_address": 1, "company_address": 1})
+        if company:
+            depot_address = company.get("warehouse_address") or company.get("company_address")
+
+    # Fallback to standard Paris/Ile-de-France hub if none provided
+    if not depot_address and deliveries:
+        # Default starting point (ex: Cergy/Pontoise Hub or first address area)
+        depot_address = "Port de Gennevilliers, 92230 Gennevilliers"
+        depot_name = "Hub Logistique / Dépôt"
+
+    stops = []
+
+    # Geocode Depot / Departure point (Stop A / 0)
+    if depot_address:
+        depot_coord = await geocode_address(depot_address)
+        if depot_coord:
+            stops.append({
+                "tracking_id": "DEPOT-START",
+                "recipient_name": depot_name,
+                "address": depot_address,
+                "lng": depot_coord[0],
+                "lat": depot_coord[1],
+                "is_depot": True,
+                "order": 0,
+            })
+
+    # Geocode Delivery destinations (Stops 1...N)
+    for idx, d in enumerate(deliveries):
         coord = await geocode_address(d.get("recipient_address", ""))
         if coord:
             stops.append({
                 "tracking_id": d["tracking_id"],
                 "recipient_name": d.get("recipient_name", ""),
                 "address": d.get("recipient_address", ""),
-                "lng": coord[0], "lat": coord[1],
-                "order": d.get("sequence_order"),
+                "lng": coord[0],
+                "lat": coord[1],
+                "is_depot": False,
+                "order": d.get("sequence_order", idx + 1),
             })
 
     geometry = []
@@ -126,7 +172,7 @@ async def get_route_preview(user: dict = Depends(require_role("admin"))):
                 if r.status_code == 200:
                     data = r.json()
                     if data.get("code") == "Ok" and data.get("routes"):
-                        # GeoJSON coords are [lng, lat] → Leaflet wants [lat, lng]
+                        # GeoJSON coords are [lng, lat] -> Leaflet wants [lat, lng]
                         geometry = [[c[1], c[0]] for c in data["routes"][0]["geometry"]["coordinates"]]
         except Exception as e:
             logger.warning(f"OSRM route geometry failed: {e}")
