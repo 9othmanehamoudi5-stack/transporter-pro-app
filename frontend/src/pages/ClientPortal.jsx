@@ -153,7 +153,7 @@ export const ClientPortal = () => {
                     attributionControl={false}
                   >
                     <TileLayer
-                      url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+                      url="https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png"
                     />
                     <Marker position={[delivery.lat, delivery.lng]} icon={trackingPinIcon}>
                       <Popup>
