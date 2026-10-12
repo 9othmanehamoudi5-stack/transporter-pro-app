@@ -13,6 +13,8 @@ const LandingPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [activeFaq, setActiveFaq] = useState(null);
+  const [timeSavingsPeriod, setTimeSavingsPeriod] = useState('month'); // 'week' | 'month' | 'year'
+  const [expandedPlanDetails, setExpandedPlanDetails] = useState({ starter: false, pme: false, flotte: false });
 
   React.useEffect(() => {
     if (user) navigate('/dashboard', { replace: true });
@@ -380,31 +382,123 @@ const LandingPage = () => {
       {/* 8. GRILLE TARIFAIRE TRANSPARENTE */}
       <section id="tarifs" className="py-20 px-6 bg-white border-t border-slate-200">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
+          <div className="text-center mb-12">
             <span className="text-xs uppercase tracking-[0.2em] text-[#059669] font-bold">Sans engagement</span>
             <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 mt-2 mb-3">
               Des forfaits simples et adaptés à votre flotte
             </h2>
-            <p className="text-slate-600 text-sm max-w-lg mx-auto">
+            <p className="text-slate-600 text-sm max-w-lg mx-auto mb-8">
               Chaque plan comprend 30 jours d'essai gratuit. Résiliation libre en 1 clic.
             </p>
+
+            {/* Sélecteur de période pour le gain de temps réel */}
+            <div className="inline-flex items-center p-1.5 bg-slate-100 rounded-2xl border border-slate-200 text-xs font-semibold shadow-inner">
+              <span className="px-3 py-1 text-slate-500 font-bold flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5 text-[#2563EB]" />
+                Afficher le gain de temps :
+              </span>
+              <button
+                onClick={() => setTimeSavingsPeriod('week')}
+                className={`px-3.5 py-1.5 rounded-xl transition-all ${
+                  timeSavingsPeriod === 'week'
+                    ? 'bg-[#2563EB] text-white shadow-sm font-bold'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                Par semaine
+              </button>
+              <button
+                onClick={() => setTimeSavingsPeriod('month')}
+                className={`px-3.5 py-1.5 rounded-xl transition-all ${
+                  timeSavingsPeriod === 'month'
+                    ? 'bg-[#2563EB] text-white shadow-sm font-bold'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                Par mois
+              </button>
+              <button
+                onClick={() => setTimeSavingsPeriod('year')}
+                className={`px-3.5 py-1.5 rounded-xl transition-all ${
+                  timeSavingsPeriod === 'year'
+                    ? 'bg-[#2563EB] text-white shadow-sm font-bold'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                Par an
+              </button>
+            </div>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8 items-stretch">
             
             {/* Starter */}
-            <div className="bg-white border border-slate-200 rounded-2xl p-8 flex flex-col justify-between hover:shadow-lg transition-all">
+            <div className="bg-white border border-slate-200 rounded-2xl p-7 flex flex-col justify-between hover:shadow-lg transition-all">
               <div>
                 <div className="inline-block px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-bold mb-4">
                   STARTER
                 </div>
                 <h3 className="text-xl font-bold text-slate-900">Artisans & 1 à 3 Camions</h3>
                 <p className="text-xs text-slate-500 mt-1">L'essentiel pour démarrer sereinement.</p>
-                <div className="my-6">
+                <div className="my-5">
                   <span className="text-4xl font-extrabold font-mono text-slate-900">79 €</span>
                   <span className="text-slate-500 text-xs font-medium"> / mois</span>
                   <p className="text-[11px] text-[#059669] font-bold mt-1">ou 759 €/an (~63 €/mois)</p>
                 </div>
+
+                {/* Bloc Gain de Temps Réel (Starter) */}
+                <div className="bg-emerald-50/70 border border-emerald-200/90 rounded-xl p-4 mb-6">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-[11px] uppercase font-extrabold text-[#059669] tracking-wider flex items-center gap-1.5">
+                      <Clock className="w-3.5 h-3.5" />
+                      Gain de temps réel
+                    </span>
+                    <span className="text-[10px] font-bold bg-white text-emerald-800 px-2 py-0.5 rounded-full border border-emerald-200">
+                      ~39 j / an
+                    </span>
+                  </div>
+                  
+                  <div className="flex items-baseline gap-1 my-1">
+                    <span className="text-2xl font-black font-mono text-emerald-900">
+                      {timeSavingsPeriod === 'week' ? '+6 heures' : timeSavingsPeriod === 'month' ? '+26 heures' : '+312 heures'}
+                    </span>
+                    <span className="text-xs text-emerald-700 font-semibold">
+                      {timeSavingsPeriod === 'week' ? '/ semaine' : timeSavingsPeriod === 'month' ? '/ mois' : '/ an'}
+                    </span>
+                  </div>
+                  
+                  <p className="text-[11px] text-emerald-800 font-medium">
+                    Soit près d'une journée complète de paperasse évitée chaque semaine.
+                  </p>
+
+                  {/* Bouton détail calcul */}
+                  <button
+                    type="button"
+                    onClick={() => setExpandedPlanDetails(prev => ({ ...prev, starter: !prev.starter }))}
+                    className="mt-2.5 text-[11px] font-bold text-[#059669] hover:text-emerald-900 flex items-center gap-1 underline underline-offset-2"
+                  >
+                    {expandedPlanDetails.starter ? 'Masquer le calcul' : 'Voir le détail du calcul'}
+                    {expandedPlanDetails.starter ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                  </button>
+
+                  {expandedPlanDetails.starter && (
+                    <div className="mt-3 pt-2.5 border-t border-emerald-200/80 text-[11px] text-emerald-900 space-y-1.5 font-medium animate-fadeIn">
+                      <div className="flex justify-between">
+                        <span>• Facturation Factur-X en 30s :</span>
+                        <strong className="font-mono text-emerald-800">-2h30 / sem</strong>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>• e-CMR & signature tactile :</span>
+                        <strong className="font-mono text-emerald-800">-2h15 / sem</strong>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>• Suivi des statuts sans appels :</span>
+                        <strong className="font-mono text-emerald-800">-1h15 / sem</strong>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 <ul className="space-y-3 text-xs font-semibold text-slate-700 mb-8">
                   <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#059669]" /> Jusqu'à 3 chauffeurs</li>
                   <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#059669]" /> Facturation Factur-X illimitée</li>
@@ -422,7 +516,7 @@ const LandingPage = () => {
             </div>
 
             {/* PME (Recommandé) */}
-            <div className="bg-white border-2 border-[#2563EB] rounded-2xl p-8 flex flex-col justify-between relative shadow-xl shadow-blue-500/10 scale-105">
+            <div className="bg-white border-2 border-[#2563EB] rounded-2xl p-7 flex flex-col justify-between relative shadow-xl shadow-blue-500/10 scale-105">
               <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-[#2563EB] text-white text-[11px] uppercase tracking-wider font-extrabold px-4 py-1 rounded-full shadow-md">
                 Le choix recommandé
               </div>
@@ -432,11 +526,69 @@ const LandingPage = () => {
                 </div>
                 <h3 className="text-xl font-bold text-slate-900">Flottes de 4 à 15 Camions</h3>
                 <p className="text-xs text-slate-500 mt-1">La suite complète avec l'IA Anti-Litige.</p>
-                <div className="my-6">
+                <div className="my-5">
                   <span className="text-4xl font-extrabold font-mono text-slate-900">249 €</span>
                   <span className="text-slate-500 text-xs font-medium"> / mois</span>
                   <p className="text-[11px] text-[#059669] font-bold mt-1">ou 2 390 €/an (~199 €/mois)</p>
                 </div>
+
+                {/* Bloc Gain de Temps Réel (PME) */}
+                <div className="bg-blue-50/80 border border-blue-200 rounded-xl p-4 mb-6 shadow-sm">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-[11px] uppercase font-extrabold text-[#1E40AF] tracking-wider flex items-center gap-1.5">
+                      <Clock className="w-3.5 h-3.5" />
+                      Gain de temps réel
+                    </span>
+                    <span className="text-[10px] font-bold bg-[#1E40AF] text-white px-2 py-0.5 rounded-full shadow-xs">
+                      ~1 temps plein
+                    </span>
+                  </div>
+                  
+                  <div className="flex items-baseline gap-1 my-1">
+                    <span className="text-2xl font-black font-mono text-blue-900">
+                      {timeSavingsPeriod === 'week' ? '+28 heures' : timeSavingsPeriod === 'month' ? '+121 heures' : '+1 450 heures'}
+                    </span>
+                    <span className="text-xs text-blue-800 font-semibold">
+                      {timeSavingsPeriod === 'week' ? '/ semaine' : timeSavingsPeriod === 'month' ? '/ mois' : '/ an'}
+                    </span>
+                  </div>
+                  
+                  <p className="text-[11px] text-blue-800 font-medium">
+                    Équivaut à <strong>1 poste administratif à temps plein</strong> économisé dans l'entreprise.
+                  </p>
+
+                  {/* Bouton détail calcul */}
+                  <button
+                    type="button"
+                    onClick={() => setExpandedPlanDetails(prev => ({ ...prev, pme: !prev.pme }))}
+                    className="mt-2.5 text-[11px] font-bold text-[#2563EB] hover:text-blue-900 flex items-center gap-1 underline underline-offset-2"
+                  >
+                    {expandedPlanDetails.pme ? 'Masquer le calcul' : 'Voir le détail du calcul'}
+                    {expandedPlanDetails.pme ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                  </button>
+
+                  {expandedPlanDetails.pme && (
+                    <div className="mt-3 pt-2.5 border-t border-blue-200 text-[11px] text-blue-900 space-y-1.5 font-medium animate-fadeIn">
+                      <div className="flex justify-between">
+                        <span>• e-CMR & Factur-X multi-camions :</span>
+                        <strong className="font-mono text-blue-800">-15h00 / sem</strong>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>• Bouclier IA Anti-Litige Photos :</span>
+                        <strong className="font-mono text-blue-800">-4h30 / sem</strong>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>• Tournées optimisées OSRM (1 clic) :</span>
+                        <strong className="font-mono text-blue-800">-4h30 / sem</strong>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>• Portail de tracking client autonome :</span>
+                        <strong className="font-mono text-blue-800">-4h00 / sem</strong>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 <ul className="space-y-3 text-xs font-semibold text-slate-800 mb-8">
                   <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#059669]" /> <strong>Jusqu'à 15 chauffeurs</strong></li>
                   <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#059669]" /> <strong>Bouclier IA Gemini Anti-Litige</strong></li>
@@ -455,18 +607,76 @@ const LandingPage = () => {
             </div>
 
             {/* Flotte Pro */}
-            <div className="bg-white border border-slate-200 rounded-2xl p-8 flex flex-col justify-between hover:shadow-lg transition-all">
+            <div className="bg-white border border-slate-200 rounded-2xl p-7 flex flex-col justify-between hover:shadow-lg transition-all">
               <div>
                 <div className="inline-block px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-bold mb-4">
                   FLOTTE PRO
                 </div>
                 <h3 className="text-xl font-bold text-slate-900">Grandes Flottes (+15 camions)</h3>
                 <p className="text-xs text-slate-500 mt-1">Toutes les fonctionnalités sans aucune limite.</p>
-                <div className="my-6">
+                <div className="my-5">
                   <span className="text-4xl font-extrabold font-mono text-slate-900">690 €</span>
                   <span className="text-slate-500 text-xs font-medium"> / mois</span>
                   <p className="text-[11px] text-[#059669] font-bold mt-1">ou 6 624 €/an (~552 €/mois)</p>
                 </div>
+
+                {/* Bloc Gain de Temps Réel (Flotte Pro) */}
+                <div className="bg-slate-900 text-white rounded-xl p-4 mb-6 shadow-md">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-[11px] uppercase font-extrabold text-blue-400 tracking-wider flex items-center gap-1.5">
+                      <Clock className="w-3.5 h-3.5" />
+                      Gain de temps réel
+                    </span>
+                    <span className="text-[10px] font-bold bg-emerald-500 text-white px-2 py-0.5 rounded-full">
+                      ~2 postes temps plein
+                    </span>
+                  </div>
+                  
+                  <div className="flex items-baseline gap-1 my-1">
+                    <span className="text-2xl font-black font-mono text-white">
+                      {timeSavingsPeriod === 'week' ? '+70 heures' : timeSavingsPeriod === 'month' ? '+303 heures' : '+3 640 heures'}
+                    </span>
+                    <span className="text-xs text-slate-300 font-semibold">
+                      {timeSavingsPeriod === 'week' ? '/ semaine' : timeSavingsPeriod === 'month' ? '/ mois' : '/ an'}
+                    </span>
+                  </div>
+                  
+                  <p className="text-[11px] text-slate-300 font-medium">
+                    Équivaut à <strong>2 régulateurs / dispatcheurs</strong> administratifs à temps plein.
+                  </p>
+
+                  {/* Bouton détail calcul */}
+                  <button
+                    type="button"
+                    onClick={() => setExpandedPlanDetails(prev => ({ ...prev, flotte: !prev.flotte }))}
+                    className="mt-2.5 text-[11px] font-bold text-blue-400 hover:text-blue-300 flex items-center gap-1 underline underline-offset-2"
+                  >
+                    {expandedPlanDetails.flotte ? 'Masquer le calcul' : 'Voir le détail du calcul'}
+                    {expandedPlanDetails.flotte ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                  </button>
+
+                  {expandedPlanDetails.flotte && (
+                    <div className="mt-3 pt-2.5 border-t border-slate-800 text-[11px] text-slate-200 space-y-1.5 font-medium animate-fadeIn">
+                      <div className="flex justify-between">
+                        <span>• e-CMR & Facturation de masse :</span>
+                        <strong className="font-mono text-emerald-400">-35h00 / sem</strong>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>• Dispatch & tournées multi-véhicules :</span>
+                        <strong className="font-mono text-emerald-400">-14h00 / sem</strong>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>• Résolution IA instantanée des litiges :</span>
+                        <strong className="font-mono text-emerald-400">-11h00 / sem</strong>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>• Flux API direct & portail autonome :</span>
+                        <strong className="font-mono text-emerald-400">-10h00 / sem</strong>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 <ul className="space-y-3 text-xs font-semibold text-slate-700 mb-8">
                   <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#059669]" /> <strong>Chauffeurs & camions illimités</strong></li>
                   <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#059669]" /> Toutes les fonctionnalités PME incluses</li>
