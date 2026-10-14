@@ -1848,6 +1848,8 @@ async def startup():
     await db.deliveries.create_index("driver_id")
     await db.invoices.create_index("invoice_id", unique=True)
     await db.login_attempts.create_index("identifier")
+    await db.vehicle_inspections.create_index([("company_id", 1), ("created_at", -1)])
+    await db.vehicle_inspections.create_index([("driver_id", 1), ("created_at", -1)])
     
     logger.info("Transporter-Pro API started successfully")
 
@@ -1865,10 +1867,12 @@ from routes.auth import router as auth_router
 from routes.drivers import router as drivers_router
 from routes.stripe import router as stripe_router
 from routes.deliveries import router as deliveries_router
+from routes.inspections import router as inspections_router
 app.include_router(auth_router)
 app.include_router(drivers_router)
 app.include_router(stripe_router)
 app.include_router(deliveries_router)
+app.include_router(inspections_router)
 app.include_router(api_router)
 
 # CORS

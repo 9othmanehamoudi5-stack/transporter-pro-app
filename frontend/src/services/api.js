@@ -313,5 +313,13 @@ export const auditApi = {
   getLogs: (limit = 50) => api.get('/audit-logs', { params: { limit } })
 };
 
+// ==================== VEHICLE INSPECTIONS ====================
+export const vehicleInspectionsApi = {
+  create: (data) => api.post('/vehicle-inspections', data),
+  getAll: (driverId) => api.get('/vehicle-inspections', { params: driverId ? { driver_id: driverId } : {} }),
+  getById: (id) => api.get(`/vehicle-inspections/${id}`),
+  getTodaySummary: () => api.get('/vehicle-inspections/today/summary'),
+};
+
 
 export default api;

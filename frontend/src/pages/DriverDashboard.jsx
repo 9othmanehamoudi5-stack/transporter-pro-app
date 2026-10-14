@@ -1,17 +1,18 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+﻿import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useOfflineSync } from '../hooks/useOfflineSync';
-import { deliveriesApi, damageReportsApi, ecoScoresApi, dashboardApi, syncApi, compressPhoto } from '../services/api';
+import { deliveriesApi, damageReportsApi, ecoScoresApi, dashboardApi, syncApi, compressPhoto, vehicleInspectionsApi } from '../services/api';
 import { firestoreGPS } from '../services/firebase';
 import { Button } from '../components/ui/button';
 import { 
   Truck, Package, Camera, CheckCircle, MapPin, LogOut, 
   Wifi, WifiOff, AlertTriangle, ChevronRight, Clock,
-  Navigation, Leaf, Shield, RefreshCw, X, Upload, ScanLine
+  Navigation, Leaf, Shield, RefreshCw, X, Upload, ScanLine, ClipboardCheck
 } from 'lucide-react';
 import { Toaster, toast } from 'sonner';
 import BarcodeScanner from '../components/BarcodeScanner';
 import SignatureCanvas from './SignatureCanvas';
+import { VehicleInspectionModal } from './VehicleInspectionModal';
 
 const statusLabels = {
   pending: 'En attente',
@@ -33,6 +34,8 @@ export const DriverDashboard = () => {
   const [showScanner, setShowScanner] = useState(false);
   const [showSignature, setShowSignature] = useState(false);
   const [ecoScore, setEcoScore] = useState(null);
+  const [showInspection, setShowInspection] = useState(false);
+  const [todayInspectionDone, setTodayInspectionDone] = useState(false);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -48,6 +51,16 @@ export const DriverDashboard = () => {
       if (get(0)) setDeliveries(get(0));
       if (get(1)) setStats(get(1));
       if (get(2) && get(2).length > 0) setEcoScore(get(2)[0]);
+
+      // Check if driver already did today's inspection
+      try {
+        const todayInspections = await vehicleInspectionsApi.getAll();
+        const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
+        const done = (todayInspections.data || []).some(insp => new Date(insp.created_at) >= todayStart);
+        setTodayInspectionDone(done);
+      } catch (_) {
+        // ignore — non-blocking
+      }
 
       const failed = results.filter(r => r.status === 'rejected');
       if (failed.length > 0 && !isOnline) {

@@ -11,6 +11,7 @@ import SettingsPage from './SettingsPage';
 import { StatCard, GatedButton, LockedFeatureOverlay } from '../components/admin/DashboardHelpers';
 import { DamageReportCard } from '../components/admin/DamageReportCard';
 import { EcoScoresTab } from '../components/admin/EcoScoresTab';
+import { InspectionsTab } from '../components/admin/InspectionsTab';
 import { NewDeliveryForm, NewDriverForm, EditDriverForm, AssignDeliveryForm } from '../components/admin/DashboardForms';
 import { RevenueSparkline } from '../components/admin/RevenueSparkline';
 import { RevenueAnalyticsModal } from '../components/admin/RevenueAnalyticsModal';
@@ -20,7 +21,7 @@ import {
   Truck, Package, DollarSign, AlertTriangle, Leaf, Users, 
   Clock, CheckCircle, TrendingUp, LogOut, Menu, X,
   Plus, Eye, MapPin, FileText, Shield, RefreshCw, Bell,
-  CreditCard, UserPlus, Trash2, Lock, Crown, Map, Settings as SettingsIcon, Pencil
+  CreditCard, UserPlus, Trash2, Lock, Crown, Map, Settings as SettingsIcon, Pencil, ClipboardCheck
 } from 'lucide-react';
 import {
   Dialog,
@@ -283,6 +284,7 @@ export const AdminDashboard = () => {
     { id: 'drivers', label: t('sidebar.drivers', 'Chauffeurs'), icon: Users },
     { id: 'litiges', label: t('sidebar.litiges', 'Litiges'), icon: AlertTriangle },
     { id: 'eco', label: t('sidebar.eco', 'Éco-scores'), icon: Leaf },
+    { id: 'inspections', label: 'Contrôles départ', icon: ClipboardCheck },
     ...(user?.role === 'admin' ? [{ id: 'subscription', label: t('sidebar.subscription', 'Abonnement'), icon: CreditCard }] : []),
     { id: 'settings', label: t('sidebar.settings', 'Paramètres'), icon: SettingsIcon },
   ];
@@ -1071,6 +1073,10 @@ export const AdminDashboard = () => {
           )}
 
           {/* Eco Scores Tab */}
+          {activeTab === 'inspections' && (
+            <InspectionsTab />
+          )}
+
           {activeTab === 'eco' && (
             !hasFeature('ecoScore') ? (
               <LockedFeatureOverlay
