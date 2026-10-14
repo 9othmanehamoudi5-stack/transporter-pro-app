@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
-import { dashboardApi, deliveriesApi, invoicesApi, driversApi, damageReportsApi, ecoScoresApi, adminDriversApi, notificationsApi } from '../services/api';
+import { dashboardApi, deliveriesApi, invoicesApi, driversApi, damageReportsApi, ecoScoresApi, adminDriversApi, notificationsApi, vehicleInspectionsApi } from '../services/api';
 import { firestoreDrivers } from '../services/firebase';
 import { generateInvoicePDF, generateAllInvoicesPDF } from '../services/pdfGenerator';
 import BarcodeScanner from '../components/BarcodeScanner';
@@ -77,6 +77,7 @@ export const AdminDashboard = () => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
   const [firestoreDriversList, setFirestoreDriversList] = useState([]);
+  const [inspectionSummary, setInspectionSummary] = useState(null);
   // Quota: use the authenticated user's plan as initial seed so the UI never flashes the wrong plan label.
   // Legacy plan ids (solo/croissance/flotte_pro) are kept so existing users still resolve.
   const PLAN_MAX = { starter: 3, pme: 15, flotte: -1, solo: 3, croissance: 15, flotte_pro: -1 };
@@ -121,7 +122,8 @@ export const AdminDashboard = () => {
         ecoScoresApi.getSummary(),
         notificationsApi.getAll(),
         notificationsApi.getUnreadCount(),
-        ecoScoresApi.getDailyAvg()
+        ecoScoresApi.getDailyAvg(),
+        vehicleInspectionsApi.getTodaySummary()
       ]);
       
       const get = (i) => results[i].status === 'fulfilled' ? results[i].value.data : null;
@@ -136,6 +138,7 @@ export const AdminDashboard = () => {
       if (get(7)) setNotifications(get(7));
       if (get(8)) setUnreadCount(get(8).count);
       if (get(9)) setEcoDailyAvg(get(9));
+      if (get(10)) setInspectionSummary(get(10));
 
       // Fetch quota separately (non-blocking)
       try {
@@ -451,6 +454,37 @@ export const AdminDashboard = () => {
           {/* Overview Tab */}
           {activeTab === 'overview' && (
             <>
+              {/* Pilotage Banner Header */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl bg-gradient-to-r from-[#121214] via-[#16161A] to-[#121214] border border-[#27272A] shadow-sm">
+                <div>
+                  <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-[#0066FF]/10 text-[#0066FF] border border-[#0066FF]/30 tracking-wider uppercase">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#0066FF] animate-pulse"></span>
+                      Pilotage Opérationnel Flotte
+                    </span>
+                    <span className="text-xs text-zinc-500 font-mono">
+                      {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
+                    </span>
+                  </div>
+                  <h2 className="text-xl lg:text-2xl font-extrabold text-white tracking-tight">
+                    Tableau de Bord & Supervision
+                  </h2>
+                  <p className="text-xs text-zinc-400 mt-0.5">
+                    Surveillance en direct des expéditions, chauffeurs actifs et trésorerie Factur-X
+                  </p>
+                </div>
+                <div className="flex items-center gap-2.5">
+                  <Button
+                    onClick={() => setShowRevenueModal(true)}
+                    className="bg-gradient-to-r from-[#0066FF] to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-medium text-xs px-4 py-2.5 rounded-xl shadow-lg shadow-blue-500/20 flex items-center gap-2 transition-all hover:scale-[1.02]"
+                    data-testid="open-crm-revenue-overview"
+                  >
+                    <TrendingUp className="w-3.5 h-3.5" />
+                    Tableau Financier CRM ↗
+                  </Button>
+                </div>
+              </div>
+
               {/* Stats Grid */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <StatCard
@@ -458,61 +492,151 @@ export const AdminDashboard = () => {
                   value={stats?.total_deliveries || 0}
                   icon={Package}
                   color="blue"
+                  badge="Activité"
+                  subtext="Missions enregistrées"
+                  trend={`${stats?.pending_deliveries || 0} en attente`}
                 />
                 <StatCard
                   title={t('kpi.inTransit', 'En transit')}
                   value={stats?.in_transit || 0}
                   icon={Truck}
                   color="blue"
+                  badge="En route"
+                  subtext="Chauffeurs géolocalisés"
+                  trend="GPS Actif"
                 />
                 <StatCard
                   title={t('kpi.deliveredToday', "Livrées aujourd'hui")}
                   value={stats?.delivered_today || 0}
                   icon={CheckCircle}
                   color="green"
+                  badge="Validées"
+                  subtext="e-CMR & signatures acquises"
+                  trend="100% conforme"
                 />
                 <StatCard
                   title={t('kpi.activeDisputes', 'Litiges actifs')}
                   value={stats?.active_litiges || 0}
                   icon={AlertTriangle}
-                  color="red"
+                  color={stats?.active_litiges > 0 ? "red" : "green"}
+                  badge={stats?.active_litiges > 0 ? "Alerte IA" : "Sain"}
+                  subtext="Bouclier IA Anti-litige"
                   pulse={stats?.active_litiges > 0}
                 />
               </div>
 
-              {/* Cash Flow Card */}
-              <div className="bg-[#121214] border border-[#27272A] rounded-xl p-6" data-testid="cashflow-card">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold flex items-center gap-2">
-                    <DollarSign className="w-5 h-5 text-[#0066FF]" />
-                    {t('cashflow.title', 'Cash-Flow Instantané')}
-                  </h3>
+              {/* High-Impact CRM Cash Flow & Fleet Card */}
+              <div className="bg-[#121214] border border-[#27272A] rounded-2xl p-6 relative overflow-hidden shadow-sm" data-testid="cashflow-card">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/30 tracking-wider uppercase">
+                        ✦ CRM Business & Trésorerie
+                      </span>
+                    </div>
+                    <h3 className="text-lg font-bold flex items-center gap-2 text-white">
+                      <DollarSign className="w-5 h-5 text-[#0066FF]" />
+                      Trésorerie Opérationnelle & Factur-X
+                    </h3>
+                    <p className="text-xs text-zinc-400 mt-0.5">
+                      Suivi instantané des encaissements, factures conformes et conformité flotte
+                    </p>
+                  </div>
+                  <Button
+                    onClick={() => setShowRevenueModal(true)}
+                    variant="outline"
+                    className="border-[#27272A] hover:border-[#0066FF]/60 hover:bg-[#1A1A1E] text-xs text-zinc-300 hover:text-white rounded-xl self-start sm:self-auto"
+                  >
+                    Ouvrir l'Analyse Complète ↗
+                  </Button>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="p-4 bg-[#1A1A1E] rounded-lg">
-                    <p className="text-sm text-zinc-400 mb-1">{t('cashflow.blocked', 'Argent bloqué (camions)')}</p>
-                    <p className="text-2xl font-bold font-mono text-yellow-400">
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {/* Tile 1: Argent bloqué */}
+                  <div className="p-4 bg-[#1A1A1E] border border-[#27272A] hover:border-amber-500/30 rounded-xl transition-all">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-[10px] font-semibold tracking-wider uppercase px-2 py-0.5 rounded-full border bg-amber-500/10 text-amber-400 border-amber-500/30">
+                        Pont Trésorerie
+                      </span>
+                      <Clock className="w-4 h-4 text-amber-400" />
+                    </div>
+                    <p className="text-xs text-zinc-400 mb-1">{t('cashflow.blocked', 'Argent bloqué (camions)')}</p>
+                    <p className="text-2xl font-bold font-mono text-amber-400 tracking-tight">
                       {(cashFlow?.money_blocked_in_trucks || 0).toLocaleString('fr-FR')} €
                     </p>
-                    <p className="text-xs text-zinc-500 mt-1">{cashFlow?.blocked_deliveries_count || 0} {t('kpi.totalDeliveries', 'livraisons').toLowerCase()}</p>
+                    <p className="text-xs text-zinc-500 mt-1.5 flex items-center gap-1">
+                      <span>{cashFlow?.blocked_deliveries_count || 0} livraison(s) en transit</span>
+                    </p>
                   </div>
-                  <div className="p-4 bg-[#1A1A1E] rounded-lg">
-                    <p className="text-sm text-zinc-400 mb-1">{t('cashflow.pending', 'Factures en attente')}</p>
-                    <p className="text-2xl font-bold font-mono text-[#0066FF]">
+
+                  {/* Tile 2: Factures en attente */}
+                  <div className="p-4 bg-[#1A1A1E] border border-[#27272A] hover:border-blue-500/30 rounded-xl transition-all">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-[10px] font-semibold tracking-wider uppercase px-2 py-0.5 rounded-full border bg-blue-500/10 text-blue-400 border-blue-500/30">
+                        Factur-X
+                      </span>
+                      <FileText className="w-4 h-4 text-[#0066FF]" />
+                    </div>
+                    <p className="text-xs text-zinc-400 mb-1">{t('cashflow.pending', 'Factures en attente')}</p>
+                    <p className="text-2xl font-bold font-mono text-[#0066FF] tracking-tight">
                       {cashFlow?.pending_invoices_count || 0}
                     </p>
+                    <p className="text-xs text-zinc-500 mt-1.5">
+                      Prêtes pour règlement client
+                    </p>
                   </div>
-                  <div className="p-4 bg-[#1A1A1E] rounded-lg" data-testid="kpi-month-revenue">
-                    <p className="text-sm text-zinc-400 mb-1">{t('cashflow.monthRevenue', 'CA ce mois')}</p>
-                    <p className="text-2xl font-bold font-mono text-green-400">
+
+                  {/* Tile 3: CA ce mois (Clickable) */}
+                  <div 
+                    onClick={() => setShowRevenueModal(true)}
+                    className="p-4 bg-[#1A1A1E] border border-[#27272A] hover:border-emerald-500/40 rounded-xl transition-all cursor-pointer group" 
+                    data-testid="kpi-month-revenue"
+                    title="Cliquer pour afficher l'analyse financière complète"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-[10px] font-semibold tracking-wider uppercase px-2 py-0.5 rounded-full border bg-emerald-500/10 text-emerald-400 border-emerald-500/30 flex items-center gap-1">
+                        Encaissé <TrendingUp className="w-2.5 h-2.5" />
+                      </span>
+                      <span className="text-[10px] text-zinc-500 group-hover:text-emerald-400 transition-colors">↗ Détail</span>
+                    </div>
+                    <p className="text-xs text-zinc-400 mb-1">{t('cashflow.monthRevenue', 'CA ce mois')}</p>
+                    <p className="text-2xl font-bold font-mono text-emerald-400 tracking-tight">
                       {(cashFlow?.revenue_this_month || 0).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
                     </p>
-                    <RevenueSparkline data={cashFlow?.revenue_sparkline_30d || []} color="#22c55e" height={40} />
+                    <div className="mt-2">
+                      <RevenueSparkline data={cashFlow?.revenue_sparkline_30d || []} color="#22c55e" height={32} />
+                    </div>
                     {cashFlow?.stripe_revenue_this_month > 0 && (
-                      <p className="text-[11px] text-zinc-500 mt-1">
+                      <p className="text-[11px] text-zinc-500 mt-1.5">
                         {t('cashflow.stripeOf', 'dont Stripe')} : {cashFlow.stripe_revenue_this_month.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
                       </p>
                     )}
+                  </div>
+
+                  {/* Tile 4: Contrôles Flotte du Jour */}
+                  <div 
+                    onClick={() => setActiveTab('inspections')}
+                    className="p-4 bg-[#1A1A1E] border border-[#27272A] hover:border-cyan-500/40 rounded-xl transition-all cursor-pointer group"
+                    title="Cliquer pour voir les contrôles de départ des véhicules"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <span className={`text-[10px] font-semibold tracking-wider uppercase px-2 py-0.5 rounded-full border ${
+                        inspectionSummary?.with_anomaly > 0
+                          ? 'bg-rose-500/10 text-rose-400 border-rose-500/30'
+                          : 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30'
+                      }`}>
+                        {inspectionSummary?.with_anomaly > 0 ? '⚠️ Anomalie' : 'Contrôle Départ'}
+                      </span>
+                      <ClipboardCheck className="w-4 h-4 text-cyan-400" />
+                    </div>
+                    <p className="text-xs text-zinc-400 mb-1">Flotte vérifiée ce jour</p>
+                    <p className="text-2xl font-bold font-mono text-white tracking-tight">
+                      {inspectionSummary ? `${inspectionSummary.ok || 0}/${inspectionSummary.total || 0}` : `${stats?.active_drivers || 0}`}
+                    </p>
+                    <p className="text-xs text-zinc-500 mt-1.5 group-hover:text-cyan-400 transition-colors flex items-center justify-between">
+                      <span>{inspectionSummary?.with_anomaly ? `${inspectionSummary.with_anomaly} anomalie(s)` : '100% conforme'}</span>
+                      <span>Gérer →</span>
+                    </p>
                   </div>
                 </div>
               </div>
@@ -560,46 +684,94 @@ export const AdminDashboard = () => {
                 />
               </div>
 
-              {/* Recent Deliveries */}
-              <div className="bg-[#121214] border border-[#27272A] rounded-xl overflow-hidden">
-                <div className="p-4 border-b border-[#27272A]">
-                  <h3 className="font-semibold">{t('tabs.recentDeliveries', 'Dernières livraisons')}</h3>
+              {/* Recent Deliveries — Modern High-Density CRM Table */}
+              <div className="bg-[#121214] border border-[#27272A] rounded-2xl overflow-hidden shadow-sm">
+                <div className="p-4 lg:p-5 border-b border-[#27272A] flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#121214]">
+                  <div className="flex items-center gap-3">
+                    <h3 className="font-bold text-base text-white">{t('tabs.recentDeliveries', 'Dernières livraisons')}</h3>
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                      Direct Flux
+                    </span>
+                  </div>
+                  <button 
+                    onClick={() => setActiveTab('deliveries')} 
+                    className="text-xs font-semibold text-[#0066FF] hover:text-blue-400 transition-colors flex items-center gap-1 self-start sm:self-auto"
+                  >
+                    Toutes les livraisons ({deliveries.length}) →
+                  </button>
                 </div>
+
                 <div className="overflow-x-auto">
                   <table className="w-full">
-                    <thead className="bg-[#1A1A1E] text-xs text-zinc-400 uppercase">
+                    <thead className="bg-[#16161A] text-[11px] font-semibold text-zinc-400 uppercase tracking-wider border-b border-[#27272A]">
                       <tr>
-                        <th className="px-4 py-3 text-left">{t('kpi.trackingId', 'Tracking')}</th>
-                        <th className="px-4 py-3 text-left">{t('kpi.recipient', 'Destinataire')}</th>
-                        <th className="px-4 py-3 text-left">{t('kpi.status', 'Statut')}</th>
-                        <th className="px-4 py-3 text-left">{t('kpi.driver', 'Chauffeur')}</th>
-                        <th className="px-4 py-3 text-left">{t('kpi.action', 'Action')}</th>
+                        <th className="px-5 py-3 text-left">{t('kpi.trackingId', 'Tracking')}</th>
+                        <th className="px-5 py-3 text-left">{t('kpi.recipient', 'Destinataire')}</th>
+                        <th className="px-5 py-3 text-left">{t('kpi.status', 'Statut')}</th>
+                        <th className="px-5 py-3 text-left">{t('kpi.driver', 'Chauffeur')}</th>
+                        <th className="px-5 py-3 text-right">{t('kpi.action', 'Action')}</th>
                       </tr>
                     </thead>
-                    <tbody>
-                      {deliveries.slice(0, 5).map((d) => {
-                        const hasDriver = !!(d.driver_id || d.driver_name);
-                        const effectiveStatus = hasDriver && d.status === 'pending' ? 'assigned' : d.status;
-                        return (
-                        <tr key={d.tracking_id} className="hover:bg-[#1A1A1E]/50">
-                          <td className="px-4 py-3 font-mono text-sm">{d.tracking_id}</td>
-                          <td className="px-4 py-3">{d.recipient_name}</td>
-                          <td className="px-4 py-3">
-                            <span className={`px-2 py-1 rounded-full text-xs ${statusColors[effectiveStatus]}`} data-testid={`status-badge-${d.tracking_id}`}>
-                              {t(`status.${effectiveStatus}`, statusLabels[effectiveStatus])}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 text-zinc-400">{d.driver_name || (d.driver_id ? drivers.find(dr => dr.id === d.driver_id)?.name : null) || '-'}</td>
-                          <td className="px-4 py-3">
-                            {!d.driver_id ? (
-                              <button onClick={() => setShowAssignDriver(d.tracking_id)} className="text-xs text-[#0066FF] hover:underline font-medium" data-testid={`assign-btn-${d.tracking_id}`}>{t('actions.assign', 'Assigner')}</button>
-                            ) : (
-                              <span className="text-xs text-zinc-500">{t('status.assigned', 'Assigné')}</span>
-                            )}
+                    <tbody className="divide-y divide-[#27272A]/60">
+                      {deliveries.length === 0 ? (
+                        <tr>
+                          <td colSpan="5" className="px-5 py-8 text-center text-zinc-500 text-sm">
+                            Aucune livraison récente.
                           </td>
                         </tr>
-                        );
-                      })}
+                      ) : (
+                        deliveries.slice(0, 6).map((d) => {
+                          const hasDriver = !!(d.driver_id || d.driver_name);
+                          const effectiveStatus = hasDriver && d.status === 'pending' ? 'assigned' : d.status;
+                          const driverName = d.driver_name || (d.driver_id ? drivers.find(dr => dr.id === d.driver_id)?.name : null);
+                          return (
+                          <tr key={d.tracking_id} className="hover:bg-[#1A1A1E]/60 transition-colors">
+                            <td className="px-5 py-3.5">
+                              <span className="font-mono text-xs font-semibold bg-zinc-800/80 text-zinc-300 px-2.5 py-1 rounded-md border border-zinc-700/50 inline-block">
+                                {d.tracking_id}
+                              </span>
+                            </td>
+                            <td className="px-5 py-3.5">
+                              <p className="font-semibold text-sm text-white">{d.recipient_name}</p>
+                              <p className="text-xs text-zinc-400 truncate max-w-[200px]">{d.recipient_address || d.package_description || 'Standard'}</p>
+                            </td>
+                            <td className="px-5 py-3.5">
+                              <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${statusColors[effectiveStatus]}`} data-testid={`status-badge-${d.tracking_id}`}>
+                                {t(`status.${effectiveStatus}`, statusLabels[effectiveStatus])}
+                              </span>
+                            </td>
+                            <td className="px-5 py-3.5">
+                              {driverName ? (
+                                <div className="flex items-center gap-2">
+                                  <div className="w-6 h-6 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-[10px] font-bold text-zinc-300">
+                                    {driverName.charAt(0).toUpperCase()}
+                                  </div>
+                                  <span className="text-xs text-zinc-300 font-medium">{driverName}</span>
+                                </div>
+                              ) : (
+                                <span className="text-xs text-zinc-500 italic">Non assigné</span>
+                              )}
+                            </td>
+                            <td className="px-5 py-3.5 text-right">
+                              {!d.driver_id ? (
+                                <button 
+                                  onClick={() => setShowAssignDriver(d.tracking_id)} 
+                                  className="text-xs text-white bg-[#0066FF] hover:bg-[#0052CC] px-3 py-1.5 rounded-lg font-semibold transition-colors" 
+                                  data-testid={`assign-btn-${d.tracking_id}`}
+                                >
+                                  {t('actions.assign', 'Assigner')}
+                                </button>
+                              ) : (
+                                <span className="text-xs font-medium text-zinc-400 bg-[#1A1A1E] px-2.5 py-1 rounded-md border border-[#27272A]">
+                                  {t('status.assigned', 'Assigné')}
+                                </span>
+                              )}
+                            </td>
+                          </tr>
+                          );
+                        })
+                      )}
                     </tbody>
                   </table>
                 </div>
