@@ -1868,11 +1868,13 @@ from routes.drivers import router as drivers_router
 from routes.stripe import router as stripe_router
 from routes.deliveries import router as deliveries_router
 from routes.inspections import router as inspections_router
+from routes.demo import router as demo_router
 app.include_router(auth_router)
 app.include_router(drivers_router)
 app.include_router(stripe_router)
 app.include_router(deliveries_router)
 app.include_router(inspections_router)
+app.include_router(demo_router)
 app.include_router(api_router)
 
 # CORS

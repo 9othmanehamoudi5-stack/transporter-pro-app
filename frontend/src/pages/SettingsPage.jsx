@@ -40,9 +40,12 @@ import {
   Upload,
   Activity,
   Clock,
+  Sparkles,
+  Database,
+  RotateCcw,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import api from '../services/api';
+import api, { demoApi } from '../services/api';
 import { useEffect } from 'react';
 
 const PLAN_LABELS = {
@@ -492,6 +495,50 @@ const SecuritySection = ({ user, refreshUser, logout }) => {
             </div>
             <Switch checked={twoFa} onCheckedChange={handleToggle2FA} data-testid="toggle-2fa" />
           </label>
+        </div>
+      </div>
+
+      {/* Demo Data Management */}
+      <div className="bg-[#121214] border border-[#27272A] rounded-2xl overflow-hidden shadow-sm">
+        <div className="p-6 border-b border-[#27272A] flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center justify-center">
+              <Sparkles className="w-5 h-5 text-emerald-400" />
+            </div>
+            <div>
+              <h2 className="font-semibold text-white">Mode Démonstration & Données TRM</h2>
+              <p className="text-xs text-zinc-400">Générer un environnement d'exploitation routière complet pour vos présentations</p>
+            </div>
+          </div>
+          <span className="text-[10px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+            Prêt pour démo B2B
+          </span>
+        </div>
+        <div className="p-6 space-y-4">
+          <p className="text-sm text-zinc-300">
+            Injecte instantanément un jeu complet de données réalistes : <strong>3 chauffeurs</strong> (avec plaques d'immatriculation françaises et mot de passe <code>Chauffeur2026!</code>), <strong>6 livraisons réelles</strong> (Sogaris Rungis, Denain, Aulnay, Paris, Argenteuil), <strong>5 factures Factur-X</strong>, <strong>1 litige analysé par IA</strong> et les <strong>contrôles de départ de véhicule</strong>.
+          </p>
+          <div className="flex flex-wrap gap-3 pt-2">
+            <Button
+              onClick={handleSeedDemo}
+              disabled={seedingDemo || cleaningDemo}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs px-4 py-2.5 rounded-xl shadow-lg shadow-emerald-600/20 flex items-center gap-2"
+              data-testid="settings-seed-demo-btn"
+            >
+              <Sparkles className={`w-4 h-4 ${seedingDemo ? 'animate-spin' : ''}`} />
+              {seedingDemo ? "Génération en cours..." : "🌱 Charger les données démo TRM"}
+            </Button>
+            <Button
+              onClick={handleCleanDemo}
+              disabled={seedingDemo || cleaningDemo}
+              variant="outline"
+              className="border-[#27272A] hover:border-zinc-600 text-zinc-400 hover:text-white text-xs px-4 py-2.5 rounded-xl flex items-center gap-2"
+              data-testid="settings-clean-demo-btn"
+            >
+              <RotateCcw className={`w-3.5 h-3.5 ${cleaningDemo ? 'animate-spin' : ''}`} />
+              {cleaningDemo ? "Nettoyage..." : "Réinitialiser / Nettoyer la démo"}
+            </Button>
+          </div>
         </div>
       </div>
 

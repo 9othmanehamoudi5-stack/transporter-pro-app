@@ -321,5 +321,11 @@ export const vehicleInspectionsApi = {
   getTodaySummary: () => api.get('/vehicle-inspections/today/summary'),
 };
 
+// ==================== DEMO DATA ====================
+export const demoApi = {
+  seed: () => api.post('/demo/seed'),
+  clean: () => api.delete('/demo/clean'),
+};
+
 
 export default api;

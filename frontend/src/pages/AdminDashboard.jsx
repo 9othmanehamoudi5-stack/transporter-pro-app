@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
-import { dashboardApi, deliveriesApi, invoicesApi, driversApi, damageReportsApi, ecoScoresApi, adminDriversApi, notificationsApi, vehicleInspectionsApi } from '../services/api';
+import { dashboardApi, deliveriesApi, invoicesApi, driversApi, damageReportsApi, ecoScoresApi, adminDriversApi, notificationsApi, vehicleInspectionsApi, demoApi } from '../services/api';
 import { firestoreDrivers } from '../services/firebase';
 import { generateInvoicePDF, generateAllInvoicesPDF } from '../services/pdfGenerator';
 import BarcodeScanner from '../components/BarcodeScanner';
@@ -21,7 +21,7 @@ import {
   Truck, Package, DollarSign, AlertTriangle, Leaf, Users, 
   Clock, CheckCircle, TrendingUp, LogOut, Menu, X,
   Plus, Eye, MapPin, FileText, Shield, RefreshCw, Bell,
-  CreditCard, UserPlus, Trash2, Lock, Crown, Map, Settings as SettingsIcon, Pencil, ClipboardCheck
+  CreditCard, UserPlus, Trash2, Lock, Crown, Map, Settings as SettingsIcon, Pencil, ClipboardCheck, Sparkles
 } from 'lucide-react';
 import {
   Dialog,
@@ -78,6 +78,22 @@ export const AdminDashboard = () => {
   const [showScanner, setShowScanner] = useState(false);
   const [firestoreDriversList, setFirestoreDriversList] = useState([]);
   const [inspectionSummary, setInspectionSummary] = useState(null);
+  const [seedingDemo, setSeedingDemo] = useState(false);
+
+  const handleSeedDemoData = async () => {
+    setSeedingDemo(true);
+    try {
+      const res = await demoApi.seed();
+      toast.success(res.data.message || 'Données démo TRM injectées avec succès !', {
+        description: '3 chauffeurs, 6 livraisons, factures Factur-X et contrôles véhicules prêts pour vos démos.'
+      });
+      await fetchData();
+    } catch (err) {
+      toast.error(`Erreur: ${err.response?.data?.detail || err.message}`);
+    } finally {
+      setSeedingDemo(false);
+    }
+  };
   // Quota: use the authenticated user's plan as initial seed so the UI never flashes the wrong plan label.
   // Legacy plan ids (solo/croissance/flotte_pro) are kept so existing users still resolve.
   const PLAN_MAX = { starter: 3, pme: 15, flotte: -1, solo: 3, croissance: 15, flotte_pro: -1 };
@@ -473,7 +489,18 @@ export const AdminDashboard = () => {
                     Surveillance en direct des expéditions, chauffeurs actifs et trésorerie Factur-X
                   </p>
                 </div>
-                <div className="flex items-center gap-2.5">
+                <div className="flex items-center gap-2.5 flex-wrap">
+                  <Button
+                    onClick={handleSeedDemoData}
+                    disabled={seedingDemo}
+                    variant="outline"
+                    className="border-[#27272A] hover:border-emerald-500/50 hover:bg-emerald-500/10 text-emerald-400 font-medium text-xs px-3.5 py-2.5 rounded-xl flex items-center gap-1.5 transition-all"
+                    data-testid="seed-demo-btn"
+                    title="Générer 3 chauffeurs, 6 tournées, factures Factur-X et contrôles véhicules réalistes"
+                  >
+                    <Sparkles className={`w-3.5 h-3.5 ${seedingDemo ? 'animate-spin' : ''}`} />
+                    {seedingDemo ? "Génération TRM..." : "🌱 Charger Démo TRM"}
+                  </Button>
                   <Button
                     onClick={() => setShowRevenueModal(true)}
                     className="bg-gradient-to-r from-[#0066FF] to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-medium text-xs px-4 py-2.5 rounded-xl shadow-lg shadow-blue-500/20 flex items-center gap-2 transition-all hover:scale-[1.02]"
