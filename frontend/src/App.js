@@ -8,6 +8,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import DriverDashboard from "./pages/DriverDashboard";
 import { ClientPortal, TrackingSearch } from "./pages/ClientPortal";
 import LandingPage from "./pages/LandingPage";
+import NexumHero from "./pages/NexumHero";
 import PaymentSuccessPage from "./pages/PaymentSuccessPage";
 import { CGUPage, ConfidentialitePage, ContactPage } from "./pages/LegalPages";
 import OnboardingForm from "./pages/OnboardingForm";
@@ -198,6 +199,8 @@ function App() {
               
               {/* Default redirect */}
               <Route path="/" element={<LandingPage />} />
+              <Route path="/nexum" element={<NexumHero />} />
+              <Route path="/hero" element={<NexumHero />} />
 
               {/* Legal pages */}
               <Route path="/cgu" element={<CGUPage />} />
