@@ -121,20 +121,35 @@ async def seed_demo_data(user: dict = Depends(require_role("admin"))):
         driver_ids.append(d_id)
         driver_map[d["name"]] = {"id": d_id, "plate": d["vehicle_plate"]}
 
-        # Seed Eco-score for each driver
+        # Seed 14-day realistic Eco-score progression & telemetry for each driver
         await db.eco_scores.delete_many({"driver_id": d_id})
-        await db.eco_scores.insert_one({
-            "driver_id": d_id,
-            "driver_name": d["name"],
-            "company_id": company_id,
-            "score": d["eco_score"],
-            "distance_km": 310.0 if d["name"] == "Karim Benali" else 245.0 if d["name"] == "Sylvain Moreau" else 420.0,
-            "co2_kg": 85.0 if d["name"] == "Karim Benali" else 68.0 if d["name"] == "Sylvain Moreau" else 110.0,
-            "fuel_liters": 78.0,
-            "harsh_braking_count": 0 if d["eco_score"] > 90 else 1,
-            "harsh_acceleration_count": 1 if d["eco_score"] > 90 else 2,
-            "updated_at": now
-        })
+        eco_records = []
+        base_score = d["eco_score"]
+
+        for day_offset in range(14, -1, -1):
+            record_date = (now - timedelta(days=day_offset)).strftime("%Y-%m-%d")
+            # Subtle realistic daily fluctuation (-3 to +2 pts around their profile)
+            day_variation = ((day_offset * 7 + (3 if d["name"] == "Alexandre Martin" else 1)) % 6) - 3
+            day_score = min(99, max(68, base_score + day_variation))
+            day_dist = 220.0 + ((day_offset * 19) % 180)
+            day_co2 = round(day_dist * (0.24 if day_score > 90 else 0.29), 1)
+            day_fuel = round(day_dist * 0.27, 1)
+
+            eco_records.append({
+                "driver_id": d_id,
+                "driver_name": d["name"],
+                "company_id": company_id,
+                "date": record_date,
+                "score": day_score,
+                "distance_km": day_dist,
+                "co2_kg": day_co2,
+                "fuel_liters": day_fuel,
+                "harsh_braking_count": 0 if day_score >= 90 else 1 if day_score >= 80 else 3,
+                "harsh_acceleration_count": 0 if day_score >= 92 else 1 if day_score >= 82 else 2,
+                "updated_at": now - timedelta(days=day_offset),
+            })
+        if eco_records:
+            await db.eco_scores.insert_many(eco_records)
 
     # 3. SEED DELIVERIES (6 real French logistics journeys)
     karim = driver_map["Karim Benali"]
@@ -235,7 +250,7 @@ async def seed_demo_data(user: dict = Depends(require_role("admin"))):
             "signature_data": None,
             "distance_km": 132.0,
             "co2_kg": 115.0,
-            "gps_location": None
+            "gps_location": {"lat": 46.7808, "lng": 4.8539}  # Chalon-sur-Saône
         },
         {
             "tracking_id": f"TP-DEMO-06",
@@ -254,9 +269,23 @@ async def seed_demo_data(user: dict = Depends(require_role("admin"))):
             "signature_data": None,
             "distance_km": 145.0,
             "co2_kg": 18.0,
-            "gps_location": None
+            "gps_location": {"lat": 49.8941, "lng": 2.2957}  # Amiens
         }
     ]
+
+    # Pre-cache delivery coordinates so route preview and optimization never wait for Nominatim
+    for d in deliveries_seed:
+        if d.get("gps_location") and d.get("recipient_address"):
+            await db.geocode_cache.update_one(
+                {"address": d["recipient_address"]},
+                {"$set": {
+                    "address": d["recipient_address"],
+                    "lng": d["gps_location"]["lng"],
+                    "lat": d["gps_location"]["lat"],
+                    "cached_at": now,
+                }},
+                upsert=True,
+            )
 
     # Clean existing demo deliveries first
     await db.deliveries.delete_many({"company_id": company_id, "tracking_id": {"$regex": "^TP-DEMO-"}})
