@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useOfflineSync } from '../hooks/useOfflineSync';
 import { deliveriesApi, damageReportsApi, ecoScoresApi, dashboardApi, syncApi, compressPhoto, vehicleInspectionsApi } from '../services/api';
@@ -268,6 +268,28 @@ export const DriverDashboard = () => {
           </div>
         </div>
       </header>
+
+      {/* GPS Status Indicator (CNIL & Labor Law Compliance) */}
+      {deliveries.some(d => d.status === 'in_transit') ? (
+        <div className="mx-4 mt-3 px-3.5 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-between text-xs text-emerald-300 shadow-sm" data-testid="driver-gps-active">
+          <div className="flex items-center gap-2">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+            </span>
+            <span className="font-semibold">Suivi GPS actif · Course en transit</span>
+          </div>
+          <span className="text-[10px] text-zinc-400 font-mono">Conforme CNIL</span>
+        </div>
+      ) : (
+        <div className="mx-4 mt-3 px-3.5 py-1.5 rounded-xl bg-[#1A1A20] border border-[#27272A] flex items-center justify-between text-xs text-zinc-400" data-testid="driver-gps-inactive">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-zinc-500" />
+            <span>GPS en veille (Aucune course en cours)</span>
+          </div>
+          <span className="text-[10px] text-zinc-500 font-mono">Vie privée protégée</span>
+        </div>
+      )}
 
       {/* Stats Bar */}
       <div className="px-4 py-4 grid grid-cols-3 gap-3">

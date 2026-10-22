@@ -283,12 +283,15 @@ async def download_delivery_pdf(tracking_id: str, user: dict = Depends(get_curre
     admin_doc = await db.users.find_one({"_id": ObjectId(admin_id)}) or {}
     logo_b64 = admin_doc.get("logo_base64") or company_doc.get("logo_base64") or ""
 
-    # Resolve driver name
+    # Resolve driver name & vehicle plate
     driver_name = ""
+    vehicle_plate = ""
     if delivery.get("driver_id"):
         try:
             drv = await db.users.find_one({"_id": ObjectId(delivery["driver_id"])})
-            driver_name = (drv or {}).get("name", "")
+            if drv:
+                driver_name = drv.get("name", "")
+                vehicle_plate = drv.get("vehicle_plate", "")
         except Exception:
             driver_name = ""
 
@@ -302,6 +305,7 @@ async def download_delivery_pdf(tracking_id: str, user: dict = Depends(get_curre
         },
         logo_b64=logo_b64,
         driver_name=driver_name,
+        vehicle_plate=vehicle_plate,
     )
 
     await log_action(user["id"], cid, "download_delivery_pdf", "delivery", tracking_id, "PDF rapport opérationnel téléchargé")

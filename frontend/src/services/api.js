@@ -328,4 +328,10 @@ export const demoApi = {
 };
 
 
+// ==================== RGPD COMPLIANCE ====================
+export const rgpdApi = {
+  exportData: () => api.get('/account/export-data'),
+  requestDeletion: () => api.post('/account/delete-request'),
+};
+
 export default api;

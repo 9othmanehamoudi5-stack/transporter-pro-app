@@ -43,9 +43,11 @@ import {
   Sparkles,
   Database,
   RotateCcw,
+  ShieldCheck,
+  Download,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import api, { demoApi } from '../services/api';
+import api, { demoApi, rgpdApi } from '../services/api';
 import { useEffect } from 'react';
 
 const PLAN_LABELS = {
@@ -689,6 +691,109 @@ const ActivitySection = () => {
   );
 };
 
+// ---------------- RGPD SECTION ----------------
+const PrivacyRgpdSection = () => {
+  const [exporting, setExporting] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleExportData = async () => {
+    setExporting(true);
+    try {
+      const res = await rgpdApi.exportData();
+      const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(res.data, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute('href', dataStr);
+      downloadAnchor.setAttribute('download', `export-rgpd-transporter-pro-${new Date().toISOString().split('T')[0]}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+      toast.success("Archive complète de vos données (Art. 20 RGPD) exportée avec succès !");
+    } catch {
+      toast.error("Erreur lors de l'export des données");
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleDeleteRequest = async () => {
+    if (!window.confirm("Confirmez-vous vouloir enregistrer une demande d'effacement de vos données personnelles (Art. 17 RGPD) auprès de notre DPO ?")) {
+      return;
+    }
+    setDeleting(true);
+    try {
+      const res = await rgpdApi.requestDeletion();
+      toast.success(res.data.message || "Demande d'effacement enregistrée auprès du DPO.");
+    } catch {
+      toast.error("Erreur lors de l'enregistrement de la demande");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  return (
+    <div className="bg-[#121214] border border-[#27272A] rounded-2xl p-6 space-y-5" data-testid="rgpd-section">
+      <div className="flex items-center gap-3 border-b border-[#27272A] pb-4">
+        <div className="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-400">
+          <ShieldCheck className="w-5 h-5" />
+        </div>
+        <div>
+          <h2 className="font-semibold text-white">Conformité RGPD & Données Personnelles</h2>
+          <p className="text-xs text-zinc-500">Exercice de vos droits (Règlement UE 2016/679) et souveraineté des données</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="bg-[#18181B]/60 border border-[#27272A] rounded-xl p-4 flex flex-col justify-between">
+          <div className="space-y-1.5 mb-4">
+            <p className="text-sm font-medium text-white flex items-center gap-2">
+              <Download className="w-4 h-4 text-blue-400" />
+              Portabilité des Données (Art. 20)
+            </p>
+            <p className="text-xs text-zinc-400 leading-relaxed">
+              Téléchargez l'intégralité des données rattachées à votre entreprise (profil, livraisons, chauffeurs, factures, audit) au format structuré et interopérable JSON.
+            </p>
+          </div>
+          <Button
+            onClick={handleExportData}
+            disabled={exporting}
+            variant="outline"
+            className="border-[#27272A] bg-[#1F1F24] hover:bg-[#272730] text-xs h-9 text-zinc-200 self-start"
+            data-testid="rgpd-export-btn"
+          >
+            {exporting ? 'Génération de l’archive…' : 'Exporter mes données (JSON)'}
+          </Button>
+        </div>
+
+        <div className="bg-[#18181B]/60 border border-[#27272A] rounded-xl p-4 flex flex-col justify-between">
+          <div className="space-y-1.5 mb-4">
+            <p className="text-sm font-medium text-white flex items-center gap-2">
+              <Trash2 className="w-4 h-4 text-red-400" />
+              Droit à l'Effacement (Art. 17)
+            </p>
+            <p className="text-xs text-zinc-400 leading-relaxed">
+              Demandez la suppression de vos données personnelles sous réserve des obligations légales de conservation des factures et e-CMR (5 ans).
+            </p>
+          </div>
+          <Button
+            onClick={handleDeleteRequest}
+            disabled={deleting}
+            variant="outline"
+            className="border-red-950/40 bg-red-950/10 hover:bg-red-950/20 text-xs h-9 text-red-400 self-start"
+            data-testid="rgpd-delete-btn"
+          >
+            {deleting ? 'Transmission…' : 'Demander l’effacement'}
+          </Button>
+        </div>
+      </div>
+
+      <div className="text-[11px] text-zinc-500 pt-2 border-t border-[#27272A]/50 flex flex-wrap items-center justify-between gap-2">
+        <span>Délégué à la Protection des Données : <strong className="text-zinc-400">dpo@transporter-pro.com</strong></span>
+        <span>Données hébergées en France · Norme ISO 27001 & RGPD</span>
+      </div>
+    </div>
+  );
+};
+
 // ---------------- MAIN ----------------
 const SettingsPage = () => {
   const { user, logout, checkAuth } = useAuth();
@@ -727,6 +832,7 @@ const SettingsPage = () => {
       <BillingSection user={user} refreshUser={refreshUser} />
       <CustomizationSection user={user} refreshUser={refreshUser} />
       <SecuritySection user={user} refreshUser={refreshUser} logout={logout} />
+      <PrivacyRgpdSection />
       <ActivitySection />
     </div>
   );

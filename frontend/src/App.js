@@ -10,9 +10,10 @@ import { ClientPortal, TrackingSearch } from "./pages/ClientPortal";
 import LandingPage from "./pages/LandingPage";
 import NexumHero from "./pages/NexumHero";
 import PaymentSuccessPage from "./pages/PaymentSuccessPage";
-import { CGUPage, ConfidentialitePage, ContactPage } from "./pages/LegalPages";
+import { CGUPage, CGVPage, ConfidentialitePage, ContactPage, MentionsLegalesPage } from "./pages/LegalPages";
 import OnboardingForm from "./pages/OnboardingForm";
 import TransporterBot from "./components/TransporterBot";
+import CookieBanner from "./components/CookieBanner";
 import SubscriptionGate from "./components/SubscriptionGate";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
@@ -161,6 +162,7 @@ function App() {
           <Toaster richColors position="top-right" />
           <TransporterBot />
           <BrowserRouter>
+            <CookieBanner />
             <Routes>
               {/* Public routes */}
               <Route path="/login" element={
@@ -203,7 +205,9 @@ function App() {
               <Route path="/hero" element={<NexumHero />} />
 
               {/* Legal pages */}
+              <Route path="/mentions-legales" element={<MentionsLegalesPage />} />
               <Route path="/cgu" element={<CGUPage />} />
+              <Route path="/cgv" element={<CGVPage />} />
               <Route path="/confidentialite" element={<ConfidentialitePage />} />
               <Route path="/contact" element={<ContactPage />} />
               <Route path="/payment-success" element={<PaymentSuccessPage />} />

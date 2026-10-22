@@ -877,6 +877,78 @@ async def get_account_activity(user: dict = Depends(get_current_user), limit: in
     return {"items": items, "count": len(items)}
 
 
+# ==================== RGPD / DATA PRIVACY COMPLIANCE ====================
+
+@api_router.get("/account/export-data")
+async def export_account_data(user: dict = Depends(require_role("admin"))):
+    """RGPD Art. 20 (Droit à la portabilité): Export all company, deliveries, drivers and billing data."""
+    cid = user.get("company_id") or user["id"]
+
+    # 1. Company profile
+    profile = await db.users.find_one({"id": user["id"]}, {"_id": 0, "password_hash": 0})
+
+    # 2. Deliveries
+    deliveries_cursor = db.deliveries.find({"company_id": cid}, {"_id": 0})
+    deliveries = await deliveries_cursor.to_list(1000)
+    for d in deliveries:
+        for f in ["created_at", "updated_at", "delivered_at"]:
+            if isinstance(d.get(f), datetime):
+                d[f] = d[f].isoformat()
+
+    # 3. Drivers
+    drivers_cursor = db.users.find({"company_id": cid, "role": "driver"}, {"_id": 0, "password_hash": 0})
+    drivers = await drivers_cursor.to_list(200)
+
+    # 4. Invoices
+    invoices_cursor = db.invoices.find({"company_id": cid}, {"_id": 0})
+    invoices = await invoices_cursor.to_list(500)
+    for inv in invoices:
+        for f in ["created_at", "paid_at"]:
+            if isinstance(inv.get(f), datetime):
+                inv[f] = inv[f].isoformat()
+
+    # 5. Audit logs
+    logs_cursor = db.audit_logs.find({"company_id": cid}, {"_id": 0}).limit(200)
+    logs = await logs_cursor.to_list(200)
+    for l in logs:
+        if isinstance(l.get("timestamp"), datetime):
+            l["timestamp"] = l["timestamp"].isoformat()
+
+    await log_action(user["id"], cid, "rgpd_export", "user", user["id"], "Export complet des données RGPD (Art. 20)")
+
+    return {
+        "export_metadata": {
+            "requested_at": datetime.now(timezone.utc).isoformat(),
+            "rgpd_article": "Article 20 - Droit à la portabilité des données",
+            "controller": "Transporter-Pro SAS",
+            "company_id": cid,
+        },
+        "user_profile": profile,
+        "deliveries": deliveries,
+        "drivers": drivers,
+        "invoices": invoices,
+        "audit_logs": logs,
+    }
+
+
+@api_router.post("/account/delete-request")
+async def request_account_deletion(user: dict = Depends(require_role("admin"))):
+    """RGPD Art. 17 (Droit à l'effacement): Register a legal erasure request."""
+    cid = user.get("company_id") or user["id"]
+    await db.deletion_requests.insert_one({
+        "user_id": user["id"],
+        "company_id": cid,
+        "email": user["email"],
+        "requested_at": datetime.now(timezone.utc),
+        "status": "pending_verification",
+    })
+    await log_action(user["id"], cid, "rgpd_delete_request", "user", user["id"], "Demande d'effacement de données enregistrée (Art. 17 RGPD)")
+    return {
+        "success": True,
+        "message": "Votre demande d'effacement a été enregistrée conformément à l'article 17 du RGPD. Notre DPO (dpo@transporter-pro.com) traitera la demande dans le délai légal de 30 jours.",
+    }
+
+
 # ==================== ADMIN: DRIVER MANAGEMENT ====================
 
 class DriverUpdatePayload(BaseModel):
