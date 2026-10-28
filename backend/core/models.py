@@ -123,6 +123,8 @@ class UserPreferences(BaseModel):
     language: Optional[Literal["fr", "en", "es"]] = None
     notification_prefs: Optional[dict] = None
     two_fa_enabled: Optional[bool] = None
+    preferred_view: Optional[Literal["classic", "interactive"]] = None
+    interactive_view_enabled: Optional[bool] = None
 
 
 class LogoUpload(BaseModel):

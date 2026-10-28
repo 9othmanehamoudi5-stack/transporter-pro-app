@@ -34,6 +34,8 @@ import { Toaster, toast } from 'sonner';
 import SubscriptionPage from './SubscriptionPage';
 
 const LiveMapPanel = lazy(() => import('./LiveMapPanel'));
+const ViewSwitcher = lazy(() => import('../components/interactive/ViewSwitcher'));
+const InteractiveHub = lazy(() => import('../components/interactive/InteractiveHub'));
 
 const statusLabels = {
   pending: 'En attente',
@@ -79,6 +81,21 @@ export const AdminDashboard = () => {
   const [firestoreDriversList, setFirestoreDriversList] = useState([]);
   const [inspectionSummary, setInspectionSummary] = useState(null);
   const [seedingDemo, setSeedingDemo] = useState(false);
+
+  // Interactive 3D View Feature Flag & Preferences
+  const isInteractiveAvailable = 
+    process.env.REACT_APP_ENABLE_INTERACTIVE_VIEW !== 'false' && 
+    user?.interactive_view_enabled !== false;
+
+  const [activeView, setActiveView] = useState(
+    user?.preferred_view === 'interactive' && isInteractiveAvailable ? 'interactive' : 'classic'
+  );
+
+  useEffect(() => {
+    if (user?.preferred_view && isInteractiveAvailable) {
+      setActiveView(user.preferred_view);
+    }
+  }, [user?.preferred_view, isInteractiveAvailable]);
 
   const handleSeedDemoData = async () => {
     setSeedingDemo(true);
@@ -428,6 +445,18 @@ export const AdminDashboard = () => {
               </h1>
             </div>
             <div className="flex items-center gap-2">
+              {/* View Switcher: Classic vs 3D Interactive */}
+              {isInteractiveAvailable && (
+                <Suspense fallback={null}>
+                  <ViewSwitcher
+                    currentView={activeView}
+                    onViewChange={(v) => {
+                      setActiveView(v);
+                      if (v === 'interactive') setActiveTab('overview');
+                    }}
+                  />
+                </Suspense>
+              )}
               {/* Language Switcher */}
               <LanguageSwitcher />
               {/* Notifications Bell */}
@@ -467,6 +496,28 @@ export const AdminDashboard = () => {
         </header>
 
         <div className="p-4 lg:p-6 space-y-6">
+          {isInteractiveAvailable && activeView === 'interactive' && activeTab === 'overview' ? (
+            <Suspense fallback={
+              <div className="flex flex-col items-center justify-center min-h-[520px] gap-3 text-zinc-400">
+                <div className="w-10 h-10 border-2 border-[#0066FF] border-t-transparent rounded-full animate-spin" />
+                <p className="text-sm font-medium">Chargement du hub 3D interactif...</p>
+              </div>
+            }>
+              <InteractiveHub
+                deliveries={deliveries}
+                drivers={drivers}
+                stats={stats}
+                cashFlow={cashFlow}
+                invoices={invoices}
+                onRefresh={fetchData}
+                onOpenRevenueModal={() => setShowRevenueModal(true)}
+                onSeedDemoData={handleSeedDemoData}
+                seedingDemo={seedingDemo}
+                onFallbackToClassic={() => setActiveView('classic')}
+              />
+            </Suspense>
+          ) : (
+            <>
           {/* Overview Tab */}
           {activeTab === 'overview' && (
             <>
@@ -1296,6 +1347,8 @@ export const AdminDashboard = () => {
 
           {/* Settings Tab */}
           {activeTab === 'settings' && <SettingsPage />}
+            </>
+          )}
         </div>
       </main>
 
