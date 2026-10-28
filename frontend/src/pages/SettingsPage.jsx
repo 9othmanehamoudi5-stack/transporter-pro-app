@@ -45,6 +45,7 @@ import {
   RotateCcw,
   ShieldCheck,
   Download,
+  Box,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import api, { demoApi, rgpdApi } from '../services/api';
@@ -207,6 +208,7 @@ const CustomizationSection = ({ user, refreshUser }) => {
   const fileRef = useRef(null);
   const [uploading, setUploading] = useState(false);
   const [logo, setLogo] = useState(user?.logo_base64 || '');
+  const [interactiveEnabled, setInteractiveEnabled] = useState(user?.interactive_view_enabled !== false);
   const [prefs, setPrefs] = useState(user?.notification_prefs || {
     new_dispute: true,
     weekly_eco: true,
@@ -216,6 +218,7 @@ const CustomizationSection = ({ user, refreshUser }) => {
   useEffect(() => {
     setLogo(user?.logo_base64 || '');
     if (user?.notification_prefs) setPrefs(user.notification_prefs);
+    if (user?.interactive_view_enabled !== undefined) setInteractiveEnabled(user.interactive_view_enabled !== false);
   }, [user]);
 
   const handleLogoFile = async (e) => {
@@ -256,6 +259,19 @@ const CustomizationSection = ({ user, refreshUser }) => {
     }
   };
 
+
+  const toggleInteractiveView = async () => {
+    const nextVal = !interactiveEnabled;
+    setInteractiveEnabled(nextVal);
+    try {
+      await api.patch('/settings/preferences', { interactive_view_enabled: nextVal });
+      toast.success(nextVal ? 'Vue 3D activée pour votre équipe' : 'Vue 3D désactivée pour votre équipe');
+      refreshUser?.();
+    } catch (err) {
+      toast.error('Erreur lors de la mise à jour');
+      setInteractiveEnabled(!nextVal);
+    }
+  };
   const togglePref = async (key) => {
     const updated = { ...prefs, [key]: !prefs[key] };
     setPrefs(updated);
@@ -332,6 +348,25 @@ const CustomizationSection = ({ user, refreshUser }) => {
             <PrefRow label={t('settings.notifQuota', 'Alerte quota chauffeurs')} desc={t('settings.notifQuotaDesc', 'Quand vous atteignez 80% / 100% de votre quota')} checked={prefs.quota_alert} onChange={() => togglePref('quota_alert')} testid="pref-quota-alert" />
           </div>
         </div>
+        {/* Vue Interactive 3D Flotte (Admin) */}
+        {user?.role === 'admin' && (
+          <div className="border-t border-[#27272A] pt-6">
+            <p className="text-sm text-zinc-300 font-medium mb-1 flex items-center gap-2">
+              <Box className="w-4 h-4 text-[#0066FF]" /> {t('settings.interactiveView', 'Vue interactive 3D de la flotte')}
+            </p>
+            <p className="text-xs text-zinc-500 mb-4">
+              {t('settings.interactiveViewDesc', 'Autoriser les utilisateurs de votre entreprise à basculer entre la vue classique et la vue 3D interactive du dépôt.')}
+            </p>
+            <PrefRow
+              label={t('settings.interactiveViewToggle', "Activer la vue 3D pour l'équipe")}
+              desc={t('settings.interactiveViewToggleDesc', 'Affiche le sélecteur "Classique / Vue 3D" dans la barre supérieure du tableau de bord.')}
+              checked={interactiveEnabled}
+              onChange={toggleInteractiveView}
+              testid="pref-interactive-view"
+            />
+          </div>
+        )}
+
       </div>
     </div>
   );

@@ -334,4 +334,10 @@ export const rgpdApi = {
   requestDeletion: () => api.post('/account/delete-request'),
 };
 
+// ==================== SETTINGS & PREFERENCES ====================
+export const settingsApi = {
+  getPreferences: () => api.get('/settings/preferences'),
+  updatePreferences: (data) => api.patch('/settings/preferences', data),
+};
+
 export default api;
