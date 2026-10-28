@@ -73,6 +73,8 @@ async def get_current_user(request: Request) -> dict:
                 "weekly_eco": True,
                 "quota_alert": True,
             }),
+            "preferred_view": user.get("preferred_view", "classic"),
+            "interactive_view_enabled": user.get("interactive_view_enabled", True),
         }
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token expired")

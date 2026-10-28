@@ -782,6 +782,10 @@ async def update_preferences(data: UserPreferences, user: dict = Depends(get_cur
         update["notification_prefs"] = prefs
     if data.two_fa_enabled is not None:
         update["2fa_enabled"] = bool(data.two_fa_enabled)
+    if data.preferred_view is not None:
+        update["preferred_view"] = data.preferred_view
+    if data.interactive_view_enabled is not None and user.get("role") == "admin":
+        update["interactive_view_enabled"] = data.interactive_view_enabled
 
     if not update:
         return {"message": "No change"}
