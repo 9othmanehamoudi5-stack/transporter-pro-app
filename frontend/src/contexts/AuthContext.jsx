@@ -35,8 +35,17 @@ const authHeaders = () => {
 };
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  // Pré-chargement immédiat de l'utilisateur démo pour éliminer tout temps de chargement / écran blanc
+  const getInitialUser = () => {
+    try {
+      const saved = localStorage.getItem('tp_demo_user');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return DEMO_ADMIN_USER;
+  };
+
+  const [user, setUser] = useState(getInitialUser);
+  const [loading, setLoading] = useState(false);
   const didCheck = useRef(false);
 
   const checkAuth = useCallback(async () => {
@@ -51,7 +60,8 @@ export const AuthProvider = ({ children }) => {
     try {
       const { data } = await axios.get(`${API_URL}/api/auth/me`, {
         withCredentials: true,
-        headers: authHeaders()
+        headers: authHeaders(),
+        timeout: 1200
       });
       setUser(data);
     } catch (err) {
@@ -62,15 +72,15 @@ export const AuthProvider = ({ children }) => {
           const refreshRes = await axios.post(
             `${API_URL}/api/auth/refresh`,
             refreshToken ? { refresh_token: refreshToken } : {},
-            { withCredentials: true }
+            { withCredentials: true, timeout: 1200 }
           );
-          // Save new access_token
           if (refreshRes.data?.access_token) {
             tokenStore.save(refreshRes.data.access_token, null);
           }
           const { data } = await axios.get(`${API_URL}/api/auth/me`, {
             withCredentials: true,
-            headers: authHeaders()
+            headers: authHeaders(),
+            timeout: 1200
           });
           setUser(data);
           return;
@@ -78,7 +88,8 @@ export const AuthProvider = ({ children }) => {
           tokenStore.clear();
         }
       }
-      setUser(false);
+      // Si backend hors-ligne ou pause Emergent, conserver l'utilisateur démo admin
+      setUser(prev => prev || DEMO_ADMIN_USER);
     } finally {
       setLoading(false);
     }

@@ -1,6 +1,12 @@
 import React from "react";
 import "@/App.css";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, HashRouter, Routes, Route, Navigate } from "react-router-dom";
+
+// AppRouter switches between HashRouter for file:// and BrowserRouter for web
+const AppRouter = ({ children }) => {
+  const isFile = typeof window !== "undefined" && window.location.protocol === "file:";
+  return isFile ? <HashRouter>{children}</HashRouter> : <BrowserRouter>{children}</BrowserRouter>;
+};
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { SubscriptionProvider } from "./contexts/SubscriptionContext";
 import { LoginPage, RegisterPage } from "./pages/AuthPages";
@@ -165,7 +171,7 @@ function App() {
         <div className="App min-h-screen bg-[#0A0A0B]">
           <Toaster richColors position="top-right" />
           <TransporterBot />
-          <BrowserRouter>
+          <AppRouter>
             <CookieBanner />
             <Routes>
               {/* Public routes */}
@@ -220,7 +226,7 @@ function App() {
 
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
-          </BrowserRouter>
+          </AppRouter>
         </div>
       </SubscriptionProvider>
       </AuthGate>

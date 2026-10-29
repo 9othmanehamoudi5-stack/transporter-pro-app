@@ -39,6 +39,7 @@ export const compressPhoto = (input, { maxSize = 800, quality = 0.7 } = {}) =>
 const api = axios.create({
   baseURL: `${API_URL}/api`,
   withCredentials: true,
+  timeout: 2500,
   headers: {
     'Content-Type': 'application/json'
   }
