@@ -30,8 +30,12 @@ export const InteractiveHub = ({
   onSeedDemoData,
   seedingDemo = false,
   onFallbackToClassic,
+  onSelectTab,
+  isFullscreen = false,
+  onToggleFullscreen,
 }) => {
   const [selectedTruck, setSelectedTruck] = useState(null);
+  const [leftPanelCollapsed, setLeftPanelCollapsed] = useState(false);
   const [filter, setFilter] = useState('all');
   const [showAccessibleList, setShowAccessibleList] = useState(false);
   const [cameraAction, setCameraAction] = useState(null);
@@ -137,8 +141,19 @@ export const InteractiveHub = ({
 
           <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-700 border border-emerald-500/20 text-xs font-semibold">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span>En direct 10:14</span>
+            <span>Supervision Active</span>
           </div>
+
+          {onToggleFullscreen && (
+            <button
+              onClick={onToggleFullscreen}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-zinc-100 text-zinc-700 border border-zinc-200 text-xs font-semibold shadow-sm transition-all"
+              title={isFullscreen ? "Restaurer le menu latéral" : "Agrandir en plein écran (rétracter le menu)"}
+            >
+              {isFullscreen ? <Minimize2 className="w-4 h-4 text-[#0066FF]" /> : <Maximize2 className="w-4 h-4 text-[#0066FF]" />}
+              <span className="hidden sm:inline">{isFullscreen ? "Réduire" : "Grand Écran"}</span>
+            </button>
+          )}
 
           {onRefresh && (
             <button
@@ -178,19 +193,39 @@ export const InteractiveHub = ({
           onCameraControlHandled={() => setCameraAction(null)}
         />
 
-        {/* PANNEAU FLOTTANT GAUCHE : IDENTITÉ & CHAUFFEURS (Style Novalis) */}
-        <div className="absolute top-4 left-4 z-10 w-72 lg:w-80 max-h-[580px] flex flex-col rounded-3xl bg-white/90 backdrop-blur-xl border border-white/70 shadow-2xl text-zinc-800 p-4 overflow-hidden">
-          {/* Header Entreprise */}
-          <div className="pb-3 border-b border-zinc-100 flex items-start gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#0066FF] to-blue-700 flex items-center justify-center text-white font-black text-base shadow-md">
-              TP
+                {/* PANNEAU FLOTTANT GAUCHE : IDENTITÉ & CHAUFFEURS (Rétractable) */}
+        {leftPanelCollapsed ? (
+          <button
+            onClick={() => setLeftPanelCollapsed(false)}
+            className="absolute top-4 left-4 z-10 px-3.5 py-2.5 rounded-2xl bg-white/95 backdrop-blur-xl border border-white/80 shadow-2xl text-zinc-800 text-xs font-bold flex items-center gap-2 hover:bg-white transition-all"
+            title="Ouvrir le volet flotte"
+          >
+            <div className="w-6 h-6 rounded-lg bg-[#0066FF] flex items-center justify-center text-white text-[11px] font-black">TP</div>
+            <span>Flotte ({activeDriversList.length})</span>
+            <ChevronRight className="w-4 h-4 text-zinc-400" />
+          </button>
+        ) : (
+          <div className="absolute top-4 left-4 z-10 w-72 lg:w-80 max-h-[580px] flex flex-col rounded-3xl bg-white/90 backdrop-blur-xl border border-white/70 shadow-2xl text-zinc-800 p-4 overflow-hidden transition-all">
+            {/* Header Entreprise avec bouton rétracter */}
+            <div className="pb-3 border-b border-zinc-100 flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#0066FF] to-blue-700 flex items-center justify-center text-white font-black text-base shadow-md shrink-0">
+                  TP
+                </div>
+                <div className="flex-1 min-w-0">
+                  <span className="text-[10px] uppercase tracking-wider font-bold text-blue-600 block">Siège • Dépôt A1</span>
+                  <h3 className="font-bold text-sm text-zinc-900 truncate">Transporter-Pro SA</h3>
+                  <p className="text-[11px] text-zinc-500 truncate">Av. des Transports 12, Hub Nord</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setLeftPanelCollapsed(true)}
+                className="p-1.5 rounded-xl hover:bg-zinc-100 text-zinc-400 hover:text-zinc-700 transition-colors shrink-0"
+                title="Rétracter ce volet"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
             </div>
-            <div className="flex-1 min-w-0">
-              <span className="text-[10px] uppercase tracking-wider font-bold text-blue-600 block">Siège • Dépôt A1</span>
-              <h3 className="font-bold text-sm text-zinc-900 truncate">Transporter-Pro SA</h3>
-              <p className="text-[11px] text-zinc-500 truncate">Av. des Transports 12, Hub Nord</p>
-            </div>
-          </div>
 
           {/* Statut ouverture & Jauges rapides */}
           <div className="py-3 border-b border-zinc-100 space-y-2">
@@ -248,6 +283,7 @@ export const InteractiveHub = ({
             ))}
           </div>
         </div>
+        )}
 
         {/* PANNEAU FLOTTANT DROIT : SUPERVISION DU JOUR & KPIS (Style Novalis) */}
         <div className="absolute top-4 right-4 z-10 w-72 lg:w-80 flex flex-col gap-3">

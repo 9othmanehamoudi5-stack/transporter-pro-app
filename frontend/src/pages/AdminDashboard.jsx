@@ -122,6 +122,7 @@ export const AdminDashboard = () => {
   const { t } = useI18n();
   const planInfo = getPlanInfo();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [stats, setStats] = useState(null);
   const [cashFlow, setCashFlow] = useState(null);
@@ -345,10 +346,10 @@ export const AdminDashboard = () => {
   };
 
   const handleMarkNotificationsRead = async () => {
+    setUnreadCount(0);
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
     try {
       await notificationsApi.markRead();
-      setUnreadCount(0);
-      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
     } catch {}
   };
 
@@ -425,29 +426,43 @@ export const AdminDashboard = () => {
         <div className="fixed inset-0 bg-black/60 z-[9998] lg:hidden" onClick={() => setSidebarOpen(false)} />
       )}
 
-      {/* Sidebar */}
-      <aside className={`fixed lg:static inset-y-0 left-0 z-[9999] w-64 bg-[#0A0A0B] border-r border-[#27272A] transform transition-transform lg:transform-none flex flex-col ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
-        <div className="flex items-center gap-3 p-4 border-b border-[#27272A]">
-          <div className="w-10 h-10 bg-[#0066FF] rounded-lg flex items-center justify-center overflow-hidden" data-testid="sidebar-logo">
-            {user?.logo_base64 ? (
-              <img src={user.logo_base64} alt="Logo" className="w-full h-full object-contain bg-white" />
-            ) : (
-              <Truck className="w-6 h-6 text-white" />
+      {/* Sidebar (Rétractable en barre d'icônes ou plein format) */}
+      <aside className={`fixed lg:static inset-y-0 left-0 z-[9999] ${sidebarCollapsed ? 'w-20' : 'w-64'} bg-[#0A0A0B] border-r border-[#27272A] transform transition-all duration-300 lg:transform-none flex flex-col ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+        <div className={`flex items-center ${sidebarCollapsed ? 'justify-center p-3' : 'justify-between p-4'} border-b border-[#27272A]`}>
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 bg-[#0066FF] rounded-lg flex items-center justify-center overflow-hidden shrink-0" data-testid="sidebar-logo">
+              {user?.logo_base64 ? (
+                <img src={user.logo_base64} alt="Logo" className="w-full h-full object-contain bg-white" />
+              ) : (
+                <Truck className="w-6 h-6 text-white" />
+              )}
+            </div>
+            {!sidebarCollapsed && (
+              <div className="flex-1 min-w-0">
+                <span className="font-bold text-lg block truncate">Transporter-Pro</span>
+                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider text-white ${planInfo.color}`} data-testid="plan-badge">
+                  <Crown className="w-3 h-3" />
+                  {planInfo.badge}
+                </span>
+              </div>
             )}
           </div>
-          <div className="flex-1 min-w-0">
-            <span className="font-bold text-lg block">Transporter-Pro</span>
-            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider text-white ${planInfo.color}`} data-testid="plan-badge">
-              <Crown className="w-3 h-3" />
-              {planInfo.badge}
-            </span>
-          </div>
+          
+          {/* Bouton pour rétracter/agrandir le menu latéral */}
+          <button
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            className="hidden lg:flex p-1.5 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors shrink-0"
+            title={sidebarCollapsed ? "Agrandir le menu (Ctrl+B)" : "Rétracter le menu"}
+          >
+            {sidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+          </button>
+          
           <button className="lg:hidden ml-auto" onClick={() => setSidebarOpen(false)}>
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+        <nav className={`flex-1 ${sidebarCollapsed ? 'p-2 space-y-2' : 'p-4 space-y-1'} overflow-y-auto`}>
           {sidebarItems.map((item) => {
             const isLocked = !canAccessPage(item.id);
             return (
@@ -464,19 +479,20 @@ export const AdminDashboard = () => {
                   setSidebarOpen(false);
                 }}
                 data-testid={`nav-${item.id}`}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                title={sidebarCollapsed ? item.label : undefined}
+                className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center py-3' : 'gap-3 px-4 py-3'} rounded-xl transition-all ${
                   activeTab === item.id 
-                    ? 'bg-[#0066FF] text-white' 
+                    ? 'bg-[#0066FF] text-white shadow-lg shadow-blue-500/20' 
                     : isLocked
                       ? 'text-zinc-600 hover:bg-[#1A1A1E] cursor-not-allowed'
                       : 'text-zinc-400 hover:bg-[#1A1A1E] hover:text-white'
                 }`}
               >
-                <item.icon className="w-5 h-5" />
-                <span>{item.label}</span>
-                {isLocked && <Lock className="w-4 h-4 ml-auto text-zinc-600" />}
+                <item.icon className="w-5 h-5 shrink-0" />
+                {!sidebarCollapsed && <span className="truncate">{item.label}</span>}
+                {!sidebarCollapsed && isLocked && <Lock className="w-4 h-4 ml-auto text-zinc-600 shrink-0" />}
                 {!isLocked && item.id === 'litiges' && damageReports.filter(r => r.ai_analysis?.is_damaged).length > 0 && (
-                  <span className="ml-auto w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                  <span className={`${sidebarCollapsed ? 'absolute top-2 right-2' : 'ml-auto'} w-2 h-2 rounded-full bg-red-500 animate-pulse`} />
                 )}
               </button>
             );
@@ -572,7 +588,7 @@ export const AdminDashboard = () => {
           </div>
         </header>
 
-        <div className="p-4 lg:p-6 space-y-6">
+        <div className={isInteractiveAvailable && activeView === 'interactive' && activeTab === 'overview' ? 'p-2 lg:p-3 w-full' : 'p-4 lg:p-6 space-y-6'}>
           {isInteractiveAvailable && activeView === 'interactive' && activeTab === 'overview' ? (
             <Suspense fallback={
               <div className="flex flex-col items-center justify-center min-h-[520px] gap-3 text-zinc-400">
@@ -591,6 +607,9 @@ export const AdminDashboard = () => {
                 onSeedDemoData={handleSeedDemoData}
                 seedingDemo={seedingDemo}
                 onFallbackToClassic={() => setActiveView('classic')}
+                onSelectTab={(tabId) => setActiveTab(tabId)}
+                isFullscreen={sidebarCollapsed}
+                onToggleFullscreen={() => setSidebarCollapsed(!sidebarCollapsed)}
               />
             </Suspense>
           ) : (

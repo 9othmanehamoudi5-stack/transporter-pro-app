@@ -159,9 +159,10 @@ export const Scene3D = ({
           }
 
           // Déplacement des camions en transit sur la route au premier plan
+                    // Déplacement fluide des camions en transit sur la voie libre de la route
           if (truck.userData.status === 'in_transit' && truck.userData.startX !== undefined) {
             truck.position.x += 0.08;
-            if (truck.position.x > 50) truck.position.x = -50;
+            if (truck.position.x > 55) truck.position.x = -55;
           }
         });
       }
@@ -243,23 +244,33 @@ export const Scene3D = ({
         idIndex: index,
       });
 
-      if (item.status === 'pending' || item.status === 'assigned') {
-        // Camion au quai de l'entrepôt (à droite du bâtiment, cabine orientée vers l'avant)
-        const x = 32 + (dockIndex * 9);
-        truck.position.set(x, 0, -22);
-        truck.rotation.y = 0;
+            if (item.status === 'pending' || item.status === 'assigned' || item.status === 'dock') {
+        // Camions adossés aux quais de l'entrepôt (zone droite de la maquette, orientés vers l'avant)
+        const dockSlots = [
+          { x: 30, z: 15, rot: 0 },
+          { x: 40, z: 15, rot: 0 },
+          { x: 49, z: 15, rot: 0 }
+        ];
+        const slot = dockSlots[dockIndex % dockSlots.length];
+        truck.position.set(slot.x, 0, slot.z);
+        truck.rotation.y = slot.rot;
         dockIndex++;
       } else if (item.status === 'in_transit') {
-        // Camion en circulation sur la route au premier plan
-        truck.userData.startX = -35 + inTransitIndex * 35;
-        truck.position.set(truck.userData.startX, 0, 32);
+        // Camion en circulation fluide sur la voie de roulement dégagée (Z = 35, ne croise aucune voiture)
+        truck.userData.startX = -48 + inTransitIndex * 42;
+        truck.position.set(truck.userData.startX, 0, 35);
         truck.rotation.y = Math.PI / 2; // Roulant vers la droite
         inTransitIndex++;
       } else {
-        // Camion en attente stationné
-        const x = -40 + parkIndex * 14;
-        truck.position.set(x, 0, 16);
-        truck.rotation.y = -Math.PI / 3;
+        // Camions stationnés dans le parc poids-lourds extérieur (à gauche, complètement à l'extérieur des bureaux)
+        const yardSlots = [
+          { x: -52, z: -6, rot: Math.PI / 2 },
+          { x: -52, z: 4, rot: Math.PI / 2 },
+          { x: -52, z: 14, rot: Math.PI / 2 }
+        ];
+        const slot = yardSlots[parkIndex % yardSlots.length];
+        truck.position.set(slot.x, 0, slot.z);
+        truck.rotation.y = slot.rot;
         parkIndex++;
       }
 

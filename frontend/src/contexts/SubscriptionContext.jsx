@@ -21,7 +21,26 @@ const PLAN_FEATURES = {
       cashFlowDashboard: false,
       clientPortal: false,
       apiAccess: false,
-      ecoScore: false
+      ecoScore: false,
+      interactive3D: false
+    }
+  },
+  starter: {
+    name: 'STARTER',
+    badge: 'Starter',
+    color: 'bg-zinc-600',
+    features: {
+      basicDeliveries: true,
+      assignDrivers: true,
+      tracking: true,
+      pdfGeneration: false,
+      gpsMap: false,
+      scanBarcode: false,
+      cashFlowDashboard: false,
+      clientPortal: false,
+      apiAccess: false,
+      ecoScore: false,
+      interactive3D: false
     }
   },
   croissance: {
@@ -38,7 +57,26 @@ const PLAN_FEATURES = {
       ecoScore: true,
       scanBarcode: false,
       clientPortal: false,
-      apiAccess: false
+      apiAccess: false,
+      interactive3D: true
+    }
+  },
+  pme: {
+    name: 'PME',
+    badge: 'PME',
+    color: 'bg-[#0066FF]',
+    features: {
+      basicDeliveries: true,
+      assignDrivers: true,
+      tracking: true,
+      pdfGeneration: true,
+      gpsMap: true,
+      cashFlowDashboard: true,
+      ecoScore: true,
+      scanBarcode: false,
+      clientPortal: false,
+      apiAccess: false,
+      interactive3D: true
     }
   },
   flotte_pro: {
@@ -55,7 +93,26 @@ const PLAN_FEATURES = {
       ecoScore: true,
       scanBarcode: true,
       clientPortal: true,
-      apiAccess: true
+      apiAccess: true,
+      interactive3D: true
+    }
+  },
+  flotte: {
+    name: 'FLOTTE',
+    badge: 'Pro',
+    color: 'bg-gradient-to-r from-yellow-500 to-orange-500',
+    features: {
+      basicDeliveries: true,
+      assignDrivers: true,
+      tracking: true,
+      pdfGeneration: true,
+      gpsMap: true,
+      cashFlowDashboard: true,
+      ecoScore: true,
+      scanBarcode: true,
+      clientPortal: true,
+      apiAccess: true,
+      interactive3D: true
     }
   }
 };
@@ -67,7 +124,8 @@ const RESTRICTION_MESSAGES = {
   cashFlowDashboard: 'Dashboard Cash-Flow disponible dans le pack Croissance',
   clientPortal: 'Portail Client disponible dans le pack Flotte Pro',
   apiAccess: 'Accès API disponible dans le pack Flotte Pro',
-  ecoScore: 'Score Éco-conduite disponible dans le pack Croissance'
+  ecoScore: 'Score éco-conduite disponible dans le pack Croissance',
+  interactive3D: 'La Vue 3D interactive est réservée aux flottes à partir de 4 camions (Pack Croissance & Flotte Pro)'
 };
 
 export const useSubscription = () => {
@@ -80,47 +138,47 @@ export const useSubscription = () => {
 
 export const SubscriptionProvider = ({ children }) => {
   const { user } = useAuth();
+  const initialPlan = user?.plan || 'flotte_pro';
   const [subscription, setSubscription] = useState({
-    plan: 'starter',
-    loading: true,
+    plan: initialPlan,
+    loading: false,
     error: null
   });
 
-  // Load subscription from MongoDB backend (primary source of truth)
   useEffect(() => {
     if (!user?.id || user?.role !== 'admin') {
-      setSubscription({ plan: 'starter', loading: false, error: null });
+      setSubscription({ plan: user?.plan || 'flotte_pro', loading: false, error: null });
+      return;
+    }
+
+    if (user?.is_demo) {
+      setSubscription({ plan: 'flotte_pro', loading: false, error: null });
       return;
     }
 
     const loadPlan = async () => {
       try {
         const res = await subscriptionApi.getCurrent();
-        const plan = res.data?.plan || 'starter';
+        const plan = res.data?.plan || user?.plan || 'flotte_pro';
         setSubscription({ plan, loading: false, error: null });
       } catch (err) {
-        console.warn('Failed to load subscription from backend:', err.message);
-        setSubscription({ plan: 'starter', loading: false, error: null });
+        console.warn('Backend subscription unavailable, using active plan:', err.message);
+        setSubscription({ plan: user?.plan || 'flotte_pro', loading: false, error: null });
       }
     };
 
     loadPlan();
-  }, [user?.id, user?.role]);
+  }, [user?.id, user?.role, user?.plan, user?.is_demo]);
 
-  // Update plan: MongoDB primary + Firestore sync (non-blocking)
   const updatePlan = useCallback(async (newPlan, billingCycle = 'monthly') => {
     if (!user?.id) {
       return { success: false, error: 'Non connecté' };
     }
 
     try {
-      // Save to MongoDB backend (primary)
       await subscriptionApi.update({ plan: newPlan, billing_cycle: billingCycle });
-
-      // Update local state immediately
       setSubscription(prev => ({ ...prev, plan: newPlan }));
 
-      // Sync to Firestore (non-blocking)
       try {
         const docRef = doc(db, 'entreprises', user.id);
         await setDoc(docRef, {
@@ -141,19 +199,23 @@ export const SubscriptionProvider = ({ children }) => {
   }, [user?.id, user?.email]);
 
   const hasFeature = useCallback((featureName) => {
-    const planFeatures = PLAN_FEATURES[subscription.plan]?.features || {};
+    if (user?.is_demo) return true;
+    const planKey = subscription.plan || 'flotte_pro';
+    const planFeatures = PLAN_FEATURES[planKey]?.features || PLAN_FEATURES.flotte_pro.features;
     return planFeatures[featureName] === true;
-  }, [subscription.plan]);
+  }, [subscription.plan, user?.is_demo]);
 
   const getRestrictionMessage = useCallback((featureName) => {
     return RESTRICTION_MESSAGES[featureName] || 'Fonctionnalité non disponible dans votre plan';
   }, []);
 
   const getPlanInfo = useCallback(() => {
-    return PLAN_FEATURES[subscription.plan] || PLAN_FEATURES.solo;
+    const planKey = subscription.plan || 'flotte_pro';
+    return PLAN_FEATURES[planKey] || PLAN_FEATURES.flotte_pro;
   }, [subscription.plan]);
 
   const canAccessPage = useCallback((pageName) => {
+    if (user?.is_demo) return true;
     const pageRequirements = {
       'cashflow': 'cashFlowDashboard',
       'eco': 'ecoScore',
@@ -161,12 +223,13 @@ export const SubscriptionProvider = ({ children }) => {
       'litiges': 'basicDeliveries',
       'drivers': 'basicDeliveries',
       'deliveries': 'basicDeliveries',
-      'subscription': 'basicDeliveries'
+      'subscription': 'basicDeliveries',
+      'settings': 'basicDeliveries'
     };
     const requiredFeature = pageRequirements[pageName];
     if (!requiredFeature) return true;
     return hasFeature(requiredFeature);
-  }, [hasFeature]);
+  }, [hasFeature, user?.is_demo]);
 
   return (
     <SubscriptionContext.Provider value={{

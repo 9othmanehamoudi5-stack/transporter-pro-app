@@ -567,8 +567,9 @@ export const createCompleteDiorama = () => {
 
   // 5. EXTÉRIEUR : VÉHICULES, ARBRES & PARC DE STATIONNEMENT
   // Voitures berlines garées sur la rue
-  diorama.add(createMiniatureCar(DIORAMA_THEME.carBlue, -36, 33, Math.PI / 2));
-  diorama.add(createMiniatureCar(DIORAMA_THEME.carOrange, -12, 33, Math.PI / 2));
+  // Voitures berlines garées sur des emplacements dédiés hors de la voie de circulation des camions
+  diorama.add(createMiniatureCar(DIORAMA_THEME.carBlue, -38, 23, 0));
+  diorama.add(createMiniatureCar(DIORAMA_THEME.carOrange, -24, 23, 0));
 
   // Arbres décoratifs tout autour (style low-poly cloud trees)
   const treePositions = [
