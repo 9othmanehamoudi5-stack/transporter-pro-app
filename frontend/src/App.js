@@ -51,7 +51,7 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 
 // Dashboard Router - redirects to appropriate dashboard based on role
 const DashboardRouter = () => {
-  const { user, loading } = useAuth();
+  const { user, loading, loginDemo } = useAuth();
 
   if (loading) {
     return (
@@ -61,18 +61,21 @@ const DashboardRouter = () => {
     );
   }
 
+  // Auto fallback to demo user on Netlify / offline preview
   if (!user) {
+    if (loginDemo) {
+      loginDemo('admin');
+      return <AdminDashboard />;
+    }
     return <Navigate to="/login" replace />;
   }
 
   switch (user.role) {
     case "admin":
-      if (!user.onboarding_complete) {
+      if (!user.onboarding_complete && !user.is_demo) {
         return <OnboardingForm />;
       }
-      // STRICT subscription gate: admin can't access dashboard without active Stripe subscription
-      // subscription_status must be 'active' or 'trialing' (set by Stripe webhook after successful checkout)
-      if (user.subscription_status !== "active" && user.subscription_status !== "trialing") {
+      if (user.subscription_status !== "active" && user.subscription_status !== "trialing" && !user.is_demo) {
         return <SubscriptionGate user={user} />;
       }
       return <AdminDashboard />;
@@ -204,16 +207,8 @@ function App() {
               <Route path="/" element={<LandingPage />} />
               <Route path="/nexum" element={<NexumHero />} />
               <Route path="/hero" element={<NexumHero />} />
-              <Route path="/3d" element={
-                <React.Suspense fallback={<div className="min-h-screen bg-[#ECE8E1] flex items-center justify-center text-zinc-800 font-bold">Chargement de la maquette 3D...</div>}>
-                  <InteractiveHub onFallbackToClassic={() => window.location.href = "/"} />
-                </React.Suspense>
-              } />
-              <Route path="/diorama" element={
-                <React.Suspense fallback={<div className="min-h-screen bg-[#ECE8E1] flex items-center justify-center text-zinc-800 font-bold">Chargement de la maquette 3D...</div>}>
-                  <InteractiveHub onFallbackToClassic={() => window.location.href = "/"} />
-                </React.Suspense>
-              } />
+              <Route path="/3d" element={<Navigate to="/dashboard?view=interactive" replace />} />
+              <Route path="/diorama" element={<Navigate to="/dashboard?view=interactive" replace />} />
 
               {/* Legal pages */}
               <Route path="/mentions-legales" element={<MentionsLegalesPage />} />

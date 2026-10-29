@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
-import { Truck, AlertCircle, Eye, EyeOff, KeyRound } from 'lucide-react';
+import { Truck, AlertCircle, Eye, EyeOff, KeyRound, Sparkles } from 'lucide-react';
 
 export const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -15,8 +15,13 @@ export const LoginPage = () => {
   // 2FA challenge state
   const [twoFaToken, setTwoFaToken] = useState('');
   const [twoFaCode, setTwoFaCode] = useState('');
-  const { login, verify2FA } = useAuth();
+  const { login, verify2FA, loginDemo } = useAuth();
   const navigate = useNavigate();
+
+  const handleDemoLogin = () => {
+    if (loginDemo) loginDemo('admin');
+    navigate('/dashboard?view=interactive');
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -136,6 +141,24 @@ export const LoginPage = () => {
                 </div>
                 <Button type="submit" disabled={loading} data-testid="login-submit-btn" className="w-full h-12 bg-[#0066FF] hover:bg-[#0052CC] text-white font-semibold">
                   {loading ? 'Connexion...' : 'Se connecter'}
+                </Button>
+
+                <div className="relative my-4">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-[#27272A]" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-[#121214] px-2 text-zinc-500 font-medium">mode direct</span>
+                  </div>
+                </div>
+
+                <Button
+                  type="button"
+                  onClick={handleDemoLogin}
+                  className="w-full h-12 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-700 hover:to-indigo-800 text-white font-semibold flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20 border border-blue-400/30"
+                >
+                  <Sparkles className="w-5 h-5 text-amber-300" />
+                  Accéder au Tableau de Bord (Mode Démo)
                 </Button>
               </form>
 

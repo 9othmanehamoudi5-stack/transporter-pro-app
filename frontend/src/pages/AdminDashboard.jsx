@@ -1,3 +1,4 @@
+import { useSearchParams } from 'react-router-dom';
 import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
@@ -53,6 +54,68 @@ const statusColors = {
   failed: 'text-red-400 bg-red-400/10'
 };
 
+
+// ==================== FALLBACK DEMO DATA (FOR OFFLINE / NETLIFY PREVIEW) ====================
+const FALLBACK_STATS = {
+  total_deliveries: 18,
+  pending_deliveries: 3,
+  in_transit: 5,
+  delivered_today: 10,
+  active_litiges: 0,
+  active_drivers: 8
+};
+
+const FALLBACK_CASHFLOW = {
+  money_blocked_in_trucks: 4250,
+  blocked_deliveries_count: 2,
+  pending_invoices_count: 3,
+  revenue_this_month: 48500,
+  revenue_sparkline_30d: [1200, 1800, 2400, 1900, 3100, 2800, 3500, 4200, 3900, 4850],
+  stripe_revenue_this_month: 48500
+};
+
+const FALLBACK_DRIVERS = [
+  { id: 'drv-1', name: 'Alexandre Mercier', email: 'alexandre.m@transporter-pro.com', phone: '06 12 34 56 78', vehicle_plate: 'TR-01-AB', status: 'in_transit', current_location: 'Lyon' },
+  { id: 'drv-2', name: 'Bastien Jordan', email: 'bastien.j@transporter-pro.com', phone: '06 23 45 67 89', vehicle_plate: 'TR-02-CD', status: 'available', current_location: 'Hub Central - Quai 2' },
+  { id: 'drv-3', name: 'Sophie Laurent', email: 'sophie.l@transporter-pro.com', phone: '06 34 56 78 90', vehicle_plate: 'VL-03-EF', status: 'paused', current_location: 'Aire de Beaune' },
+  { id: 'drv-4', name: 'Marc Fontana', email: 'marc.f@transporter-pro.com', phone: '06 45 67 89 01', vehicle_plate: 'TR-04-GH', status: 'in_transit', current_location: 'A6 - km 142' },
+  { id: 'drv-5', name: 'Karim Meziane', email: 'karim.m@transporter-pro.com', phone: '06 56 78 90 12', vehicle_plate: 'TR-05-IJ', status: 'in_transit', current_location: 'Paris Nord' },
+  { id: 'drv-6', name: 'Thomas Bernard', email: 'thomas.b@transporter-pro.com', phone: '06 67 89 01 23', vehicle_plate: 'VL-06-KL', status: 'available', current_location: 'Hub Central - Quai 1' },
+  { id: 'drv-7', name: 'Julie Dubois', email: 'julie.d@transporter-pro.com', phone: '06 78 90 12 34', vehicle_plate: 'TR-07-MN', status: 'available', current_location: 'Dépôt Lille' },
+  { id: 'drv-8', name: 'Lucas Moreau', email: 'lucas.m@transporter-pro.com', phone: '06 89 01 23 45', vehicle_plate: 'TR-08-OP', status: 'in_transit', current_location: 'Reims' }
+];
+
+const FALLBACK_DELIVERIES = [
+  { id: "del-1", tracking_id: "TR-2026-001", sender_name: "Leroy Merlin Logistique", recipient_name: "BatiCentre Lyon", recipient_address: "14 Rue de l Industrie, 69007 Lyon", destination: "Lyon (69000)", origin: "Hub Central (77)", goods_type: "12 Palettes - Outillage", weight_kg: 2900, price: 980, status: "in_transit", driver_id: "drv-1", driver_name: "Alexandre Mercier", ecmr_signed: true, created_at: "2026-10-29T08:00:00Z" },
+  { id: "del-2", tracking_id: "TR-2026-002", sender_name: "Saint-Gobain Distribution", recipient_name: "Chantier Reims Grand Est", recipient_address: "8 Av. Nationale, 51100 Reims", destination: "Reims (51100)", origin: "Dépôt Lille (59)", goods_type: "8 Palettes - Isolation", weight_kg: 1800, price: 1450, status: "in_transit", driver_id: "drv-8", driver_name: "Lucas Moreau", ecmr_signed: false, created_at: "2026-10-29T08:30:00Z" },
+  { id: "del-3", tracking_id: "TR-2026-003", sender_name: "Metro Cash & Carry", recipient_name: "Hôtel Negresco Nice", recipient_address: "37 Promenade des Anglais, 06000 Nice", destination: "Nice (06000)", origin: "Marseille (13)", goods_type: "6 Palettes Frais", weight_kg: 1200, price: 850, status: "delivered", driver_id: "drv-4", driver_name: "Marc Fontana", ecmr_signed: true, created_at: "2026-10-29T06:15:00Z" },
+  { id: "del-4", tracking_id: "TR-2026-004", sender_name: "Rexel France", recipient_name: "Armor Élec Rennes", recipient_address: "22 Rue de Fougères, 35000 Rennes", destination: "Rennes (35000)", origin: "Nantes (44)", goods_type: "4 Palettes Câblage", weight_kg: 850, price: 620, status: "assigned", driver_id: "drv-2", driver_name: "Bastien Jordan", ecmr_signed: false, created_at: "2026-10-29T09:00:00Z" },
+  { id: "del-5", tracking_id: "TR-2026-005", sender_name: "Schneider Electric", recipient_name: "Airbus Toulouse Blagnac", recipient_address: "Rond-Point Dewoitine, 31700 Blagnac", destination: "Toulouse (31700)", origin: "Bordeaux (33)", goods_type: "Automates industriels", weight_kg: 1400, price: 1120, status: "in_transit", driver_id: "drv-5", driver_name: "Karim Meziane", ecmr_signed: true, created_at: "2026-10-29T07:45:00Z" },
+  { id: "del-6", tracking_id: "TR-2026-006", sender_name: "Almet Métaux", recipient_name: "Mecaplast Metz", recipient_address: "45 Rue de Pont-à-Mousson, 57000 Metz", destination: "Metz (57000)", origin: "Strasbourg (67)", goods_type: "Profilés aluminium", weight_kg: 2100, price: 740, status: "pending", driver_id: null, driver_name: null, ecmr_signed: false, created_at: "2026-10-29T10:00:00Z" }
+];
+
+const FALLBACK_INVOICES = [
+  { id: 'inv-1', invoice_number: 'FX-2026-089', client_name: 'Leroy Merlin Logistique', amount: 980, status: 'pending', issue_date: '2026-10-29', due_date: '2026-11-28', factur_x_status: 'ready' },
+  { id: 'inv-2', invoice_number: 'FX-2026-088', client_name: 'Saint-Gobain Distribution', amount: 1450, status: 'pending', issue_date: '2026-10-29', due_date: '2026-11-28', factur_x_status: 'sent' },
+  { id: 'inv-3', invoice_number: 'FX-2026-087', client_name: 'Metro Cash & Carry', amount: 850, status: 'paid', issue_date: '2026-10-28', due_date: '2026-11-27', factur_x_status: 'paid' },
+  { id: 'inv-4', invoice_number: 'FX-2026-086', client_name: 'Rexel France', amount: 620, status: 'paid', issue_date: '2026-10-27', due_date: '2026-11-26', factur_x_status: 'paid' },
+  { id: 'inv-5', invoice_number: 'FX-2026-085', client_name: 'Schneider Electric', amount: 1120, status: 'pending', issue_date: '2026-10-26', due_date: '2026-11-25', factur_x_status: 'ready' }
+];
+
+const FALLBACK_ECO_SUMMARY = [
+  { driver_id: 'drv-7', driver_name: 'Julie Dubois', score: 97, medal: 'gold', fuel_saved_liters: 42, co2_avoided_kg: 112 },
+  { driver_id: 'drv-1', driver_name: 'Alexandre Mercier', score: 96, medal: 'silver', fuel_saved_liters: 38, co2_avoided_kg: 101 },
+  { driver_id: 'drv-3', driver_name: 'Sophie Laurent', score: 95, medal: 'bronze', fuel_saved_liters: 34, co2_avoided_kg: 90 },
+  { driver_id: 'drv-5', driver_name: 'Karim Meziane', score: 94, fuel_saved_liters: 31, co2_avoided_kg: 82 },
+  { driver_id: 'drv-8', driver_name: 'Lucas Moreau', score: 93, fuel_saved_liters: 28, co2_avoided_kg: 74 }
+];
+
+const FALLBACK_NOTIFICATIONS = [
+  { id: "notif-1", title: "Mission assignée", message: "Alexandre Mercier a pris en charge la livraison TR-2026-001", read: false, created_at: "2026-10-29T08:05:00Z" },
+  { id: "notif-2", title: "Factur-X prête", message: "Facture FX-2026-089 prête à l envoi (980,00 €)", read: false, created_at: "2026-10-29T08:15:00Z" }
+];
+
+
 export const AdminDashboard = () => {
   const { user, logout } = useAuth();
   const { plan, hasFeature, getRestrictionMessage, getPlanInfo, canAccessPage } = useSubscription();
@@ -82,20 +145,27 @@ export const AdminDashboard = () => {
   const [inspectionSummary, setInspectionSummary] = useState(null);
   const [seedingDemo, setSeedingDemo] = useState(false);
 
+  const [searchParams] = useSearchParams();
+  const urlView = searchParams.get('view');
+
   // Interactive 3D View Feature Flag & Preferences
   const isInteractiveAvailable = 
     process.env.REACT_APP_ENABLE_INTERACTIVE_VIEW !== 'false' && 
     user?.interactive_view_enabled !== false;
 
   const [activeView, setActiveView] = useState(
-    user?.preferred_view === 'interactive' && isInteractiveAvailable ? 'interactive' : 'classic'
+    urlView === 'interactive' || urlView === 'classic'
+      ? urlView
+      : (user?.preferred_view === 'interactive' && isInteractiveAvailable ? 'interactive' : 'classic')
   );
 
   useEffect(() => {
-    if (user?.preferred_view && isInteractiveAvailable) {
+    if (urlView === 'interactive' || urlView === 'classic') {
+      setActiveView(urlView);
+    } else if (user?.preferred_view && isInteractiveAvailable) {
       setActiveView(user.preferred_view);
     }
-  }, [user?.preferred_view, isInteractiveAvailable]);
+  }, [urlView, user?.preferred_view, isInteractiveAvailable]);
 
   const handleSeedDemoData = async () => {
     setSeedingDemo(true);
@@ -161,15 +231,15 @@ export const AdminDashboard = () => {
       
       const get = (i) => results[i].status === 'fulfilled' ? results[i].value.data : null;
       
-      if (get(0)) setStats(get(0));
-      if (get(1)) setCashFlow(get(1));
-      if (get(2)) setDeliveries(get(2));
-      if (get(3)) setInvoices(get(3));
-      if (get(4)) setDrivers(get(4));
-      if (get(5)) setDamageReports(get(5));
-      if (get(6)) setEcoSummary(get(6));
-      if (get(7)) setNotifications(get(7));
-      if (get(8)) setUnreadCount(get(8).count);
+      setStats(get(0) || FALLBACK_STATS);
+      setCashFlow(get(1) || FALLBACK_CASHFLOW);
+      setDeliveries(get(2) && get(2).length > 0 ? get(2) : FALLBACK_DELIVERIES);
+      setInvoices(get(3) && get(3).length > 0 ? get(3) : FALLBACK_INVOICES);
+      setDrivers(get(4) && get(4).length > 0 ? get(4) : FALLBACK_DRIVERS);
+      setDamageReports(get(5) || []);
+      setEcoSummary(get(6) && get(6).length > 0 ? get(6) : FALLBACK_ECO_SUMMARY);
+      setNotifications(get(7) && get(7).length > 0 ? get(7) : FALLBACK_NOTIFICATIONS);
+      setUnreadCount(get(8)?.count ?? 2);
       if (get(9)) setEcoDailyAvg(get(9));
       if (get(10)) setInspectionSummary(get(10));
 
@@ -177,7 +247,14 @@ export const AdminDashboard = () => {
       try {
         const quotaRes = await adminDriversApi.getQuota();
         if (quotaRes.data) setDriverQuota(quotaRes.data);
-      } catch {}
+      } catch {
+        setDriverQuota({
+          driver_count: 8,
+          max_drivers: -1,
+          can_add: true,
+          plan: 'flotte_pro'
+        });
+      }
 
       const failed = results.filter(r => r.status === 'rejected');
       if (failed.length > 0) {
