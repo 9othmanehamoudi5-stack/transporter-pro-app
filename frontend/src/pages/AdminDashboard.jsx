@@ -22,7 +22,8 @@ import {
   Truck, Package, DollarSign, AlertTriangle, Leaf, Users, 
   Clock, CheckCircle, TrendingUp, LogOut, Menu, X,
   Plus, Eye, MapPin, FileText, Shield, RefreshCw, Bell,
-  CreditCard, UserPlus, Trash2, Lock, Crown, Map, Settings as SettingsIcon, Pencil, ClipboardCheck, Sparkles
+  CreditCard, UserPlus, Trash2, Lock, Crown, Map, Settings as SettingsIcon, Pencil, ClipboardCheck, Sparkles,
+  ChevronLeft, ChevronRight
 } from 'lucide-react';
 import {
   Dialog,
@@ -499,26 +500,35 @@ export const AdminDashboard = () => {
           })}
         </nav>
 
-        <div className="p-4 bg-[#0A0A0B] border-t border-[#27272A]">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-full bg-[#1A1A1E] flex items-center justify-center">
-              <span className="text-sm font-medium">{user?.name?.[0]?.toUpperCase()}</span>
+        <div className={`${sidebarCollapsed ? 'p-2' : 'p-4'} bg-[#0A0A0B] border-t border-[#27272A]`}>
+          {!sidebarCollapsed ? (
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-full bg-[#1A1A1E] flex items-center justify-center shrink-0">
+                <span className="text-sm font-medium">{user?.name?.[0]?.toUpperCase()}</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">{user?.name}</p>
+                <p className="text-xs text-zinc-500 truncate">{user?.email}</p>
+              </div>
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">{user?.name}</p>
-              <p className="text-xs text-zinc-500 truncate">{user?.email}</p>
+          ) : (
+            <div className="flex justify-center mb-3" title={`${user?.name || ''} (${user?.email || ''})`}>
+              <div className="w-10 h-10 rounded-full bg-[#1A1A1E] flex items-center justify-center">
+                <span className="text-sm font-medium">{user?.name?.[0]?.toUpperCase()}</span>
+              </div>
             </div>
-          </div>
-          <div className="flex items-center gap-2">
+          )}
+          <div className={`flex items-center ${sidebarCollapsed ? 'flex-col gap-2' : 'gap-2'}`}>
             <ThemeToggle />
             <Button 
               onClick={logout} 
               variant="outline" 
-              className="flex-1 border border-[#27272A] text-zinc-400 hover:text-white hover:bg-[#1A1A1E]"
+              className={`${sidebarCollapsed ? 'w-10 h-10 p-0 justify-center' : 'flex-1'} border border-[#27272A] text-zinc-400 hover:text-white hover:bg-[#1A1A1E]`}
+              title={t('sidebar.logout', 'Déconnexion')}
               data-testid="logout-btn"
             >
-              <LogOut className="w-4 h-4 mr-2" />
-              {t('sidebar.logout', 'Déconnexion')}
+              <LogOut className={`w-4 h-4 ${sidebarCollapsed ? '' : 'mr-2'}`} />
+              {!sidebarCollapsed && t('sidebar.logout', 'Déconnexion')}
             </Button>
           </div>
         </div>

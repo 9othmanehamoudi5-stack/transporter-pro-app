@@ -5,7 +5,7 @@ import AccessibleListView from './AccessibleListView';
 import { 
   Truck, Package, Clock, CheckCircle2, Sparkles, RefreshCw, 
   Plus, Minus, RotateCw, Home, Search, Users, ShieldCheck, 
-  MapPin, ChevronRight, FileText, Phone, Building2 
+  MapPin, ChevronRight, ChevronLeft, Maximize2, Minimize2, FileText, Phone, Building2 
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { deliveriesApi } from '../../services/api';
