@@ -30,6 +30,9 @@ const LandingPage = () => {
             Loi 2026-2027
           </span>
           <span>Préparez votre entreprise à la transition e-CMR & Facturation : <strong className="text-white">30 jours d'essai gratuit sans engagement</strong></span>
+          <a href="/3d" className="inline-flex items-center gap-1 bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-bold px-2.5 py-0.5 rounded text-[11px] ml-2 shadow-sm transition-all">
+            ✨ Maquette 3D Diorama ↗
+          </a>
           <a href="/nexum" className="hidden sm:inline-flex items-center gap-1 bg-white/10 hover:bg-white/20 text-white font-medium px-2 py-0.5 rounded text-[11px] border border-white/20 ml-2 transition-colors">
             ✨ Tester Démo Hero Nexum ↗
           </a>

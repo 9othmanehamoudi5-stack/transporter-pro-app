@@ -8,6 +8,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import DriverDashboard from "./pages/DriverDashboard";
 import { ClientPortal, TrackingSearch } from "./pages/ClientPortal";
 import LandingPage from "./pages/LandingPage";
+const InteractiveHub = React.lazy(() => import("./components/interactive/InteractiveHub"));
 import NexumHero from "./pages/NexumHero";
 import PaymentSuccessPage from "./pages/PaymentSuccessPage";
 import { CGUPage, CGVPage, ConfidentialitePage, ContactPage, MentionsLegalesPage } from "./pages/LegalPages";
@@ -203,6 +204,16 @@ function App() {
               <Route path="/" element={<LandingPage />} />
               <Route path="/nexum" element={<NexumHero />} />
               <Route path="/hero" element={<NexumHero />} />
+              <Route path="/3d" element={
+                <React.Suspense fallback={<div className="min-h-screen bg-[#ECE8E1] flex items-center justify-center text-zinc-800 font-bold">Chargement de la maquette 3D...</div>}>
+                  <InteractiveHub onFallbackToClassic={() => window.location.href = "/"} />
+                </React.Suspense>
+              } />
+              <Route path="/diorama" element={
+                <React.Suspense fallback={<div className="min-h-screen bg-[#ECE8E1] flex items-center justify-center text-zinc-800 font-bold">Chargement de la maquette 3D...</div>}>
+                  <InteractiveHub onFallbackToClassic={() => window.location.href = "/"} />
+                </React.Suspense>
+              } />
 
               {/* Legal pages */}
               <Route path="/mentions-legales" element={<MentionsLegalesPage />} />
