@@ -595,6 +595,15 @@ export const createCompleteDiorama = () => {
  * Cabine blanche étincelante, bandeau bleu officiel, semi-remorque blanche immaculée,
  * roues réalistes et badge holographique.
  */
+/**
+ * Camion Poids-Lourd Réaliste de la Flotte Transporter-Pro (Format Semi-Remorque Européenne 40T)
+ * - Tracteur routier contemporain avec déflecteur aéro de toit, rétroviseurs, calandre détaillée,
+ *   optiques bi-LED, réservoirs alu, sellette d'attelage
+ * - Semi-remorque fourgon/frigorifique avec groupe froid Thermo King, barres anti-encastrement latérales,
+ *   portes arrière battantes à crémones chromées, chevrons rétro-réfléchissants et feux de gabarit
+ * - Essieux tandem réalistes avec jantes alu et bavettes de protection
+ * - Anneau de statut télématique spatial
+ */
 export const createFleetTruck = (data) => {
   const truck = new THREE.Group();
   truck.name = `Truck_${data.tracking_id || data.id}`;
@@ -603,77 +612,301 @@ export const createFleetTruck = (data) => {
   const statusColor = data.status === 'delivered' ? 0x10B981 :
                       data.status === 'in_transit' ? 0x06B6D4 : 0xF59E0B;
 
-  // 1. Cabine tracteur blanc polaire épuré
-  const cabGeo = new THREE.BoxGeometry(3.6, 3.8, 3.6);
-  const cabMat = createClayMat(DIORAMA_THEME.truckCab, { roughness: 0.35 });
-  const cab = new THREE.Mesh(cabGeo, cabMat);
-  cab.position.set(0, 2.6, 4.4);
+  // --- MATÉRIAUX QUALITÉ DIORAMA ARCHITECTURAL ---
+  const cabWhiteMat = createClayMat(DIORAMA_THEME.truckCab, { roughness: 0.25, metalness: 0.05 });
+  const brandBlueMat = createClayMat(DIORAMA_THEME.truckBlue, { roughness: 0.35, metalness: 0.1 });
+  const chassisDarkMat = createClayMat(0x1E293B, { roughness: 0.8, metalness: 0.3 });
+  const glassMat = createClayMat(0x0F172A, { roughness: 0.05, metalness: 0.9 });
+  const chromeMat = createClayMat(0xE2E8F0, { roughness: 0.15, metalness: 0.95 });
+  const rubberMat = createClayMat(0x0F172A, { roughness: 0.9 });
+  const darkTrimMat = createClayMat(0x334155, { roughness: 0.7 });
+  const lightHeadMat = new THREE.MeshBasicMaterial({ color: 0xF8FAFC }); // Phares LED xénon blanc pur
+  const lightAmberMat = new THREE.MeshBasicMaterial({ color: 0xF59E0B });
+  const lightRedMat = new THREE.MeshBasicMaterial({ color: 0xEF4444 });
+
+  // ==========================================
+  // 1. TRACTEUR ROUTIER (Cabine & Châssis)
+  // ==========================================
+  const tractorGroup = new THREE.Group();
+  tractorGroup.position.set(0, 0, 4.4); // Centre du tracteur
+  truck.add(tractorGroup);
+
+  // Châssis longerons acier
+  const tractorChassis = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.5, 5.2), chassisDarkMat);
+  tractorChassis.position.set(0, 0.85, -0.6);
+  tractorGroup.add(tractorChassis);
+
+  // Sellette d'attelage circulaire Jost (5th Wheel)
+  const fifthWheel = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.75, 0.15, 16), chromeMat);
+  fifthWheel.position.set(0, 1.15, -1.8);
+  tractorGroup.add(fifthWheel);
+
+  // Réservoir gazole aluminium brossé (côté gauche)
+  const fuelTank = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 2.2, 16), chromeMat);
+  fuelTank.rotation.x = Math.PI / 2;
+  fuelTank.position.set(-1.45, 0.85, -1.0);
+  tractorGroup.add(fuelTank);
+
+  // Coffre à batteries / réservoir AdBlue (côté droit)
+  const adBlueBox = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.8, 1.8), darkTrimMat);
+  adBlueBox.position.set(1.45, 0.85, -1.0);
+  tractorGroup.add(adBlueBox);
+
+  // Cabine principale (Box contemporaine)
+  const cabGeo = new THREE.BoxGeometry(3.4, 3.2, 2.8);
+  const cab = new THREE.Mesh(cabGeo, cabWhiteMat);
+  cab.position.set(0, 2.7, 0.3);
   cab.castShadow = true;
   cab.receiveShadow = true;
-  truck.add(cab);
+  tractorGroup.add(cab);
 
-  // Pare-brise panoramique teinté noir
-  const glass = new THREE.Mesh(new THREE.BoxGeometry(3.3, 1.5, 0.2), createClayMat(0x0F172A, { roughness: 0.1, metalness: 0.8 }));
-  glass.position.set(0, 3.3, 6.22);
-  truck.add(glass);
+  // Déflecteur de toit aérodynamique incliné
+  const spoilerGeo = new THREE.BoxGeometry(3.2, 0.7, 2.2);
+  const spoiler = new THREE.Mesh(spoilerGeo, cabWhiteMat);
+  spoiler.position.set(0, 4.4, 0.1);
+  spoiler.rotation.x = 0.12; // Pente douce aéro
+  tractorGroup.add(spoiler);
 
-  // Bas de caisse bleu Transporter-Pro
-  const bumper = new THREE.Mesh(new THREE.BoxGeometry(3.7, 1.0, 0.8), createClayMat(DIORAMA_THEME.truckBlue));
-  bumper.position.set(0, 0.9, 5.8);
-  truck.add(bumper);
-
-  // Phares ronds chaleureux
-  [-1.2, 1.2].forEach((hX) => {
-    const light = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.1, 16), new THREE.MeshBasicMaterial({ color: 0xFEF08A }));
-    light.rotation.x = Math.PI / 2;
-    light.position.set(hX, 1.4, 6.22);
-    truck.add(light);
+  // Déflecteurs d'air latéraux d'angle de cabine
+  [-1.75, 1.75].forEach((sideX) => {
+    const sideDeflector = new THREE.Mesh(new THREE.BoxGeometry(0.12, 3.0, 0.6), cabWhiteMat);
+    sideDeflector.position.set(sideX, 2.7, 1.3);
+    tractorGroup.add(sideDeflector);
   });
 
-  // 2. Semi-remorque (Trailer)
-  const trailerGeo = new THREE.BoxGeometry(3.8, 4.2, 10.2);
-  const trailerMat = createClayMat(DIORAMA_THEME.truckTrailer, { roughness: 0.4 });
-  const trailer = new THREE.Mesh(trailerGeo, trailerMat);
-  trailer.position.set(0, 2.9, -2.4);
-  trailer.castShadow = true;
-  trailer.receiveShadow = true;
-  truck.add(trailer);
+  // Pare-brise panoramique teinté
+  const windshield = new THREE.Mesh(new THREE.BoxGeometry(3.1, 1.35, 0.12), glassMat);
+  windshield.position.set(0, 3.1, 1.72);
+  tractorGroup.add(windshield);
 
-  // Bandeau bleu officiel sur le flanc de la remorque
-  const stripe = new THREE.Mesh(new THREE.BoxGeometry(3.85, 0.8, 9.6), createClayMat(DIORAMA_THEME.truckBlue));
-  stripe.position.set(0, 2.9, -2.4);
-  truck.add(stripe);
+  // Casquette pare-soleil extérieure au-dessus du pare-brise
+  const visor = new THREE.Mesh(new THREE.BoxGeometry(3.3, 0.22, 0.4), brandBlueMat);
+  visor.position.set(0, 3.9, 1.8);
+  tractorGroup.add(visor);
 
-  // 3. Roues stylisées avec enjoliveurs
-  const wheelGeo = new THREE.CylinderGeometry(0.8, 0.8, 0.6, 16);
-  const wheelMat = createClayMat(DIORAMA_THEME.wheelRubber);
-  const hubGeo = new THREE.CylinderGeometry(0.4, 0.4, 0.65, 12);
-  const hubMat = createClayMat(DIORAMA_THEME.wheelHub, { metalness: 0.8 });
+  // Vitres latérales gauche et droite
+  [-1.72, 1.72].forEach((sideX) => {
+    const sideWindow = new THREE.Mesh(new THREE.BoxGeometry(0.08, 1.1, 1.4), glassMat);
+    sideWindow.position.set(sideX, 3.1, 0.4);
+    tractorGroup.add(sideWindow);
+  });
 
-  const wheelsCoords = [
-    [-1.8, 4.4], [1.8, 4.4],
-    [-1.8, -3.4], [1.8, -3.4],
-    [-1.8, -5.4], [1.8, -5.4],
+  // Rétroviseurs extérieurs grand-angle avec montants
+  [-1.9, 1.9].forEach((mirrorX) => {
+    const mirrorBracket = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.08, 0.3), darkTrimMat);
+    mirrorBracket.position.set(mirrorX * 0.95, 3.3, 1.4);
+    tractorGroup.add(mirrorBracket);
+
+    const mirror = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.9, 0.35), darkTrimMat);
+    mirror.position.set(mirrorX, 3.1, 1.45);
+    tractorGroup.add(mirror);
+
+    // Face miroir chrome
+    const mirrorFace = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.8), chromeMat);
+    mirrorFace.rotation.y = mirrorX > 0 ? -Math.PI / 2 : Math.PI / 2;
+    mirrorFace.position.set(mirrorX > 0 ? mirrorX - 0.1 : mirrorX + 0.1, 3.1, 1.45);
+    tractorGroup.add(mirrorFace);
+  });
+
+  // Calandre avant (Grille radiateur)
+  const grille = new THREE.Mesh(new THREE.BoxGeometry(2.4, 1.1, 0.12), darkTrimMat);
+  grille.position.set(0, 1.85, 1.72);
+  tractorGroup.add(grille);
+
+  // Baguettes horizontales chromées sur calandre
+  [-0.3, 0.0, 0.3].forEach((slatY) => {
+    const slat = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.06, 0.14), chromeMat);
+    slat.position.set(0, 1.85 + slatY, 1.72);
+    tractorGroup.add(slat);
+  });
+
+  // Logo Badge central Transporter-Pro
+  const badge = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.15, 12), brandBlueMat);
+  badge.rotation.x = Math.PI / 2;
+  badge.position.set(0, 2.05, 1.75);
+  tractorGroup.add(badge);
+
+  // Bouclier pare-chocs avant avec bas de caisse
+  const frontBumper = new THREE.Mesh(new THREE.BoxGeometry(3.5, 0.85, 0.6), cabWhiteMat);
+  frontBumper.position.set(0, 0.85, 1.6);
+  tractorGroup.add(frontBumper);
+
+  // Plaque d'immatriculation française
+  const plate = new THREE.Mesh(new THREE.PlaneGeometry(1.0, 0.22), chromeMat);
+  plate.position.set(0, 0.6, 1.91);
+  tractorGroup.add(plate);
+
+  // Phares bi-LED modernes (feux horizontaux blancs)
+  [-1.25, 1.25].forEach((lightX) => {
+    const lightStrip = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.18, 0.1), lightHeadMat);
+    lightStrip.position.set(lightX, 1.05, 1.88);
+    tractorGroup.add(lightStrip);
+
+    // Clignotant orange d'angle
+    const blinker = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.18, 0.1), lightAmberMat);
+    blinker.position.set(lightX > 0 ? lightX + 0.38 : lightX - 0.38, 1.05, 1.88);
+    tractorGroup.add(blinker);
+  });
+
+  // Marchepieds d'accès cabine sous chaque porte
+  [-1.75, 1.75].forEach((stepX) => {
+    const step = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.08, 0.8), darkTrimMat);
+    step.position.set(stepX, 0.9, 0.6);
+    tractorGroup.add(step);
+  });
+
+  // ==========================================
+  // 2. SEMI-REMORQUE FOURGON 3 ESSIEUX
+  // ==========================================
+  const trailerGroup = new THREE.Group();
+  trailerGroup.position.set(0, 0, -2.4); // Centre remorque
+  truck.add(trailerGroup);
+
+  // Châssis acier porteur de la remorque
+  const trailerChassis = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.5, 10.6), chassisDarkMat);
+  trailerChassis.position.set(0, 0.85, 0);
+  trailerGroup.add(trailerChassis);
+
+  // Caisse fourgon frigorifique
+  const trailerBodyGeo = new THREE.BoxGeometry(3.6, 4.0, 10.4);
+  const trailerBody = new THREE.Mesh(trailerBodyGeo, createClayMat(DIORAMA_THEME.truckTrailer, { roughness: 0.3 }));
+  trailerBody.position.set(0, 2.95, 0);
+  trailerBody.castShadow = true;
+  trailerBody.receiveShadow = true;
+  trailerGroup.add(trailerBody);
+
+  // Groupe frigorifique frontal Thermo King / Carrier
+  const fridgeUnit = new THREE.Mesh(new THREE.BoxGeometry(2.6, 1.8, 0.6), darkTrimMat);
+  fridgeUnit.position.set(0, 3.4, 5.35);
+  trailerGroup.add(fridgeUnit);
+
+  const fridgeVent = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.1, 16), chromeMat);
+  fridgeVent.rotation.x = Math.PI / 2;
+  fridgeVent.position.set(0, 3.5, 5.66);
+  trailerGroup.add(fridgeVent);
+
+  // Voyant statut du groupe froid
+  const fridgeLed = new THREE.Mesh(new THREE.SphereGeometry(0.08, 8, 8), new THREE.MeshBasicMaterial({ color: 0x10B981 }));
+  fridgeLed.position.set(0.9, 3.9, 5.66);
+  trailerGroup.add(fridgeLed);
+
+  // Bandeau dynamique officiel Transporter-Pro sur les deux flancs
+  const brandStripeL = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.9, 9.8), brandBlueMat);
+  brandStripeL.position.set(-1.82, 2.95, 0);
+  trailerGroup.add(brandStripeL);
+
+  const brandStripeR = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.9, 9.8), brandBlueMat);
+  brandStripeR.position.set(1.82, 2.95, 0);
+  trailerGroup.add(brandStripeR);
+
+  // Barres pare-cycliste / protection anti-encastrement latérales (alu)
+  [-1.75, 1.75].forEach((railX) => {
+    const sideRailTop = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 4.4), chromeMat);
+    sideRailTop.position.set(railX, 0.85, 1.2);
+    trailerGroup.add(sideRailTop);
+
+    const sideRailBottom = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 4.4), chromeMat);
+    sideRailBottom.position.set(railX, 0.55, 1.2);
+    trailerGroup.add(sideRailBottom);
+  });
+
+  // Portes arrière battantes avec joints noirs
+  const rearDoorsFrame = new THREE.Mesh(new THREE.BoxGeometry(3.4, 3.8, 0.08), darkTrimMat);
+  rearDoorsFrame.position.set(0, 2.95, -5.22);
+  trailerGroup.add(rearDoorsFrame);
+
+  // Crémones de verrouillage chromées (2 tringles verticales)
+  [-0.6, 0.6].forEach((rodX) => {
+    const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 3.6, 8), chromeMat);
+    rod.position.set(rodX, 2.95, -5.28);
+    trailerGroup.add(rod);
+
+    // Poignées de verrouillage
+    const handle = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.08, 0.1), chromeMat);
+    handle.position.set(rodX, 2.1, -5.32);
+    trailerGroup.add(handle);
+  });
+
+  // Barre anti-encastrement arrière & feux de signalisation
+  const rearBumper = new THREE.Mesh(new THREE.BoxGeometry(3.5, 0.35, 0.25), chassisDarkMat);
+  rearBumper.position.set(0, 0.7, -5.3);
+  trailerGroup.add(rearBumper);
+
+  // Feux arrière combinés (Stop, Clignotant, Recul)
+  [-1.3, 1.3].forEach((lightX) => {
+    const tailLight = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.18, 0.08), lightRedMat);
+    tailLight.position.set(lightX, 0.7, -5.44);
+    trailerGroup.add(tailLight);
+  });
+
+  // Bavettes anti-projection (Mudflaps) arrière
+  [-1.2, 1.2].forEach((flapX) => {
+    const flap = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.5, 0.05), rubberMat);
+    flap.position.set(flapX, 0.45, -4.8);
+    trailerGroup.add(flap);
+  });
+
+  // ==========================================
+  // 3. ENSEMBLE ROUES & ESSIEUX RÉALISTES
+  // ==========================================
+  const wheelTireGeo = new THREE.CylinderGeometry(0.78, 0.78, 0.55, 18);
+  const rimGeo = new THREE.CylinderGeometry(0.46, 0.46, 0.58, 14);
+  const hubCapGeo = new THREE.CylinderGeometry(0.22, 0.22, 0.62, 10);
+
+  const createRealisticWheel = () => {
+    const wGroup = new THREE.Group();
+    // Pneu caoutchouc
+    wGroup.add(new THREE.Mesh(wheelTireGeo, rubberMat));
+    // Jante alu argentée
+    wGroup.add(new THREE.Mesh(rimGeo, chromeMat));
+    // Cache-moyeu central avec écrous
+    wGroup.add(new THREE.Mesh(hubCapGeo, darkTrimMat));
+    return wGroup;
+  };
+
+  // Coordonnées complètes des roues [X, Z relative au truck]
+  // - 2 roues avant tracteur (directionnelles)
+  // - 2 roues motrices arrière tracteur
+  // - 4 roues tandem remorque (2 essieux arrière)
+  const fullWheelsList = [
+    // Tracteur essieu avant
+    { x: -1.65, z: 5.1 }, { x: 1.65, z: 5.1 },
+    // Tracteur essieu moteur
+    { x: -1.65, z: 2.8 }, { x: 1.65, z: 2.8 },
+    // Remorque essieu 1
+    { x: -1.65, z: -4.5 }, { x: 1.65, z: -4.5 },
+    // Remorque essieu 2
+    { x: -1.65, z: -6.2 }, { x: 1.65, z: -6.2 },
   ];
 
-  wheelsCoords.forEach(([wX, wZ]) => {
-    const wheelGroup = new THREE.Group();
-    wheelGroup.position.set(wX, 0.8, wZ);
-    wheelGroup.rotation.z = Math.PI / 2;
-
-    wheelGroup.add(new THREE.Mesh(wheelGeo, wheelMat));
-    wheelGroup.add(new THREE.Mesh(hubGeo, hubMat));
-    truck.add(wheelGroup);
+  fullWheelsList.forEach(({ x, z }) => {
+    const wheel = createRealisticWheel();
+    wheel.position.set(x, 0.78, z);
+    wheel.rotation.z = Math.PI / 2;
+    truck.add(wheel);
   });
 
-  // 4. Anneau holographique flottant
-  const haloGeo = new THREE.TorusGeometry(1.6, 0.12, 10, 24);
-  const haloMat = new THREE.MeshBasicMaterial({ color: statusColor, transparent: true, opacity: 0.9 });
-  const halo = new THREE.Mesh(haloGeo, haloMat);
-  halo.rotation.x = Math.PI / 2;
-  halo.position.set(0, 7.2, 1.0);
-  halo.name = 'Halo';
-  truck.add(halo);
+  // ==========================================
+  // 4. BALISE TÉLÉMATIQUE HOLOGRAPHIQUE LIVE
+  // ==========================================
+  const haloGroup = new THREE.Group();
+  haloGroup.name = 'Halo';
+  haloGroup.position.set(0, 7.3, 1.2);
+
+  const haloRing = new THREE.Mesh(
+    new THREE.TorusGeometry(1.4, 0.1, 10, 24),
+    new THREE.MeshBasicMaterial({ color: statusColor, transparent: true, opacity: 0.85 })
+  );
+  haloRing.rotation.x = Math.PI / 2;
+  haloGroup.add(haloRing);
+
+  const haloBeacon = new THREE.Mesh(
+    new THREE.SphereGeometry(0.3, 12, 12),
+    new THREE.MeshBasicMaterial({ color: statusColor })
+  );
+  haloGroup.add(haloBeacon);
+
+  truck.add(haloGroup);
 
   return truck;
 };

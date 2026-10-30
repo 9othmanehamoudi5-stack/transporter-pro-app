@@ -247,26 +247,27 @@ export const Scene3D = ({
             if (item.status === 'pending' || item.status === 'assigned' || item.status === 'dock') {
         // Camions adossés aux quais de l'entrepôt (zone droite de la maquette, orientés vers l'avant)
         const dockSlots = [
-          { x: 30, z: 15, rot: 0 },
-          { x: 40, z: 15, rot: 0 },
-          { x: 49, z: 15, rot: 0 }
+          { x: 28, z: 20, rot: 0 },
+          { x: 38, z: 20, rot: 0 },
+          { x: 48, z: 20, rot: 0 }
         ];
         const slot = dockSlots[dockIndex % dockSlots.length];
         truck.position.set(slot.x, 0, slot.z);
         truck.rotation.y = slot.rot;
         dockIndex++;
       } else if (item.status === 'in_transit') {
-        // Camion en circulation fluide sur la voie de roulement dégagée (Z = 35, ne croise aucune voiture)
+        // Camion en circulation fluide sur la chaussée centrale (Z = 32, sans croiser les voitures garées)
         truck.userData.startX = -48 + inTransitIndex * 42;
-        truck.position.set(truck.userData.startX, 0, 35);
+        truck.position.set(truck.userData.startX, 0, 32);
         truck.rotation.y = Math.PI / 2; // Roulant vers la droite
         inTransitIndex++;
       } else {
-        // Camions stationnés dans le parc poids-lourds extérieur (à gauche, complètement à l'extérieur des bureaux)
+        // Camions stationnés dans le parc poids-lourds extérieur (à gauche du site)
+        // Garés PARALLÈLE au mur extérieur (rot = 0), à X = -54.5, sans jamais traverser de mur ni chevaucher de voiture
         const yardSlots = [
-          { x: -52, z: -6, rot: Math.PI / 2 },
-          { x: -52, z: 4, rot: Math.PI / 2 },
-          { x: -52, z: 14, rot: Math.PI / 2 }
+          { x: -54.5, z: -8, rot: 0 },
+          { x: -54.5, z: 6, rot: 0 },
+          { x: -54.5, z: 20, rot: 0 }
         ];
         const slot = yardSlots[parkIndex % yardSlots.length];
         truck.position.set(slot.x, 0, slot.z);
