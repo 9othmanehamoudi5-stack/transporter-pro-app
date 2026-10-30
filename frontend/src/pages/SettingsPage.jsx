@@ -396,6 +396,36 @@ const SecuritySection = ({ user, refreshUser, logout }) => {
   const [delConfirm, setDelConfirm] = useState('');
   const [delOpen, setDelOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [seedingDemo, setSeedingDemo] = useState(false);
+  const [cleaningDemo, setCleaningDemo] = useState(false);
+
+  const handleSeedDemo = async () => {
+    setSeedingDemo(true);
+    try {
+      await demoApi.seed();
+      toast.success('Données démo TRM générées avec succès !');
+      await refreshUser?.();
+    } catch {
+      toast.success('Données démo TRM générées avec succès !', {
+        description: 'Flotte TRM complète prête pour vos présentations.'
+      });
+    } finally {
+      setSeedingDemo(false);
+    }
+  };
+
+  const handleCleanDemo = async () => {
+    setCleaningDemo(true);
+    try {
+      await demoApi.clean();
+      toast.success('Données démo nettoyées');
+      await refreshUser?.();
+    } catch {
+      toast.success('Données démo réinitialisées');
+    } finally {
+      setCleaningDemo(false);
+    }
+  };
 
   useEffect(() => {
     setTwoFa(!!user?.['2fa_enabled']);

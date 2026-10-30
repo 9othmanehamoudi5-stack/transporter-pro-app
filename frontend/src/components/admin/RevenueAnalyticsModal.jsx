@@ -384,12 +384,16 @@ export const RevenueAnalyticsModal = ({
                       </td>
                     </tr>
                   ) : (
-                    filteredInvoices.map((inv) => (
-                      <tr key={inv.invoice_id} className="hover:bg-[#1A1A22] transition-colors">
-                        <td className="px-4 py-3 font-mono font-medium text-white">{inv.invoice_id}</td>
+                    filteredInvoices.map((inv) => {
+                    const invId = inv.id || inv.invoice_id || inv.invoice_number;
+                    const invNum = inv.invoice_number || inv.invoice_id || inv.id;
+                    const isPaid = inv.status === 'paid' || inv.factur_x_status === 'paid';
+                    return (
+                      <tr key={invId} className="hover:bg-[#1A1A22] transition-colors">
+                        <td className="px-4 py-3 font-mono font-medium text-white">{invNum}</td>
                         <td className="px-4 py-3">
                           <p className="text-zinc-200 font-medium">{inv.client_name || 'Client e-CMR'}</p>
-                          <p className="text-[11px] font-mono text-zinc-500">{inv.delivery_id}</p>
+                          <p className="text-[11px] font-mono text-zinc-500">{inv.delivery_id || invId}</p>
                         </td>
                         <td className="px-4 py-3 font-mono font-semibold text-white">
                           {(inv.amount || 0).toLocaleString('fr-FR')} €
@@ -397,12 +401,12 @@ export const RevenueAnalyticsModal = ({
                         <td className="px-4 py-3">
                           <span
                             className={`px-2 py-0.5 rounded-full text-[11px] font-medium ${
-                              inv.status === 'paid'
+                              isPaid
                                 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
                                 : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
                             }`}
                           >
-                            {inv.status === 'paid' ? '● Payée' : '⏳ En attente'}
+                            {isPaid ? '● Payée' : '⏳ En attente'}
                           </span>
                         </td>
                         <td className="px-4 py-3 text-right">
@@ -416,16 +420,16 @@ export const RevenueAnalyticsModal = ({
                                   return;
                                 }
                                 generateInvoicePDF(inv);
-                                toast.success(`PDF ${inv.invoice_id} téléchargé`);
+                                toast.success(`PDF ${invNum} téléchargé`);
                               }}
                               className="h-7 text-xs border-[#27272A] bg-[#1A1A1E] text-zinc-300 hover:text-white"
                             >
                               <FileText className="w-3 h-3 mr-1" /> PDF
                             </Button>
-                            {inv.status !== 'paid' && onMarkPaid && (
+                            {!isPaid && onMarkPaid && (
                               <Button
                                 size="sm"
-                                onClick={() => onMarkPaid(inv.invoice_id)}
+                                onClick={() => onMarkPaid(invId)}
                                 className="h-7 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-medium"
                               >
                                 Encaisser
@@ -434,7 +438,8 @@ export const RevenueAnalyticsModal = ({
                           </div>
                         </td>
                       </tr>
-                    ))
+                    );
+                  })
                   )}
                 </tbody>
               </table>
