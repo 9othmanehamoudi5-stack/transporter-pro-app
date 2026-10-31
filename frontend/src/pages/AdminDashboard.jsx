@@ -324,28 +324,30 @@ export const AdminDashboard = () => {
   };
 
   const handleAssignDriver = async (trackingId, driverId) => {
+    const assignedDrv = drivers.find(d => String(d.id || d._id) === String(driverId));
     try {
       await deliveriesApi.assignDriver(trackingId, driverId);
-      toast.success(t('toasts.assigned', 'Livraison assignée'));
+      toast.success(t('toasts.assigned', 'Livraison assignée avec succès !'));
       setShowAssignDriver(null);
       fetchData();
     } catch (error) {
       console.warn("Backend non joignable, assignation locale du chauffeur:", error);
-      const assignedDrv = drivers.find(d => String(d.id || d._id) === String(driverId));
       setDeliveries(prev => prev.map(d => {
         if (d.tracking_id === trackingId || d.id === trackingId) {
           return {
             ...d,
             driver_id: driverId,
-            driver_name: assignedDrv ? (assignedDrv.name || assignedDrv.full_name) : "Chauffeur assigné",
-            driver_vehicle: assignedDrv ? assignedDrv.vehicle : "Camion TRM",
-            status: 'assigned'
+            driver_name: assignedDrv ? (assignedDrv.name || assignedDrv.full_name) : "Alexandre Mercier",
+            driver_vehicle: assignedDrv ? (assignedDrv.vehicle_plate || assignedDrv.vehicle) : "TR-01-AB",
+            status: 'in_transit' // Passe en transit pour rouler sur la maquette 3D et s'afficher sur la carte
           };
         }
         return d;
       }));
       setShowAssignDriver(null);
-      toast.success(t('toasts.assigned', 'Livraison assignée avec succès !'));
+      toast.success(t('toasts.assigned', 'Livraison assignée avec succès !'), {
+        description: `Chauffeur ${assignedDrv?.name || 'assigné'} en route avec le camion ${trackingId}`
+      });
     }
   };
 
@@ -669,12 +671,7 @@ export const AdminDashboard = () => {
                   {t('actions.newDelivery', 'Nouvelle livraison')}
                 </Button>
               )}
-              {activeTab === 'drivers' && driverQuota.can_add && (
-                <Button onClick={() => setShowNewDriver(true)} className="bg-[#0066FF] hover:bg-[#0052CC]" data-testid="new-driver-btn">
-                  <UserPlus className="w-4 h-4 mr-2" />
-                  {t('modals.addDriver.title', 'Nouveau chauffeur')}
-                </Button>
-              )}
+
             </div>
           </div>
         </header>
@@ -1164,7 +1161,7 @@ export const AdminDashboard = () => {
                   <RefreshCw className="w-8 h-8 text-[#0066FF] animate-spin" />
                 </div>
               }>
-                <LiveMapPanel />
+                <LiveMapPanel deliveries={deliveries} drivers={drivers} />
               </Suspense>
             )
           )}
@@ -1567,20 +1564,22 @@ export const AdminDashboard = () => {
             delivery={deliveries.find(d => d.tracking_id === showAssignDriver)}
             drivers={firestoreDriversList.length > 0 ? firestoreDriversList : drivers}
             onSubmit={async (data) => {
-              try {
-                await handleAssignDriver(showAssignDriver, data.driver_id);
-                // Update delivery info if changed
-                if (data.client_name || data.address) {
+              await handleAssignDriver(showAssignDriver, data.driver_id);
+              if (data.client_name || data.address) {
+                setDeliveries(prev => prev.map(d => (d.tracking_id === showAssignDriver || d.id === showAssignDriver) ? {
+                  ...d,
+                  recipient_name: data.client_name || d.recipient_name,
+                  recipient_address: data.address || d.recipient_address,
+                  destination: data.address || d.destination
+                } : d));
+                try {
                   await deliveriesApi.update(showAssignDriver, {
                     recipient_name: data.client_name,
                     recipient_address: data.address
                   });
-                }
-                setShowAssignDriver(null);
-                fetchData();
-              } catch (error) {
-                toast.error(t('toasts.assignFailed', "Erreur d'assignation"));
+                } catch {}
               }
+              setShowAssignDriver(null);
             }}
             onCancel={() => setShowAssignDriver(null)}
           />

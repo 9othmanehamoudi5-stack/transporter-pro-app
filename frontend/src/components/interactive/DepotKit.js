@@ -908,5 +908,88 @@ export const createFleetTruck = (data) => {
 
   truck.add(haloGroup);
 
+  // ==========================================
+  // 5. BADGE D'INFORMATIONS MISSION & CHAUFFEUR
+  // ==========================================
+  try {
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 140;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      // Fond sombre élégant avec bordure lumineuse
+      ctx.fillStyle = 'rgba(10, 10, 14, 0.92)';
+      const r = 20;
+      const bx = 8, by = 8, bw = 496, bh = 124;
+      ctx.beginPath();
+      ctx.moveTo(bx + r, by);
+      ctx.lineTo(bx + bw - r, by);
+      ctx.quadraticCurveTo(bx + bw, by, bx + bw, by + r);
+      ctx.lineTo(bx + bw, by + bh - r);
+      ctx.quadraticCurveTo(bx + bw, by + bh, bx + bw - r, by + bh);
+      ctx.lineTo(bx + r, by + bh);
+      ctx.quadraticCurveTo(bx, by + bh, bx, by + bh - r);
+      ctx.lineTo(bx, by + r);
+      ctx.quadraticCurveTo(bx, by, bx + r, by);
+      ctx.closePath();
+      ctx.fill();
+
+      const hexColor = data.status === 'delivered' ? '#10B981' : (data.status === 'in_transit' ? '#0066FF' : '#F59E0B');
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = hexColor;
+      ctx.stroke();
+
+      // Pastille statut
+      ctx.fillStyle = hexColor;
+      ctx.beginPath();
+      ctx.arc(36, 42, 10, 0, Math.PI * 2);
+      ctx.fill();
+
+      // N° Suivi
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = 'bold 26px monospace, sans-serif';
+      const tracking = data.tracking_id || data.id || 'TR-2026';
+      ctx.fillText(tracking, 56, 50);
+
+      // Statut tag
+      ctx.fillStyle = hexColor;
+      ctx.font = 'bold 18px sans-serif';
+      const statusLabel = data.status === 'in_transit' ? 'EN ROUTE ➔' : (data.status === 'delivered' ? 'LIVRÉ ✓' : 'AU QUAI');
+      ctx.fillText(statusLabel, 340, 50);
+
+      // Séparateur fin
+      ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(24, 68);
+      ctx.lineTo(488, 68);
+      ctx.stroke();
+
+      // Ligne 2 : Chauffeur & Destination
+      ctx.fillStyle = '#E4E4E7';
+      ctx.font = '22px sans-serif';
+      const driver = data.driver_name || 'Alexandre Mercier';
+      const dest = data.destination || data.recipient_name || 'France TRM';
+      const sub = `${driver} · ${dest}`;
+      ctx.fillText(sub.length > 34 ? sub.slice(0, 32) + '…' : sub, 24, 104);
+
+      const badgeTexture = new THREE.CanvasTexture(canvas);
+      badgeTexture.minFilter = THREE.LinearFilter;
+      const spriteMaterial = new THREE.SpriteMaterial({
+        map: badgeTexture,
+        transparent: true,
+        depthTest: false,
+        depthWrite: false
+      });
+      const badgeSprite = new THREE.Sprite(spriteMaterial);
+      badgeSprite.name = 'InfoBadge';
+      badgeSprite.scale.set(10.5, 2.9, 1);
+      badgeSprite.position.set(0, 9.2, 1.2);
+      truck.add(badgeSprite);
+    }
+  } catch (e) {
+    console.warn("Could not generate truck info sprite:", e);
+  }
+
   return truck;
 };
