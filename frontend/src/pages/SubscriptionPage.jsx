@@ -298,6 +298,75 @@ export const SubscriptionPage = () => {
         })}
       </div>
 
+      {/* === BANDEAU QUOTA FACTUR-X === */}
+      <div className="bg-blue-950/40 border border-blue-800/40 rounded-xl p-5 flex items-start gap-4">
+        <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
+          <Zap className="w-5 h-5 text-blue-400" />
+        </div>
+        <div>
+          <p className="font-semibold text-white text-sm mb-1">Quota Facturation Électronique Factur-X inclus</p>
+          <p className="text-xs text-zinc-400 leading-relaxed">
+            Chaque plan inclut <strong className="text-white">25 factures Factur-X par camion et par mois</strong>.
+            Au-delà de ce quota : <strong className="text-white">0,35 € HT / facture supplémentaire</strong> pour couvrir les coûts de transmission PDP/PPF et d'archivage légal 10 ans.
+          </p>
+          <p className="text-xs text-blue-400 mt-2 font-medium">
+            Exemple : pour 10 camions → 250 factures/mois incluses (couvre 95% des besoins TRM standard).
+          </p>
+        </div>
+      </div>
+
+      {/* === SECTION ADD-ONS === */}
+      <div className="bg-[#121214] border border-[#27272A] rounded-xl p-6 space-y-4">
+        <h3 className="text-lg font-semibold text-white mb-2">Options & Extensions</h3>
+
+        {/* Add-on Vue 3D */}
+        {(currentPlan === 'flotte_pro' || currentPlan === 'flotte') ? (
+          <div className="flex items-center gap-4 bg-emerald-950/30 border border-emerald-700/30 rounded-xl p-4">
+            <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+              <Check className="w-5 h-5 text-emerald-400" />
+            </div>
+            <div className="flex-1">
+              <p className="font-semibold text-white text-sm">Vue 3D Interactive LIVE — Flotte & Missions</p>
+              <p className="text-xs text-zinc-400 mt-0.5">Supervision en temps réel de votre dépôt logistique 3D. Camions animés, badges télématiques, clic → fiche mission.</p>
+            </div>
+            <span className="flex-shrink-0 text-xs bg-emerald-500 text-white px-3 py-1 rounded-full font-bold">INCLUSE</span>
+          </div>
+        ) : (
+          <div className="flex items-center gap-4 bg-[#1A1A1E] border border-[#27272A] hover:border-orange-500/40 rounded-xl p-4 transition-all">
+            <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-orange-500/10 flex items-center justify-center">
+              <Zap className="w-5 h-5 text-orange-400" />
+            </div>
+            <div className="flex-1">
+              <p className="font-semibold text-white text-sm">Vue 3D Interactive LIVE — Flotte & Missions</p>
+              <p className="text-xs text-zinc-400 mt-0.5">Tour de contrôle 3D pour votre dépôt. Camions en temps réel, badges holographiques et alertes visuelles d'incident.</p>
+            </div>
+            <div className="flex-shrink-0 flex flex-col items-end gap-1.5">
+              <span className="text-sm font-bold text-orange-400">+49 €/mois</span>
+              <button
+                className="text-xs bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 rounded-full font-semibold transition-colors"
+                onClick={() => window.open('https://buy.stripe.com/test_ADDON_3D_A_CREER', '_blank')}
+              >
+                Activer
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Engagement Annuel */}
+        <div className="flex items-center gap-4 bg-[#1A1A1E] border border-[#27272A] rounded-xl p-4">
+          <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center">
+            <Check className="w-5 h-5 text-green-400" />
+          </div>
+          <div className="flex-1">
+            <p className="font-semibold text-white text-sm">Engagement Annuel — 2 mois offerts</p>
+            <p className="text-xs text-zinc-400 mt-0.5">Passez en facturation annuelle et économisez l'équivalent de 2 mois de votre abonnement (-16,7%).</p>
+          </div>
+          <div className="flex-shrink-0">
+            <span className="text-xs bg-green-500/10 text-green-400 border border-green-500/30 px-3 py-1 rounded-full font-semibold">-16,7 %</span>
+          </div>
+        </div>
+      </div>
+
       {/* Features Comparison */}
       <div className="bg-[#121214] border border-[#27272A] rounded-xl p-6">
         <h3 className="text-lg font-semibold mb-4">{t('subscription.whyUpgrade', 'Pourquoi passer au plan supérieur ?')}</h3>

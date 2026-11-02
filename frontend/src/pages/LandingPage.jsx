@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { 
@@ -15,6 +15,21 @@ const LandingPage = () => {
   const [activeFaq, setActiveFaq] = useState(null);
   const [timeSavingsPeriod, setTimeSavingsPeriod] = useState('month'); // 'week' | 'month' | 'year'
   const [expandedPlanDetails, setExpandedPlanDetails] = useState({ starter: false, pme: false, flotte: false });
+  // États pour la tarification dynamique (Étape 5 — Nouveau modèle Base + Prix/camion)
+  const [truckCount, setTruckCount] = useState(5);
+  const [billingCycle, setBillingCycle] = useState('monthly'); // 'monthly' | 'yearly'
+  const [add3D, setAdd3D] = useState(false);
+
+  // Calcul dynamique du prix selon le modèle Base fixe + Prix par camion + option 3D
+  const calcPrice = (base, perTruck, trucks, yearly, addon3D) => {
+    const t = Math.max(1, trucks);
+    const monthly = base + (t * perTruck);
+    const price = yearly ? Math.round(monthly * 10 / 12) : monthly;
+    return price + (addon3D ? 49 : 0);
+  };
+
+  // Plan recommandé selon le nombre de camions
+  const recommendedPlan = truckCount <= 3 ? 'starter' : truckCount <= 15 ? 'pme' : 'flotte';
 
   React.useEffect(() => {
     if (user) navigate('/dashboard', { replace: true });
@@ -436,6 +451,63 @@ const LandingPage = () => {
             </div>
           </div>
 
+                    {/* === CONTRÔLES DYNAMIQUES TARIFICATION (Slider camions + Toggle billing + Add-on 3D) === */}
+          <div className="flex flex-col items-center gap-5 mb-10 bg-slate-50 border border-slate-200 rounded-2xl p-6 max-w-2xl mx-auto">
+            {/* Toggle Mensuel / Annuel */}
+            <div className="flex items-center gap-2 bg-white rounded-full border border-slate-200 p-1 shadow-sm">
+              <button
+                onClick={() => setBillingCycle('monthly')}
+                className={`px-5 py-2 rounded-full text-sm font-semibold transition-all ${billingCycle === 'monthly' ? 'bg-slate-900 text-white shadow' : 'text-slate-500 hover:text-slate-800'}`}
+              >
+                Mensuel
+              </button>
+              <button
+                onClick={() => setBillingCycle('yearly')}
+                className={`px-5 py-2 rounded-full text-sm font-semibold transition-all ${billingCycle === 'yearly' ? 'bg-slate-900 text-white shadow' : 'text-slate-500 hover:text-slate-800'}`}
+              >
+                Annuel <span className="ml-1 text-xs text-emerald-500 font-bold">2 mois offerts</span>
+              </button>
+            </div>
+
+            {/* Slider nombre de camions */}
+            <div className="w-full">
+              <label className="block text-sm font-semibold text-slate-700 mb-3 text-center">
+                Votre flotte : <span className="font-black text-slate-900 text-base">{truckCount} camion{truckCount > 1 ? 's' : ''}</span>
+                {recommendedPlan === 'starter' && <span className="ml-2 text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">Plan Starter recommandé</span>}
+                {recommendedPlan === 'pme' && <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">Plan PME Croissance recommandé</span>}
+                {recommendedPlan === 'flotte' && <span className="ml-2 text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">Plan Flotte Pro recommandé</span>}
+              </label>
+              <input
+                type="range" min={1} max={50} value={truckCount}
+                onChange={e => setTruckCount(Number(e.target.value))}
+                className="w-full h-2 accent-blue-600 cursor-pointer"
+              />
+              <div className="flex justify-between text-xs text-slate-400 mt-1.5">
+                <span>1 camion</span><span>25</span><span>50+</span>
+              </div>
+            </div>
+
+            {/* Option Vue 3D : masquée pour Flotte Pro car incluse */}
+            {recommendedPlan !== 'flotte' && (
+              <label className="flex items-center gap-2.5 cursor-pointer select-none text-sm text-slate-700 bg-white border border-orange-200 rounded-xl px-4 py-2.5 shadow-sm hover:border-orange-400 transition-all">
+                <input
+                  type="checkbox" checked={add3D}
+                  onChange={e => setAdd3D(e.target.checked)}
+                  className="w-4 h-4 accent-orange-500"
+                />
+                Ajouter la <strong className="mx-1">Vue 3D Interactive</strong>
+                <span className="text-orange-600 font-bold">+49 €/mois</span>
+              </label>
+            )}
+            {recommendedPlan === 'flotte' && (
+              <div className="flex items-center gap-2 text-sm text-emerald-700 font-semibold bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-2.5">
+                <Check className="w-4 h-4 text-emerald-600" />
+                Vue 3D LIVE incluse d'office en Flotte Pro
+              </div>
+            )}
+          </div>
+          {/* === FIN CONTRÔLES === */}
+
           <div className="grid md:grid-cols-3 gap-8 items-stretch">
             
             {/* Starter */}
@@ -447,9 +519,15 @@ const LandingPage = () => {
                 <h3 className="text-xl font-bold text-slate-900">Artisans & 1 à 3 Camions</h3>
                 <p className="text-xs text-slate-500 mt-1">L'essentiel pour démarrer sereinement.</p>
                 <div className="my-5">
-                  <span className="text-4xl font-extrabold font-mono text-slate-900">79 €</span>
+                  <span className="text-4xl font-extrabold font-mono text-slate-900">
+                    {calcPrice(45, 22, Math.min(truckCount, 3), billingCycle === 'yearly', false)} €
+                  </span>
                   <span className="text-slate-500 text-xs font-medium"> / mois</span>
-                  <p className="text-[11px] text-[#059669] font-bold mt-1">ou 759 €/an (~63 €/mois)</p>
+                  {billingCycle === 'yearly'
+                    ? <p className="text-[11px] text-[#059669] font-bold mt-1">Facturé annuellement — 2 mois offerts</p>
+                    : <p className="text-[11px] text-slate-400 font-medium mt-1">Base 45 € + {Math.min(truckCount, 3)} × 22 € / camion</p>
+                  }
+                  {recommendedPlan === 'starter' && <span className="inline-block mt-1.5 text-[10px] bg-slate-900 text-white px-2 py-0.5 rounded-full font-bold">Recommandé pour vous</span>}
                 </div>
 
                 {/* Bloc Gain de Temps Réel (Starter) */}
@@ -533,9 +611,15 @@ const LandingPage = () => {
                 <h3 className="text-xl font-bold text-slate-900">Flottes de 4 à 15 Camions</h3>
                 <p className="text-xs text-slate-500 mt-1">La suite complète avec l'IA Anti-Litige.</p>
                 <div className="my-5">
-                  <span className="text-4xl font-extrabold font-mono text-slate-900">249 €</span>
+                  <span className="text-4xl font-extrabold font-mono text-slate-900">
+                    {calcPrice(119, 17, Math.min(Math.max(truckCount, 4), 15), billingCycle === 'yearly', add3D)} €
+                  </span>
                   <span className="text-slate-500 text-xs font-medium"> / mois</span>
-                  <p className="text-[11px] text-[#059669] font-bold mt-1">ou 2 390 €/an (~199 €/mois)</p>
+                  {billingCycle === 'yearly'
+                    ? <p className="text-[11px] text-[#059669] font-bold mt-1">Facturé annuellement — 2 mois offerts</p>
+                    : <p className="text-[11px] text-slate-400 font-medium mt-1">Base 119 € + {Math.min(Math.max(truckCount, 4), 15)} × 17 € / camion{add3D ? ' + Vue 3D 49 €' : ''}</p>
+                  }
+                  {recommendedPlan === 'pme' && <span className="inline-block mt-1.5 text-[10px] bg-blue-600 text-white px-2 py-0.5 rounded-full font-bold">Recommandé pour vous</span>}
                 </div>
 
                 {/* Bloc Gain de Temps Réel (PME) */}
@@ -621,9 +705,15 @@ const LandingPage = () => {
                 <h3 className="text-xl font-bold text-slate-900">Grandes Flottes (+15 camions)</h3>
                 <p className="text-xs text-slate-500 mt-1">Toutes les fonctionnalités sans aucune limite.</p>
                 <div className="my-5">
-                  <span className="text-4xl font-extrabold font-mono text-slate-900">690 €</span>
+                  <span className="text-4xl font-extrabold font-mono text-slate-900">
+                    {calcPrice(329, 15, Math.max(truckCount, 16), billingCycle === 'yearly', false)} €
+                  </span>
                   <span className="text-slate-500 text-xs font-medium"> / mois</span>
-                  <p className="text-[11px] text-[#059669] font-bold mt-1">ou 6 624 €/an (~552 €/mois)</p>
+                  {billingCycle === 'yearly'
+                    ? <p className="text-[11px] text-[#059669] font-bold mt-1">Facturé annuellement — 2 mois offerts</p>
+                    : <p className="text-[11px] text-slate-400 font-medium mt-1">Base 329 € + {Math.max(truckCount, 16)} × 15 € / camion</p>
+                  }
+                  {recommendedPlan === 'flotte' && <span className="inline-block mt-1.5 text-[10px] bg-emerald-600 text-white px-2 py-0.5 rounded-full font-bold">Recommandé pour vous</span>}
                 </div>
 
                 {/* Bloc Gain de Temps Réel (Flotte Pro) */}
@@ -689,6 +779,10 @@ const LandingPage = () => {
                   <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#059669]" /> Accès API dédié</li>
                   <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#059669]" /> Accompagnement & onboarding sur mesure</li>
                   <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#059669]" /> Chargé de compte dédié</li>
+                  <li className="flex items-center gap-2 text-emerald-700 font-bold">
+                    <Check className="w-4 h-4 text-emerald-600" />
+                    <span>Vue 3D Interactive LIVE <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full ml-1 font-bold">OFFERTE</span></span>
+                  </li>
                 </ul>
               </div>
               <button 
@@ -720,7 +814,7 @@ const LandingPage = () => {
             {[
               {
                 q: "Quel est le prix de Transporter-Pro pour une entreprise de transport ?",
-                a: "Le tarif démarre à 79 € par mois pour le forfait STARTER (jusqu'à 3 camions). Le forfait PME est à 249 € par mois (jusqu'à 15 camions) et le forfait FLOTTE est à 690 € par mois (camions illimités). Tous les forfaits incluent 30 jours d'essai gratuit sans engagement."
+                a: "Nos tarifs s'adaptent à votre flotte : le modèle fonctionne sur une base fixe + un prix par camion. Pour un artisan (1 camion) : à partir de 67 €/mois (plan Starter). Pour une PME de 10 camions : 289 €/mois (plan PME Croissance). Pour une grande flotte de 25 camions : 704 €/mois (plan Flotte Pro, Vue 3D offerte). Tous les plans incluent 30 jours d'essai gratuit sans CB."
               },
               {
                 q: "Comment fonctionne la protection IA sur les photos de colis ?",

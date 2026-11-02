@@ -22,7 +22,7 @@ const PLAN_FEATURES = {
       clientPortal: false,
       apiAccess: false,
       ecoScore: false,
-      interactive3D: false
+      interactive3D: false  // ⚠️ Option payante +49€/mois
     }
   },
   starter: {
@@ -40,7 +40,7 @@ const PLAN_FEATURES = {
       clientPortal: false,
       apiAccess: false,
       ecoScore: false,
-      interactive3D: false
+      interactive3D: false  // ⚠️ Option payante +49€/mois
     }
   },
   croissance: {
@@ -58,7 +58,7 @@ const PLAN_FEATURES = {
       scanBarcode: false,
       clientPortal: false,
       apiAccess: false,
-      interactive3D: true
+      interactive3D: false  // ⚠️ Option payante +49€/mois (verrouillé par défaut)
     }
   },
   pme: {
@@ -76,7 +76,7 @@ const PLAN_FEATURES = {
       scanBarcode: false,
       clientPortal: false,
       apiAccess: false,
-      interactive3D: true
+      interactive3D: false  // ⚠️ Option payante +49€/mois (verrouillé par défaut)
     }
   },
   flotte_pro: {
@@ -94,7 +94,7 @@ const PLAN_FEATURES = {
       scanBarcode: true,
       clientPortal: true,
       apiAccess: true,
-      interactive3D: true
+      interactive3D: true   // ✅ Incluse d'office en Flotte Pro
     }
   },
   flotte: {
@@ -112,7 +112,7 @@ const PLAN_FEATURES = {
       scanBarcode: true,
       clientPortal: true,
       apiAccess: true,
-      interactive3D: true
+      interactive3D: true   // ✅ Incluse d'office en Flotte Pro
     }
   }
 };
@@ -125,7 +125,7 @@ const RESTRICTION_MESSAGES = {
   clientPortal: 'Portail Client disponible dans le pack Flotte Pro',
   apiAccess: 'Accès API disponible dans le pack Flotte Pro',
   ecoScore: 'Score éco-conduite disponible dans le pack Croissance',
-  interactive3D: 'La Vue 3D interactive est réservée aux flottes à partir de 4 camions (Pack Croissance & Flotte Pro)'
+  interactive3D: 'La Vue 3D LIVE est disponible en option (+49 €/mois) pour les plans Starter et PME Croissance, et incluse d\'office dans le plan Flotte Pro.'
 };
 
 export const useSubscription = () => {
@@ -200,10 +200,17 @@ export const SubscriptionProvider = ({ children }) => {
 
   const hasFeature = useCallback((featureName) => {
     if (user?.is_demo) return true;
+    // Logique spéciale pour la Vue 3D : Flotte Pro d'office OU add-on explicitement activé
+    if (featureName === 'interactive3D') {
+      const plan = subscription.plan || 'solo';
+      const isFlottePro = plan === 'flotte_pro' || plan === 'flotte';
+      const hasAddon = user?.interactive_addon_active === true;
+      return isFlottePro || hasAddon;
+    }
     const planKey = subscription.plan || 'flotte_pro';
     const planFeatures = PLAN_FEATURES[planKey]?.features || PLAN_FEATURES.flotte_pro.features;
     return planFeatures[featureName] === true;
-  }, [subscription.plan, user?.is_demo]);
+  }, [subscription.plan, user?.is_demo, user?.interactive_addon_active]);
 
   const getRestrictionMessage = useCallback((featureName) => {
     return RESTRICTION_MESSAGES[featureName] || 'Fonctionnalité non disponible dans votre plan';

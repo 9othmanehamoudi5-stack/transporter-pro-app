@@ -1,4 +1,4 @@
-from dotenv import load_dotenv
+﻿from dotenv import load_dotenv
 load_dotenv()
 
 import asyncio
@@ -786,6 +786,9 @@ async def update_preferences(data: UserPreferences, user: dict = Depends(get_cur
         update["preferred_view"] = data.preferred_view
     if data.interactive_view_enabled is not None and user.get("role") == "admin":
         update["interactive_view_enabled"] = data.interactive_view_enabled
+    if data.interactive_addon_active is not None and user.get("role") == "admin":
+        # Activation/désactivation de l'add-on Vue 3D Interactive (+49€/mois)
+        update["interactive_addon_active"] = data.interactive_addon_active
 
     if not update:
         return {"message": "No change"}
@@ -987,10 +990,45 @@ SUBSCRIPTION_PLANS = {
         "features": ["Camions illimités", "IA Anti-litige", "Cash-Flow Dashboard", "Éco-Score complet", "Support 24/7 dédié", "API Access", "White-label"]
     },
     # Legacy aliases so existing subscription docs still resolve.
-    "solo": {"name": "STARTER", "monthly_price": 79, "yearly_price": 759, "max_trucks": 3, "features": []},
-    "croissance": {"name": "PME", "monthly_price": 249, "yearly_price": 2390, "max_trucks": 15, "features": []},
-    "flotte_pro": {"name": "FLOTTE", "monthly_price": 690, "yearly_price": 6624, "max_trucks": -1, "features": []},
+    "solo":      {"name": "STARTER",        "monthly_price": 67,  "yearly_price": 670,  "max_trucks": 3,  "base_price": 45,  "per_truck_price": 22, "invoice_quota_per_truck": 25, "invoice_overage_price": 0.35, "features": []},
+    "croissance": {"name": "PME CROISSANCE",  "monthly_price": 187, "yearly_price": 1870, "max_trucks": 15, "base_price": 119, "per_truck_price": 17, "invoice_quota_per_truck": 25, "invoice_overage_price": 0.35, "features": []},
+    "flotte_pro": {"name": "FLOTTE PRO",       "monthly_price": 569, "yearly_price": 5690, "max_trucks": -1, "base_price": 329, "per_truck_price": 15, "invoice_quota_per_truck": 25, "invoice_overage_price": 0.35, "features": []},
 }
+
+@api_router.get("/subscription/pricing")
+async def get_dynamic_pricing(plan: str = "solo", trucks: int = 1):
+    """Calcule le prix exact selon le modèle Base fixe + Prix par camion.
+    Paramètres: plan (solo/croissance/flotte_pro) et trucks (int >= 1).
+    Retourne: monthly_price, yearly_price (10 mois), invoice_quota, overage_price.
+    """
+    DYNAMIC_PRICING = {
+        "solo":       {"base": 45,  "per_truck": 22, "max": 3},
+        "starter":    {"base": 45,  "per_truck": 22, "max": 3},
+        "croissance": {"base": 119, "per_truck": 17, "max": 15},
+        "pme":        {"base": 119, "per_truck": 17, "max": 15},
+        "flotte_pro": {"base": 329, "per_truck": 15, "max": -1},
+        "flotte":     {"base": 329, "per_truck": 15, "max": -1},
+    }
+    pricing = DYNAMIC_PRICING.get(plan)
+    if not pricing:
+        raise HTTPException(status_code=400, detail=f"Plan inconnu : {plan}. Valeurs acceptées : solo, croissance, flotte_pro.")
+    trucks = max(1, int(trucks))
+    monthly = pricing["base"] + (trucks * pricing["per_truck"])
+    yearly = round(monthly * 10, 2)  # 2 mois offerts = 10 mois payés sur 12
+    savings = round(monthly * 2, 2)
+    invoice_quota = trucks * 25  # 25 factures Factur-X incluses par camion/mois
+    return {
+        "plan": plan,
+        "trucks": trucks,
+        "monthly_price": monthly,
+        "yearly_price": yearly,
+        "savings_yearly": savings,
+        "invoice_quota": invoice_quota,
+        "invoice_overage_price": 0.35,
+        "addon_3d_price": 49,
+        "addon_3d_included": plan in ["flotte_pro", "flotte"]
+    }
+
 
 @api_router.get("/subscription/plans")
 async def get_subscription_plans():
@@ -1074,6 +1112,9 @@ STRIPE_PAYMENT_LINKS = {
         "monthly_no_trial": "https://buy.stripe.com/test_6oU7sNejVb7bcP69g4enS0a",
         "yearly_no_trial":  "https://buy.stripe.com/test_eVqeVfcbNa37cP6bocenS0b",
     },
+    "addon_3d": {
+        "monthly":          "https://buy.stripe.com/test_ADDON_3D_A_CREER",
+    },
 }
 
 # ==================== STRIPE WEBHOOK ====================
@@ -1091,6 +1132,8 @@ def _detect_plan_from_amount(amount: float) -> tuple:
         return "flotte", "monthly"
     if amount >= 200:
         return "pme", "monthly"
+    if 45 <= amount <= 55:
+        return "addon_3d", "monthly"
     if amount >= 500:
         return "starter", "yearly"
     if amount > 0:
@@ -1108,10 +1151,34 @@ async def _activate_admin_subscription(admin: dict, session: dict, source: str =
     plan_type = metadata.get("plan")
     billing_cycle = metadata.get("billing")
 
+    # Traitement spécial add-on Vue 3D (+49€/mois)
+    if plan_type == "addon_3d" or metadata.get("addon") == "interactive_3d":
+        await db.users.update_one(
+            {"_id": admin["_id"]},
+            {"$set": {"interactive_addon_active": True}}
+        )
+        await log_action(
+            admin_id,
+            company_id,
+            "stripe_payment",
+            "addon_3d",
+            "interactive_3d",
+            f"Activation add-on Vue 3D (+49€/m): session {session.get('id', 'n/a')}",
+        )
+        logger.info(f"Stripe[{source}]: activated Vue 3D add-on for {admin.get('email')}")
+        return {"plan": "addon_3d", "addon": "interactive_3d", "status": "active"}
+
     # Validate plan from metadata; if missing/invalid, fall back to amount-based detection
     if plan_type not in PLAN_DRIVER_LIMITS:
         amount = (session.get("amount_total") or 0) / 100
         plan_type, billing_cycle = _detect_plan_from_amount(amount)
+        if plan_type == "addon_3d":
+            await db.users.update_one(
+                {"_id": admin["_id"]},
+                {"$set": {"interactive_addon_active": True}}
+            )
+            logger.info(f"Stripe[{source}]: activated Vue 3D add-on via amount detection for {admin.get('email')}")
+            return {"plan": "addon_3d", "addon": "interactive_3d", "status": "active"}
 
     if billing_cycle not in ("monthly", "yearly"):
         billing_cycle = "monthly"

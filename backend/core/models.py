@@ -1,4 +1,4 @@
-"""Pydantic models shared across endpoints."""
+﻿"""Pydantic models shared across endpoints."""
 from pydantic import BaseModel, EmailStr, Field
 from typing import List, Optional, Literal
 
@@ -125,6 +125,7 @@ class UserPreferences(BaseModel):
     two_fa_enabled: Optional[bool] = None
     preferred_view: Optional[Literal["classic", "interactive"]] = None
     interactive_view_enabled: Optional[bool] = None
+    interactive_addon_active: Optional[bool] = None  # Add-on Vue 3D (+49/mois)
 
 
 class LogoUpload(BaseModel):

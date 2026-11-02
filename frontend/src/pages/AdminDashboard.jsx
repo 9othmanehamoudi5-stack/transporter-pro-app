@@ -1,4 +1,4 @@
-import { useSearchParams } from 'react-router-dom';
+﻿import { useSearchParams } from 'react-router-dom';
 import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
@@ -38,6 +38,7 @@ import SubscriptionPage from './SubscriptionPage';
 const LiveMapPanel = lazy(() => import('./LiveMapPanel'));
 const ViewSwitcher = lazy(() => import('../components/interactive/ViewSwitcher'));
 const InteractiveHub = lazy(() => import('../components/interactive/InteractiveHub'));
+const Interactive3DUpsellModal = lazy(() => import('../components/interactive/Interactive3DUpsellModal'));
 
 const statusLabels = {
   pending: 'En attente',
@@ -143,6 +144,7 @@ export const AdminDashboard = () => {
   const [editingDriver, setEditingDriver] = useState(null);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
+  const [showUpsell3DModal, setShowUpsell3DModal] = useState(false);
   const [firestoreDriversList, setFirestoreDriversList] = useState([]);
   const [inspectionSummary, setInspectionSummary] = useState(null);
   const [seedingDemo, setSeedingDemo] = useState(false);
@@ -150,10 +152,9 @@ export const AdminDashboard = () => {
   const [searchParams] = useSearchParams();
   const urlView = searchParams.get('view');
 
-  // Interactive 3D View Feature Flag & Preferences
-  const isInteractiveAvailable = 
-    process.env.REACT_APP_ENABLE_INTERACTIVE_VIEW !== 'false' && 
-    user?.interactive_view_enabled !== false;
+  // Interactive 3D View Feature Flag & Preferences — basé sur hasFeature('interactive3D')
+  // Flotte Pro : activé d'office. Starter/Croissance : activé si add-on payé.
+  const isInteractiveAvailable = hasFeature('interactive3D');
 
   const [activeView, setActiveView] = useState(
     urlView === 'interactive' || urlView === 'classic'
@@ -488,6 +489,15 @@ export const AdminDashboard = () => {
     <div className="min-h-screen bg-[#0A0A0B] flex">
       <Toaster richColors position="top-right" />
 
+      {/* Modale d'upsell Vue 3D — affichée si utilisateur sans droits clique sur Vue 3D */}
+      <Suspense fallback={null}>
+        <Interactive3DUpsellModal
+          isOpen={showUpsell3DModal}
+          onClose={() => setShowUpsell3DModal(false)}
+          userPlan={user?.plan || 'solo'}
+        />
+      </Suspense>
+
       {/* Barcode Scanner Modal */}
       {showScanner && (
         <BarcodeScanner
@@ -629,7 +639,9 @@ export const AdminDashboard = () => {
             </div>
             <div className="flex items-center gap-2">
               {/* View Switcher: Classic vs 3D Interactive — strictement réservé à la Vue d'ensemble */}
-              {activeTab === 'overview' && isInteractiveAvailable && (
+              {/* Le ViewSwitcher est toujours visible en onglet overview.
+                  Si l'utilisateur n'a pas le droit 3D, on affiche la modale d'upsell. */}
+              {activeTab === 'overview' && (
                 <Suspense fallback={null}>
                   <ViewSwitcher
                     currentView={activeView}
@@ -637,6 +649,11 @@ export const AdminDashboard = () => {
                     userPlan={user?.plan || 'croissance'}
                     isDemo={!!user?.is_demo}
                     onViewChange={(v) => {
+                      if (v === 'interactive' && !isInteractiveAvailable) {
+                        // Utilisateur sans droit 3D : affiche la modale d'upsell
+                        setShowUpsell3DModal(true);
+                        return;
+                      }
                       setActiveView(v);
                       if (v === 'interactive') setActiveTab('overview');
                     }}
